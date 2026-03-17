@@ -251,19 +251,43 @@
     .unite-item.selected .check { display: inline; }
 
     /* ── UPLOAD ── */
+    .upload-zone-wrap { margin-bottom: 12px; }
     .upload-zone {
+      display: block;
       border: 1.5px dashed var(--border2);
       border-radius: var(--radius);
       padding: 28px 16px;
       text-align: center;
       cursor: pointer;
       background: var(--bg2);
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      -webkit-user-select: none;
+      user-select: none;
     }
-    .upload-zone .uz-icon { font-size: 36px; margin-bottom: 8px; }
+    .upload-zone:active { background: var(--bg3); }
+    .upload-zone .uz-icon { font-size: 36px; margin-bottom: 8px; display: block; }
     .upload-zone p { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
     .upload-zone small { font-size: 12px; color: var(--text3); }
-    #file-input { display: none; }
+    .upload-zone input[type=file],
+    .upload-zone-camera input[type=file] { display: none; }
+
+    .upload-zone-camera {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 12px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .upload-zone-camera:active { background: var(--bg3); }
 
     .ocr-type-row { display: flex; gap: 6px; margin-bottom: 12px; }
     .ocr-type-btn {
@@ -641,11 +665,17 @@
             <button class="ocr-type-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')">✏️ Handschrift / Heft</button>
           </div>
 
-          <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-            <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" />
-            <div class="uz-icon" id="up-icon">📷</div>
-            <p id="up-zone-text">Foto oder Screenshot auswählen</p>
-            <small>Mehrere Bilder gleichzeitig möglich · Kamera oder Galerie</small>
+          <div class="upload-zone-wrap">
+            <label for="file-input" class="upload-zone">
+              <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" />
+              <div class="uz-icon" id="up-icon">📷</div>
+              <p id="up-zone-text">Foto oder Screenshot auswählen</p>
+              <small>Galerie · Kamera · Screenshots</small>
+            </label>
+            <label for="file-input-camera" class="upload-zone-camera">
+              <input type="file" id="file-input-camera" accept="image/*" capture="environment" onchange="handleFiles(event)" />
+              📸 Direkt fotografieren
+            </label>
           </div>
 
           <div class="preview-grid" id="up-previews"></div>
@@ -881,17 +911,25 @@ function setUploadTab(t) {
 async function handleFiles(e) {
   const files = Array.from(e.target.files);
   if (!files.length) return;
+  // Reset input so same file can be selected again
+  e.target.value = '';
   pendingImages = []; pendingVocab = [];
   document.getElementById('up-previews').innerHTML = '';
   document.getElementById('up-extracted').style.display = 'none';
   setStatus('<span class="spinner"></span>Bilder werden geladen…', 'loading');
-  for (const file of files) {
-    const b64 = await toBase64(file);
-    pendingImages.push({ b64, mediaType: file.type || 'image/jpeg' });
-    const img = document.createElement('img');
-    img.src = 'data:' + file.type + ';base64,' + b64;
-    img.className = 'preview-img';
-    document.getElementById('up-previews').appendChild(img);
+  try {
+    for (const file of files) {
+      const b64 = await toBase64(file);
+      const mediaType = file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg';
+      pendingImages.push({ b64, mediaType });
+      const img = document.createElement('img');
+      img.src = 'data:' + mediaType + ';base64,' + b64;
+      img.className = 'preview-img';
+      document.getElementById('up-previews').appendChild(img);
+    }
+  } catch(err) {
+    setStatus('⚠️ Foto konnte nicht geladen werden. Bitte in Safari (nicht als App) versuchen, oder "Direkt fotografieren" nutzen.', 'error');
+    return;
   }
   const label = ocrType === 'handwritten'
     ? '<span class="spinner"></span>Handschrift wird erkannt – einen Moment…'
@@ -903,8 +941,15 @@ async function handleFiles(e) {
 function toBase64(file) {
   return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload = () => res(r.result.split(',')[1]);
-    r.onerror = rej;
+    r.onload = () => {
+      const result = r.result;
+      if (!result || typeof result !== 'string') { rej(new Error('Leeres Ergebnis')); return; }
+      const parts = result.split(',');
+      if (parts.length < 2) { rej(new Error('Ungültiges Format')); return; }
+      res(parts[1]);
+    };
+    r.onerror = () => rej(new Error('Lesefehler: ' + (r.error ? r.error.message : 'unbekannt')));
+    r.onabort = () => rej(new Error('Abgebrochen'));
     r.readAsDataURL(file);
   });
 }

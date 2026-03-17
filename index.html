@@ -307,7 +307,8 @@
     .status-success { color: var(--green-text); }
 
     /* ── VOCAB LIST ── */
-    .vocab-scroll { max-height: 200px; overflow-y: auto; margin-bottom: 10px; }
+    .vocab-scroll { margin-bottom: 10px; }
+    .vocab-scroll-limited { max-height: 200px; overflow-y: auto; margin-bottom: 10px; }
     .vocab-row {
       display: flex;
       align-items: center;
@@ -360,18 +361,26 @@
     .progress-fill { height: 100%; background: var(--green-text); border-radius: 2px; transition: width 0.3s; }
 
     .q-card {
-      min-height: 160px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      position: relative;
       background: var(--bg);
       border: 0.5px solid var(--border);
       border-radius: var(--radius);
       padding: 24px 16px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .q-answer-card {
+      min-height: 100px;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
       margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .q-answer-card-inner {
+      padding: 20px 16px;
     }
     .q-lang { font-size: 11px; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
     .q-word { font-size: 28px; font-weight: 600; color: var(--text); line-height: 1.2; }
@@ -384,12 +393,9 @@
       justify-content: center;
       cursor: pointer;
       border: 1.5px dashed var(--border2);
+      min-height: 100px;
     }
     .q-cover span { font-size: 14px; color: var(--text2); }
-
-    .q-answer-reveal { text-align: center; margin-bottom: 16px; }
-    .q-answer-reveal .q-lang { margin-bottom: 6px; }
-    .q-answer-reveal .q-word { font-size: 24px; }
 
     .answer-input {
       width: 100%;
@@ -530,7 +536,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v13)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <p>Jule Édition <span style="opacity:0.5;">(v15)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
   </div>
 
   <!-- Tab Bar -->
@@ -589,12 +595,14 @@
         <div class="q-card" id="q-card">
           <div class="q-lang" id="q-ask-lang">Deutsch</div>
           <div class="q-word" id="q-ask-word">–</div>
-          <div class="q-cover" id="q-cover" onclick="reveal()"><span>Antippen zum Aufdecken</span></div>
         </div>
 
-        <div id="q-revealed" style="display:none;" class="q-answer-reveal">
-          <div class="q-lang" id="q-ans-lang">Französisch</div>
-          <div class="q-word" id="q-ans-word"></div>
+        <div class="q-answer-card" id="q-answer-card">
+          <div class="q-cover" id="q-cover" onclick="reveal()"><span>Antippen zum Aufdecken</span></div>
+          <div id="q-revealed" style="display:none;">
+            <div class="q-lang" id="q-ans-lang">Französisch</div>
+            <div class="q-word" id="q-ans-word"></div>
+          </div>
         </div>
 
         <div id="q-type-area" style="display:none;">
@@ -625,7 +633,7 @@
           <div class="result-sub" id="r-sub">–</div>
           <div id="r-missed-sec" style="display:none;">
             <label style="margin-bottom:8px;">Noch üben:</label>
-            <div class="vocab-scroll">
+            <div class="vocab-scroll-limited">
               <ul id="r-missed" style="list-style:none;"></ul>
             </div>
           </div>
@@ -702,7 +710,7 @@
               <span style="font-size:11px;color:var(--text3);padding-left:4px;">Französisch</span>
               <span></span>
             </div>
-            <div class="vocab-scroll" id="up-vocab-list"></div>
+            <div class="vocab-scroll-limited" id="up-vocab-list"></div>
             <button class="btn btn-dark" onclick="saveVocab()" style="margin-top:8px;">Speichern</button>
             <button class="btn btn-secondary" onclick="resetUpload()">Neues Bild laden</button>
           </div>
@@ -1139,13 +1147,20 @@ function addEmptyRow() { pendingVocab.push({de:'',fr:''}); renderExtracted(); do
 
 function saveVocab() {
   const unite = document.getElementById('up-unite-name').value.trim() || 'Unité ?';
-  if (!pendingVocab.length) return;
+  const valid = pendingVocab.filter(v => v.de && v.de.trim() && v.fr && v.fr.trim());
+  if (!valid.length) return;
   if (!db[unite]) db[unite] = [];
-  db[unite].push(...pendingVocab);
+  const existing = new Set(db[unite].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const newOnes = valid.filter(v => !existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const dupes = valid.length - newOnes.length;
+  db[unite].push(...newOnes);
   saveDb();
-  setStatus('✓ ' + pendingVocab.length + ' Vokabeln in „' + unite + '" gespeichert!', 'success');
+  const msg = dupes > 0
+    ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.`
+    : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`;
+  setStatus(msg, 'success');
   pendingVocab = []; pendingImages = [];
-  setTimeout(resetUpload, 1800);
+  setTimeout(resetUpload, 2000);
 }
 
 function resetUpload() {
@@ -1161,11 +1176,14 @@ function saveManual() {
   const pairs = lines.map(l => { const p = l.split(';'); return p.length>=2 ? {de:p[0].trim(),fr:p[1].trim()} : null; }).filter(Boolean);
   if (!pairs.length) { alert('Keine gültigen Einträge gefunden.\nFormat: deutsch;französisch'); return; }
   if (!db[unite]) db[unite] = [];
-  db[unite].push(...pairs);
+  const existing = new Set(db[unite].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const newOnes = pairs.filter(v => !existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const dupes = pairs.length - newOnes.length;
+  db[unite].push(...newOnes);
   saveDb();
   document.getElementById('man-text').value = '';
   document.getElementById('man-unite-name').value = '';
-  alert('✓ ' + pairs.length + ' Vokabeln in „' + unite + '" gespeichert!');
+  alert(dupes > 0 ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.` : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`);
 }
 
 function setStatus(html, cls) {
@@ -1323,16 +1341,17 @@ function showCard() {
   document.getElementById('q-ans-lang').textContent = direction==='de-fr'?'Französisch':'Deutsch';
   document.getElementById('q-ans-word').textContent = direction==='de-fr'?card.fr:card.de;
   lastCorrect = false;
-  // reset
   document.getElementById('q-revealed').style.display='none';
   document.getElementById('q-nav-after').style.display='none';
   document.getElementById('q-type-feedback').innerHTML='';
   if (quizMode==='cover') {
+    document.getElementById('q-answer-card').style.display='block';
     document.getElementById('q-cover').style.display='flex';
     document.getElementById('q-type-area').style.display='none';
     document.getElementById('q-nav-cover').style.display='none';
     document.getElementById('q-check-wrap').style.display='none';
   } else {
+    document.getElementById('q-answer-card').style.display='none';
     document.getElementById('q-cover').style.display='none';
     document.getElementById('q-type-area').style.display='block';
     document.getElementById('q-check-wrap').style.display='block';

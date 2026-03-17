@@ -530,7 +530,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v8)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <p>Jule Édition <span style="opacity:0.5;">(v9)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
   </div>
 
   <!-- Tab Bar -->
@@ -939,32 +939,44 @@ async function handleFiles(e) {
 
 function toBase64(file) {
   return new Promise((res, rej) => {
-    // iOS PWA workaround: draw into canvas first, then export
-    // This bypasses iCloud Photo download issues and FileReader blob errors
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      try {
-        // Resize large images to max 1600px to keep API payload small
-        const MAX = 1600;
-        let w = img.naturalWidth, h = img.naturalHeight;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        URL.revokeObjectURL(url);
-        const b64 = dataUrl.split(',')[1];
-        if (!b64) { rej(new Error('Canvas export fehlgeschlagen')); return; }
-        res(b64);
-      } catch(e) { URL.revokeObjectURL(url); rej(e); }
+    // Method 1: fetch + arrayBuffer — most reliable in iOS PWA standalone mode
+    // Works even when createObjectURL and FileReader fail with iCloud Photos
+    const tryFetch = () => {
+      const url = URL.createObjectURL(file);
+      fetch(url)
+        .then(r => r.arrayBuffer())
+        .then(buf => {
+          URL.revokeObjectURL(url);
+          const bytes = new Uint8Array(buf);
+          let binary = '';
+          const chunk = 8192;
+          for (let i = 0; i < bytes.length; i += chunk) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+          }
+          res(btoa(binary));
+        })
+        .catch(() => {
+          URL.revokeObjectURL(url);
+          tryFileReader(); // fallback
+        });
     };
-    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Bild konnte nicht geladen werden')); };
-    img.src = url;
+
+    // Method 2: classic FileReader fallback
+    const tryFileReader = () => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        if (result && result.includes(',')) {
+          res(result.split(',')[1]);
+        } else {
+          rej(new Error('Bild konnte nicht gelesen werden. Bitte "Direkt fotografieren" versuchen.'));
+        }
+      };
+      reader.onerror = () => rej(new Error('Lesefehler. Bitte "Direkt fotografieren" versuchen.'));
+      reader.readAsDataURL(file);
+    };
+
+    tryFetch();
   });
 }
 

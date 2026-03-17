@@ -530,7 +530,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v11)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <p>Jule Édition <span style="opacity:0.5;">(v12)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
   </div>
 
   <!-- Tab Bar -->
@@ -889,7 +889,7 @@ let apiKey = '';
 try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){}
 try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){}
 try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){}
-try { apiKey = localStorage.getItem('vt_apikey') || ''; } catch(e){}
+try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){}
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} }
 
@@ -901,7 +901,8 @@ function saveApiKey() {
   }
   apiKey = val;
   localStorage.setItem('vt_apikey', apiKey);
-  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">✓ Key gespeichert</span>';
+  const preview = val.substring(0, 14) + '...' + val.substring(val.length - 4);
+  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert: ' + preview + '</span>';
   document.getElementById('apikey-input').value = '••••••••••••••••••••';
   document.getElementById('apikey-clear-btn').style.display = 'block';
   renderInstallHint();
@@ -1098,7 +1099,12 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
     }
 
     if (!res.ok) {
-      setStatus('⚠️ API Fehler ' + res.status + ' – bitte nochmal versuchen.', 'error');
+      let errMsg = 'API Fehler ' + res.status;
+      try {
+        const errData = await res.json();
+        if (errData.error && errData.error.message) errMsg += ': ' + errData.error.message;
+      } catch(e) {}
+      setStatus('⚠️ ' + errMsg, 'error');
       return;
     }
 

@@ -458,6 +458,27 @@
     .unite-header .uinfo { font-size: 12px; color: var(--text2); }
     .unite-header .del-btn { background: none; border: none; color: var(--red-text); font-size: 13px; cursor: pointer; }
 
+    /* ── VOCAB HIDE COLUMNS ── */
+    .hide-col-btn {
+      padding: 4px 10px; font-size: 12px; font-weight: 600;
+      border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+      background: var(--bg2); color: var(--text2); cursor: pointer;
+      font-family: inherit; transition: all 0.15s;
+      -webkit-user-select: none; user-select: none;
+    }
+    .hide-col-btn.active { background: var(--accent); color: var(--bg); border-color: transparent; }
+    .vocab-word-hidden {
+      color: transparent !important;
+      background: var(--bg3);
+      border-radius: 4px;
+      cursor: pointer;
+      -webkit-user-select: none; user-select: none;
+      padding: 1px 6px; margin: -1px -6px;
+      display: inline-block; min-width: 60px;
+      transition: color 0.1s, background 0.1s;
+    }
+    .vocab-word-hidden.revealed { color: var(--text) !important; background: var(--blue-bg); }
+
     .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--blue-text); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -536,7 +557,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v16)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <p>Jule Édition <span style="opacity:0.5;">(v17)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
   </div>
 
   <!-- Tab Bar -->
@@ -646,7 +667,13 @@
     <!-- ═══ VOCAB ═══ -->
     <div id="main-vocab" class="screen">
       <div class="card">
-        <h2>Gespeicherte Vokabeln</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin-bottom:0;">Gespeicherte Vokabeln</h2>
+          <div style="display:flex;gap:6px;">
+            <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')" title="Deutsch ausblenden">DE</button>
+            <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')" title="Französisch ausblenden">FR</button>
+          </div>
+        </div>
         <div id="vocab-content"></div>
       </div>
     </div>
@@ -1193,6 +1220,22 @@ function setStatus(html, cls) {
 }
 
 // ─── VOCAB SCREEN ────────────────────────────────────────────────────
+let hideDE = false;
+let hideFR = false;
+
+function toggleHide(col) {
+  if (col === 'de') hideDE = !hideDE;
+  else hideFR = !hideFR;
+  document.getElementById('hide-de-btn').classList.toggle('active', hideDE);
+  document.getElementById('hide-fr-btn').classList.toggle('active', hideFR);
+  renderVocabScreen();
+}
+
+function revealWord(el) {
+  el.classList.add('revealed');
+  setTimeout(() => el.classList.remove('revealed'), 2000);
+}
+
 function renderVocabScreen() {
   const unites = Object.keys(db);
   const el = document.getElementById('vocab-content');
@@ -1207,10 +1250,16 @@ function renderVocabScreen() {
       const isStarred = !!stars[k];
       const errCount = errors[k]||0;
       const autoFlag = errCount >= 2 ? `<span style="font-size:11px;color:var(--red-text);margin-left:4px;">${errCount}✗</span>` : '';
+      const deHtml = hideDE
+        ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.de)}</span>${autoFlag}`
+        : `${esc(v.de)}${autoFlag}`;
+      const frHtml = hideFR
+        ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.fr)}</span>`
+        : esc(v.fr);
       return `<div class="vocab-row">
-        <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})" title="Als schwierig markieren">⭐</button>
-        <span class="de" style="flex:1;">${esc(v.de)}${autoFlag}</span>
-        <span class="fr">${esc(v.fr)}</span>
+        <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
+        <span class="de" style="flex:1;">${deHtml}</span>
+        <span class="fr">${frHtml}</span>
         <button class="del-btn" onclick="delItem('${esc(u)}',${i})">✕</button>
       </div>`;
     }).join('');

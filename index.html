@@ -557,7 +557,10 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v18)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <div style="text-align:right;">
+      <p>Jule Édition <span style="opacity:0.5;">(v19)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p style="margin-top:1px;">by sEpp</p>
+    </div>
   </div>
 
   <!-- Tab Bar -->
@@ -597,6 +600,11 @@
             <div class="toggle-group">
               <button class="toggle-btn active-green" id="mode-cover" onclick="setMode('cover')">Aufdecken</button>
               <button class="toggle-btn" id="mode-type" onclick="setMode('type')">Eintippen</button>
+            </div>
+            <label>Reihenfolge</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')">🔀 Zufällig</button>
+              <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')">↕ Nacheinander</button>
             </div>
             <button class="btn btn-dark" id="start-btn" onclick="startQuiz()">Abfrage starten</button>
           </div>
@@ -1015,6 +1023,7 @@ function getSchwierig() {
 // ─── STATE ───────────────────────────────────────────────────────────
 let direction = 'de-fr';
 let quizMode = 'cover';
+let cardOrder = 'random';
 let selectedUnites = new Set();
 let quizCards = [], qIdx = 0, qScore = 0, qMissed = [], lastCorrect = false;
 let pendingVocab = [], pendingImages = [];
@@ -1401,6 +1410,11 @@ function setMode(m) {
   document.getElementById('mode-cover').className = 'toggle-btn' + (m==='cover'?' active-green':'');
   document.getElementById('mode-type').className = 'toggle-btn' + (m==='type'?' active-green':'');
 }
+function setOrder(o) {
+  cardOrder = o;
+  document.getElementById('order-random').className = 'toggle-btn' + (o==='random'?' active-blue':'');
+  document.getElementById('order-sequential').className = 'toggle-btn' + (o==='sequential'?' active-blue':'');
+}
 
 // ─── QUIZ ────────────────────────────────────────────────────────────
 function startQuiz() {
@@ -1419,7 +1433,8 @@ function startQuiz() {
     alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.');
     return;
   }
-  quizCards = shuffle(all); qIdx=0; qScore=0; qMissed=[];
+  quizCards = cardOrder === 'random' ? shuffle(all) : all;
+  qIdx=0; qScore=0; qMissed=[];
   document.getElementById('learn-setup').style.display='none';
   document.getElementById('learn-results').style.display='none';
   document.getElementById('learn-quiz').style.display='block';

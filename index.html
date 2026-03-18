@@ -557,7 +557,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v17)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <p>Jule Édition <span style="opacity:0.5;">(v18)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
   </div>
 
   <!-- Tab Bar -->
@@ -771,130 +771,162 @@
 
       <div class="card two-col-full">
         <h2>Vokabeltrainer 🇫🇷</h2>
-        <p style="font-size:13px;color:var(--text2);line-height:1.6;">Diese App hilft dir, Französisch-Vokabeln aus deinem Schulbuch <em>À toi! Bayern</em> zu lernen. Du kannst Fotos von Vokabelseiten oder handgeschriebenen Heften hochladen – die KI erkennt die Wörter automatisch.</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;">Dein persönlicher Französisch-Trainer für das Schulbuch <em>À toi! Bayern</em>. Fotos vom Heft oder Schulbuch hochladen – die KI erkennt die Vokabeln automatisch. Dann gezielt üben, einzelne Wörter markieren und den Fortschritt verfolgen.</p>
       </div>
 
       <!-- Schritt 1 -->
       <div class="card">
         <h3>1️⃣ Vokabeln hinzufügen</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Tippe auf <strong>➕ Hinzufügen</strong> und wähle eine der drei Methoden:</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Tab <strong>➕ Hinzufügen</strong> öffnen und Methode wählen:</p>
         <div class="help-row">
           <span class="help-icon">📷</span>
-          <div><strong>Foto / Screenshot</strong><br><span>Mach ein Foto vom Schulbuch oder einen Screenshot von der Schulplattform. Wähle zuerst ob es Druckschrift oder Handschrift ist – dann lädt die KI die Vokabeln automatisch.</span></div>
+          <div><strong>Foto / Screenshot</strong><br><span>Foto vom Schulbuch oder Screenshot von der Schulplattform. Art der Vorlage wählen (Druck oder Handschrift), dann lädt die KI alle Vokabeln automatisch.</span></div>
         </div>
         <div class="help-row">
-          <span class="help-icon">✏️</span>
-          <div><strong>Handschrift / Heft</strong><br><span>Fotografiere dein handgeschriebenes Vokabelheft. Die KI ist speziell auf Schüler-Handschrift eingestellt und erkennt auch Akzente (é, è, ç …).</span></div>
+          <span class="help-icon">📸</span>
+          <div><strong>Direkt fotografieren</strong><br><span>Öffnet sofort die Kamera – ideal für das Vokabelheft. Die KI erkennt auch Handschrift mit Akzenten (é, è, ç, œ …).</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">⌨️</span>
-          <div><strong>Manuell eingeben</strong><br><span>Tippe Vokabeln selbst ein, eine pro Zeile im Format <code>deutsch;französisch</code> – z.B. <code>der Hund;le chien</code></span></div>
+          <div><strong>Manuell</strong><br><span>Eine Vokabel pro Zeile im Format <code>deutsch;französisch</code> – z.B. <code>der Hund;le chien</code></span></div>
         </div>
         <div class="help-hint">
-          💡 Gib immer einen <strong>Unité-Namen</strong> ein (z.B. „Unité 3"), damit du später gezielt einzelne Kapitel abfragen kannst. Du kannst jederzeit weitere Fotos zur selben Unité hinzufügen.
+          💡 Immer einen <strong>Unité-Namen</strong> eingeben (z.B. „Unité 4"). Dieselbe Seite kann mehrfach fotografiert werden – Duplikate werden automatisch erkannt und übersprungen.
         </div>
       </div>
 
       <!-- Schritt 2 -->
       <div class="card">
-        <h3>2️⃣ Vokabeln prüfen &amp; korrigieren</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Nach dem Hochladen siehst du alle erkannten Wörter in einer bearbeitbaren Liste:</p>
+        <h3>2️⃣ Erkannte Vokabeln prüfen</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Nach dem Foto siehst du alle erkannten Wörter – direkt bearbeitbar:</p>
         <div class="help-row">
           <span class="help-icon">✏️</span>
-          <div><strong>Direkt bearbeiten</strong><br><span>Tippe auf ein Wort um es zu korrigieren – z.B. fehlende Akzente ergänzen.</span></div>
+          <div><strong>Korrigieren</strong><br><span>Einfach in ein Feld tippen und den Text anpassen – z.B. fehlende Akzente ergänzen.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">✕</span>
-          <div><strong>Zeile löschen</strong><br><span>Falsch erkannte Zeilen einfach mit ✕ entfernen.</span></div>
+          <div><strong>Löschen</strong><br><span>Falsch erkannte Zeilen mit ✕ entfernen.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">＋</span>
-          <div><strong>Zeile hinzufügen</strong><br><span>Mit „+ Zeile" kannst du fehlende Vokabeln manuell ergänzen.</span></div>
+          <div><strong>Ergänzen</strong><br><span>Mit „+ Zeile" fehlende Vokabeln manuell hinzufügen.</span></div>
         </div>
         <div class="help-hint">
-          💡 Dann auf <strong>Speichern</strong> – die Vokabeln werden dauerhaft auf deinem Gerät gespeichert.
+          💡 Dann <strong>Speichern</strong> – die Vokabeln werden dauerhaft auf diesem Gerät gespeichert.
         </div>
       </div>
 
       <!-- Schritt 3 -->
       <div class="card">
         <h3>3️⃣ Abfragen</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Tippe auf <strong>📚 Lernen</strong> und stelle deine Abfrage zusammen:</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Tab <strong>📚 Lernen</strong> öffnen und Abfrage zusammenstellen:</p>
         <div class="help-row">
           <span class="help-icon">☑️</span>
-          <div><strong>Unités auswählen</strong><br><span>Tippe auf eine oder mehrere Unités. Mit „Alle" / „Keine" kannst du schnell alles an- oder abwählen.</span></div>
+          <div><strong>Unités wählen</strong><br><span>Einzelne Unités antippen um sie an- oder abzuwählen. Mit <strong>Alle / Keine</strong> schnell alles umschalten. Mehrere Unités gleichzeitig möglich.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">🔄</span>
-          <div><strong>Richtung wählen</strong><br><span><strong>Deutsch → Französisch</strong> oder <strong>Französisch → Deutsch</strong>.</span></div>
+          <div><strong>Richtung</strong><br><span><strong>Deutsch → Französisch</strong> oder <strong>Französisch → Deutsch</strong>.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">🃏</span>
-          <div><strong>Aufdecken</strong><br><span>Die Antwort ist abgedeckt – antippen zum Aufdecken, dann selbst beurteilen ob richtig oder falsch.</span></div>
+          <div><strong>Aufdecken</strong><br><span>Das abzufragende Wort steht oben, die Antwort ist verdeckt. Antippen zum Aufdecken, dann selbst beurteilen: ✗ Falsch oder ✓ Richtig.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">⌨️</span>
-          <div><strong>Eintippen</strong><br><span>Schreibe die Übersetzung selbst ein und tippe auf „Überprüfen". Die App akzeptiert auch Varianten (z.B. <em>beau / belle</em>).</span></div>
+          <div><strong>Eintippen</strong><br><span>Übersetzung selbst eintippen und auf „Überprüfen" tippen. Varianten wie <em>beau / belle</em> werden akzeptiert.</span></div>
+        </div>
+        <div class="help-hint">
+          💡 Nach dem Ergebnis kann man direkt nur die falsch beantworteten Wörter nochmal wiederholen.
         </div>
       </div>
 
       <!-- Schritt 4 -->
       <div class="card">
         <h3>4️⃣ Schwierige Wörter ⭐</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Die App merkt sich automatisch, welche Wörter dir schwer fallen:</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Die App merkt sich automatisch welche Wörter schwer fallen:</p>
         <div class="help-row">
           <span class="help-icon">🔴</span>
-          <div><strong>Automatisch</strong><br><span>Jedes Wort das du <strong>2× oder öfter falsch</strong> beantwortest, landet automatisch in der Liste „⭐ Schwierige Wörter".</span></div>
+          <div><strong>Automatisch</strong><br><span>Wörter die <strong>2× oder öfter falsch</strong> beantwortet werden, erscheinen mit einem roten Zähler (z.B. <span style="color:var(--red-text);">2✗</span>) im Vokabeln-Tab.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">⭐</span>
-          <div><strong>Manuell markieren</strong><br><span>Im Tab <strong>📋 Vokabeln</strong> kannst du neben jedem Wort auf ⭐ tippen um es manuell zu markieren – z.B. vor einer Schulaufgabe.</span></div>
+          <div><strong>Manuell markieren</strong><br><span>Im Tab <strong>📋 Vokabeln</strong> den ⭐-Button neben einem Wort antippen – z.B. gezielt vor einer Schulaufgabe.</span></div>
         </div>
         <div class="help-row">
           <span class="help-icon">🎯</span>
-          <div><strong>Nur Schwierige abfragen</strong><br><span>Im Lernen-Tab erscheint die goldene Kachel „⭐ Schwierige Wörter" – einfach antippen und gezielt üben.</span></div>
+          <div><strong>Nur Schwierige üben</strong><br><span>Im Lernen-Tab erscheint die goldene Kachel <strong>⭐ Schwierige Wörter</strong> – antippen und gezielt üben. Kombinierbar mit einzelnen Unités.</span></div>
         </div>
         <div class="help-hint">
-          💡 Im Tab <strong>📋 Vokabeln</strong> siehst du bei jedem Wort auch den Fehlerzähler (z.B. <span style="color:var(--red-text);">2✗</span>). Du kannst ⭐ wieder entfernen sobald du das Wort sicher kannst.
+          💡 ⭐ lässt sich wieder entfernen sobald du das Wort sicher kannst.
+        </div>
+      </div>
+
+      <!-- Schritt 5 -->
+      <div class="card">
+        <h3>5️⃣ Vokabeln ausblenden</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Im Tab <strong>📋 Vokabeln</strong> gibt es oben rechts zwei Buttons:</p>
+        <div class="help-row">
+          <span class="help-icon">DE</span>
+          <div><strong>Deutsch ausblenden</strong><br><span>Alle deutschen Wörter werden unsichtbar – nur die französische Seite ist sichtbar. Ideal zum stillen Vokabeln-Durchgehen.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">FR</span>
+          <div><strong>Französisch ausblenden</strong><br><span>Alle französischen Wörter werden ausgeblendet – nur Deutsch ist sichtbar.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">👆</span>
+          <div><strong>Wort einblenden</strong><br><span>Auf ein ausgeblendetes Wort tippen – es erscheint für <strong>2 Sekunden</strong> blau hinterlegt, dann verschwindet es wieder.</span></div>
+        </div>
+        <div class="help-hint">
+          💡 Beide Buttons gleichzeitig aktiv → alles ausgeblendet, einzeln aufdecken.
         </div>
       </div>
 
       <!-- Speicherung -->
       <div class="card">
-        <h3>💾 Wo werden die Daten gespeichert?</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;">Die Vokabeln werden <strong>lokal auf deinem Gerät</strong> gespeichert (im Browser-Speicher von Safari). Das bedeutet:</p>
-        <div class="help-row"><span class="help-icon">✅</span><div>Funktioniert komplett offline</div></div>
-        <div class="help-row"><span class="help-icon">✅</span><div>Bleibt dauerhaft gespeichert</div></div>
-        <div class="help-row"><span class="help-icon">⚠️</span><div>Nur auf <strong>diesem Gerät</strong> – kein automatischer Sync zwischen iPhone und iPad</div></div>
-        <div class="help-row"><span class="help-icon">⚠️</span><div>Geht verloren wenn du in Safari unter <em>Einstellungen → Safari → Verlauf löschen</em> auch die Website-Daten löschst</div></div>
+        <h3>💾 Datenspeicherung</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px;">Alle Vokabeln werden <strong>lokal auf diesem Gerät</strong> gespeichert:</p>
+        <div class="help-row"><span class="help-icon">✅</span><div>Funktioniert offline</div></div>
+        <div class="help-row"><span class="help-icon">✅</span><div>Bleibt nach App-Neustart erhalten</div></div>
+        <div class="help-row"><span class="help-icon">⚠️</span><div>Nur auf <strong>diesem Gerät</strong> – kein Sync zwischen iPhone und iPad</div></div>
+        <div class="help-row"><span class="help-icon">⚠️</span><div>Geht verloren wenn Safari-Daten gelöscht werden (<em>Einstellungen → Safari → Verlauf löschen</em>)</div></div>
         <div class="help-hint">
-          💡 <strong>Tipp:</strong> Installiere die App auf dem Home-Bildschirm (siehe unten) – dann ist der Speicher vom normalen Safari-Cache getrennt und sicherer.
+          💡 App auf dem Home-Bildschirm installieren (siehe unten) – dann ist der Speicher vom Safari-Cache getrennt und sicherer.
         </div>
       </div>
 
       <!-- Installieren -->
       <div class="card">
-        <h3>📲 App auf dem iPhone installieren</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">So installierst du die App als Icon auf dem Home-Bildschirm:</p>
-        <div class="help-step"><span class="step-num">1</span><span>Öffne die App-URL in <strong>Safari</strong> (nicht Chrome!)</span></div>
-        <div class="help-step"><span class="step-num">2</span><span>Tippe unten auf das <strong>Teilen-Symbol</strong> (Quadrat mit Pfeil nach oben □↑)</span></div>
-        <div class="help-step"><span class="step-num">3</span><span>Scrolle und tippe auf <strong>„Zum Home-Bildschirm"</strong></span></div>
-        <div class="help-step"><span class="step-num">4</span><span>Namen bestätigen und auf <strong>„Hinzufügen"</strong> tippen</span></div>
+        <h3>📲 App installieren</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Als Icon auf dem Home-Bildschirm installieren:</p>
+        <div class="help-step"><span class="step-num">1</span><span>App-URL in <strong>Safari</strong> öffnen (nicht Chrome!)</span></div>
+        <div class="help-step"><span class="step-num">2</span><span>Unten auf das <strong>Teilen-Symbol</strong> tippen (□↑)</span></div>
+        <div class="help-step"><span class="step-num">3</span><span><strong>„Zum Home-Bildschirm"</strong> antippen</span></div>
+        <div class="help-step"><span class="step-num">4</span><span>Namen bestätigen → <strong>„Hinzufügen"</strong></span></div>
         <div class="help-hint" style="margin-top:10px;">
-          ✅ Die App läuft danach wie eine normale App – ohne Browser-Leiste, offline-fähig, mit eigenem Icon.
+          ✅ Läuft danach wie eine normale App – ohne Browser-Leiste, offline-fähig.
         </div>
+      </div>
+
+      <!-- Update -->
+      <div class="card">
+        <h3>🔄 App aktualisieren</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px;">Die Versionsnummer steht oben rechts neben „Jule Édition". So aktualisieren:</p>
+        <div class="help-row"><span class="help-icon">↺</span><div>Das <strong>↺-Symbol</strong> neben der Versionsnummer antippen – löscht den Cache und lädt die neueste Version.</div></div>
+        <div class="help-hint">💡 Deine Vokabeln bleiben beim Update erhalten.</div>
       </div>
 
       <!-- API Key Einrichtung -->
       <div class="card two-col-full" id="apikey-section">
         <h3>🔑 API-Key einrichten</h3>
         <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
-          Für die Foto-Erkennung (OCR) wird ein Anthropic API-Key benötigt. Der Key wird <strong>nur auf deinem Gerät</strong> gespeichert und nirgendwo hochgeladen.
+          Für die automatische Foto-Erkennung (OCR) wird ein Anthropic API-Key benötigt. Der Key wird <strong>nur lokal auf diesem Gerät</strong> gespeichert – nirgendwo hochgeladen. Jedes Gerät (iPhone, iPad) braucht den Key einmalig.
         </p>
-        <div class="help-step"><span class="step-num">1</span><span>Geh auf <strong>console.anthropic.com</strong> und registriere dich</span></div>
-        <div class="help-step"><span class="step-num">2</span><span>Unter <strong>Billing</strong> mindestens $5 Guthaben aufladen</span></div>
+        <div class="help-step"><span class="step-num">1</span><span>Auf <strong>console.anthropic.com</strong> registrieren</span></div>
+        <div class="help-step"><span class="step-num">2</span><span>Unter <strong>Billing</strong> mindestens $5 Guthaben aufladen (~300–500 Fotos)</span></div>
         <div class="help-step"><span class="step-num">3</span><span>Unter <strong>API Keys</strong> → „Create Key" → Key kopieren (<code>sk-ant-...</code>)</span></div>
-        <div class="help-step" style="border:none;"><span class="step-num">4</span><span>Key hier einfügen und speichern:</span></div>
+        <div class="help-step" style="border:none;"><span class="step-num">4</span><span>Key unten einfügen und speichern:</span></div>
         <div style="margin-top:12px;">
           <div style="position:relative;">
             <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." style="padding-right:44px;" />
@@ -905,7 +937,7 @@
           <button class="btn btn-secondary" id="apikey-clear-btn" onclick="clearApiKey()" style="display:none;">Key löschen</button>
         </div>
         <div class="help-hint" style="margin-top:12px;">
-          💡 Kosten: ca. 1–2 Cent pro Foto. $5 Guthaben reicht für ca. 300–500 Fotos.
+          💡 Kosten: ca. 1–2 Cent pro Foto.
         </div>
       </div>
 

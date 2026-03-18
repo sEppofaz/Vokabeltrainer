@@ -536,7 +536,7 @@
   <!-- Header -->
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
-    <p>Jule Édition <span style="opacity:0.5;">(v15)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+    <p>Jule Édition <span style="opacity:0.5;">(v16)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
   </div>
 
   <!-- Tab Bar -->
@@ -1240,6 +1240,8 @@ function delItem(unite, i) { db[unite].splice(i,1); if(!db[unite].length) delete
 function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); }
 
 // ─── LEARN SETUP ─────────────────────────────────────────────────────
+let selectionInitialized = false;
+
 function renderLearnSetup() {
   const unites = Object.keys(db);
   const listEl = document.getElementById('unite-select-list');
@@ -1260,22 +1262,33 @@ function renderLearnSetup() {
     </div>`;
   } else {
     schwEl.innerHTML = '';
+    selectedUnites.delete('__schwierig__');
   }
 
   if (!unites.length && !schwList.length) {
-    listEl.innerHTML = ''; emptyEl.style.display='block'; optEl.style.display='none'; return;
+    listEl.innerHTML = ''; emptyEl.style.display='block'; optEl.style.display='none';
+    selectionInitialized = false; return;
   }
   emptyEl.style.display = 'none';
   optEl.style.display = 'block';
-  if (selectedUnites.size===0) unites.forEach(u => selectedUnites.add(u));
 
-  const selCount = [...selectedUnites].filter(u=>u!=='__schwierig__'&&db[u]).reduce((s,u)=>s+(db[u].length),0);
+  // Only auto-select all on very first load, never after user interaction
+  if (!selectionInitialized) {
+    unites.forEach(u => selectedUnites.add(u));
+    selectionInitialized = true;
+  }
+
+  // Remove selected unites that no longer exist in db
+  [...selectedUnites].forEach(u => { if (u !== '__schwierig__' && !db[u]) selectedUnites.delete(u); });
+
+  const selNormalCount = [...selectedUnites].filter(u => u!=='__schwierig__' && db[u]).length;
+  const selWordCount = [...selectedUnites].filter(u=>u!=='__schwierig__'&&db[u]).reduce((s,u)=>s+(db[u].length),0);
   const selSchCount = selectedUnites.has('__schwierig__') ? schwList.length : 0;
-  const totalSel = selCount + selSchCount;
+  const totalSelWords = selWordCount + selSchCount;
 
   listEl.innerHTML = (unites.length ? `
     <div class="unite-select-header">
-      <span>${[...selectedUnites].filter(u=>u!=='__schwierig__'&&db[u]).length} von ${unites.length} Unités · ${totalSel} Wörter</span>
+      <span>${selNormalCount} von ${unites.length} · ${totalSelWords} Wörter</span>
       <div>
         <button class="link-btn" onclick="selectAll()">Alle</button>
         <button class="link-btn" onclick="selectNone()">Keine</button>
@@ -1295,7 +1308,6 @@ function renderLearnSetup() {
 
 function selectAll() { Object.keys(db).forEach(u=>selectedUnites.add(u)); renderLearnSetup(); }
 function selectNone() { selectedUnites.clear(); renderLearnSetup(); }
-
 function toggleUnite(u) { selectedUnites.has(u)?selectedUnites.delete(u):selectedUnites.add(u); renderLearnSetup(); }
 
 function setDir(d) {
@@ -1322,7 +1334,10 @@ function startQuiz() {
   // deduplicate by key
   const seen = new Set();
   all = all.filter(v => { if(seen.has(v.key)) return false; seen.add(v.key); return true; });
-  if (!all.length) return;
+  if (!all.length) {
+    alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.');
+    return;
+  }
   quizCards = shuffle(all); qIdx=0; qScore=0; qMissed=[];
   document.getElementById('learn-setup').style.display='none';
   document.getElementById('learn-results').style.display='none';

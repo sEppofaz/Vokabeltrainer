@@ -558,7 +558,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v21)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v22)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp <span id="dbx-status-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'})"></span></p>
     </div>
   </div>
@@ -934,8 +934,9 @@
         <div class="help-step"><span class="step-num">1</span><span>Auf <strong>dropbox.com/developers/apps</strong> einloggen</span></div>
         <div class="help-step"><span class="step-num">2</span><span>„Create app" → <strong>Scoped access</strong> → <strong>App folder</strong> → Name z.B. „VokabeltrainerJule"</span></div>
         <div class="help-step"><span class="step-num">3</span><span>Unter <strong>Permissions</strong>: <code>files.content.write</code> und <code>files.content.read</code> aktivieren → Submit</span></div>
-        <div class="help-step"><span class="step-num">4</span><span>Unter <strong>Settings</strong> → <strong>App key</strong> kopieren</span></div>
-        <div class="help-step" style="border:none;"><span class="step-num">5</span><span>App-Key unten eingeben und Dropbox verbinden:</span></div>
+        <div class="help-step"><span class="step-num">4</span><span>Unter <strong>Settings</strong> → <strong>Redirect URIs</strong>: GitHub-URL eintragen (z.B. <code>https://seppofaz.github.io/vokabeltrainer/</code>) → Add</span></div>
+        <div class="help-step"><span class="step-num">5</span><span>Unter <strong>Settings</strong> → <strong>Allow implicit grant</strong> → <strong>Allow</strong> wählen → Submit</span></div>
+        <div class="help-step" style="border:none;"><span class="step-num">6</span><span><strong>App key</strong> kopieren und unten eingeben:</span></div>
         <div style="margin-top:12px;">
           <input type="text" id="dbx-appkey-input" placeholder="App-Key (z.B. abc123xyz)" style="margin-bottom:8px;" />
           <div id="dbx-appkey-status" style="font-size:13px;margin-bottom:8px;min-height:18px;"></div>
@@ -1080,12 +1081,15 @@ function dbxConnect() {
   if (!key) { document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ App-Key eingeben</span>'; return; }
   dbxAppKey = key;
   localStorage.setItem('vt_dbx_appkey', key);
-  // PKCE flow
   const verifier = generateVerifier();
   localStorage.setItem('vt_dbx_verifier', verifier);
   generateChallenge(verifier).then(challenge => {
-    const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-    const url = `https://www.dropbox.com/oauth2/authorize?client_id=${key}&response_type=code&redirect_uri=${redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&token_access_type=offline`;
+    const redirectUri = window.location.origin + window.location.pathname;
+    const url = 'https://www.dropbox.com/oauth2/authorize' +
+      '?client_id=' + key +
+      '&response_type=token' +
+      '&redirect_uri=' + encodeURIComponent(redirectUri) +
+      '&token_access_type=legacy';
     window.location.href = url;
   });
 }
@@ -1102,44 +1106,25 @@ async function generateChallenge(verifier) {
   return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 }
 
-async function dbxExchangeCode(code) {
-  const verifier = localStorage.getItem('vt_dbx_verifier');
-  const redirectUri = window.location.origin + window.location.pathname;
-  const res = await fetch('https://api.dropboxapi.com/oauth2/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code, grant_type: 'authorization_code',
-      client_id: dbxAppKey,
-      redirect_uri: redirectUri,
-      code_verifier: verifier
-    })
-  });
-  if (!res.ok) throw new Error('Token exchange failed: ' + res.status);
-  const data = await res.json();
-  return data.access_token;
-}
-
 async function dbxHandleOAuthCallback() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (!code) return;
-  // Clean URL immediately
-  window.history.replaceState({}, '', window.location.pathname);
-  try {
-    dbxSetStatus('↓', 'syncing');
-    const token = await dbxExchangeCode(code);
-    dbxToken = token;
-    localStorage.setItem('vt_dbx_token', token);
-    localStorage.removeItem('vt_dbx_verifier');
-    initDropboxUI();
-    const loaded = await dbxDownload();
-    if (loaded) { renderLearnSetup(); renderVocabScreen(); }
-    dbxSetStatus('☁️', 'ok');
-  } catch(e) {
-    dbxSetStatus('⚠️', 'error');
-    console.error('Dropbox auth error:', e);
+  // Handle token in URL hash (implicit flow)
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token=')) {
+    const params = new URLSearchParams(hash.replace('#',''));
+    const token = params.get('access_token');
+    if (token) {
+      dbxToken = token;
+      localStorage.setItem('vt_dbx_token', token);
+      window.history.replaceState({}, '', window.location.pathname);
+      return true;
+    }
   }
+  // Handle error
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('error')) {
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  return false;
 }
 
 function dbxDisconnect() {
@@ -1765,13 +1750,15 @@ if ('serviceWorker' in navigator) {
 
 // Init
 (async () => {
-  await dbxHandleOAuthCallback(); // async PKCE token exchange
+  try { await dbxHandleOAuthCallback(); } catch(e) { console.error('Dropbox OAuth:', e); }
   renderLearnSetup();
   initApiKeyUI();
   initDropboxUI();
   if (dbxToken) {
-    const loaded = await dbxDownload();
-    if (loaded) { renderLearnSetup(); renderVocabScreen(); }
+    try {
+      const loaded = await dbxDownload();
+      if (loaded) { renderLearnSetup(); renderVocabScreen(); }
+    } catch(e) { console.error('Dropbox load:', e); }
   }
 })();
 </script>

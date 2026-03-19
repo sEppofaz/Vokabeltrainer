@@ -558,7 +558,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v22)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v23)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp <span id="dbx-status-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'})"></span></p>
     </div>
   </div>
@@ -1748,19 +1748,21 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
-// Init
-(async () => {
-  try { await dbxHandleOAuthCallback(); } catch(e) { console.error('Dropbox OAuth:', e); }
-  renderLearnSetup();
-  initApiKeyUI();
-  initDropboxUI();
-  if (dbxToken) {
-    try {
+// Init — synchronous, never blocks
+renderLearnSetup();
+initApiKeyUI();
+initDropboxUI();
+// Dropbox: handle OAuth callback + load, fully in background
+setTimeout(async () => {
+  try {
+    const wasCallback = await dbxHandleOAuthCallback();
+    if (wasCallback || dbxToken) {
+      initDropboxUI();
       const loaded = await dbxDownload();
       if (loaded) { renderLearnSetup(); renderVocabScreen(); }
-    } catch(e) { console.error('Dropbox load:', e); }
-  }
-})();
+    }
+  } catch(e) { console.error('Dropbox:', e); }
+}, 0);
 </script>
 </body>
 </html>

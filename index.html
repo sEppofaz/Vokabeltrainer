@@ -558,7 +558,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v25)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v28)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp <span id="dbx-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');setTimeout(()=>document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'}),100)"></span></p>
     </div>
   </div>
@@ -606,6 +606,11 @@
               <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')">🔀 Zufällig</button>
               <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')">↕ Nacheinander</button>
             </div>
+            <label>Filter</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active-blue" id="filter-all" onclick="setFilter('all')">Alle</button>
+              <button class="toggle-btn" id="filter-new" onclick="setFilter('new')">🆕 Nur neue</button>
+            </div>
             <button class="btn btn-dark" id="start-btn" onclick="startQuiz()">Abfrage starten</button>
           </div>
         </div>
@@ -623,14 +628,20 @@
 
         <div class="q-card" id="q-card">
           <div class="q-lang" id="q-ask-lang">Deutsch</div>
-          <div class="q-word" id="q-ask-word">–</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+            <div class="q-word" id="q-ask-word">–</div>
+            <button id="q-speak-ask" onclick="speak('ask')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.5;padding:4px;" title="Vorlesen">🔊</button>
+          </div>
         </div>
 
         <div class="q-answer-card" id="q-answer-card">
           <div class="q-cover" id="q-cover" onclick="reveal()"><span>Antippen zum Aufdecken</span></div>
           <div id="q-revealed" style="display:none;">
             <div class="q-lang" id="q-ans-lang">Französisch</div>
-            <div class="q-word" id="q-ans-word"></div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:20px 16px;">
+              <div class="q-word" id="q-ans-word"></div>
+              <button id="q-speak-ans" onclick="speak('ans')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.5;padding:4px;" title="Vorlesen">🔊</button>
+            </div>
           </div>
         </div>
 
@@ -1320,10 +1331,17 @@ function renderVocabScreen() {
       const frHtml = hideFR
         ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.fr)}</span>`
         : esc(v.fr);
+      // Move-to select (other unites only)
+      const otherUnites = unites.filter(x => x !== u);
+      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px 4px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:80px;">
+        <option value="">↗</option>
+        ${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
+      </select>` : '';
       return `<div class="vocab-row">
         <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
         <span class="de" style="flex:1;">${deHtml}</span>
-        <span class="fr">${frHtml}</span>
+        <span class="fr" style="flex:1;">${frHtml}</span>
+        ${moveSelect}
         <button class="del-btn" onclick="delItem('${esc(u)}',${i})">✕</button>
       </div>`;
     }).join('');
@@ -1335,7 +1353,9 @@ function renderVocabScreen() {
     ].filter(Boolean).join(' ');
     return `<div class="unite-section">
       <div class="unite-header">
-        <span class="utitle">${esc(u)} <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span></span>
+        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;" title="Antippen zum Umbenennen">
+          ${esc(u)} ✏️ <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span>
+        </span>
         <button class="del-btn" onclick="delUnite('${esc(u)}')">Löschen</button>
       </div>
       <div class="vocab-scroll">${rows}</div>
@@ -1350,7 +1370,70 @@ function toggleStar(unite, idx) {
 }
 
 function delItem(unite, i) { db[unite].splice(i,1); if(!db[unite].length) delete db[unite]; saveDb(); renderVocabScreen(); }
-function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); }
+function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); renderLearnSetup(); }
+
+// ─── RENAME UNITE ────────────────────────────────────────────────────
+function renameUnite(oldName) {
+  const newName = prompt('Neuer Name für „' + oldName + '":', oldName);
+  if (!newName || newName.trim() === oldName) return;
+  const n = newName.trim();
+  if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
+  db[n] = db[oldName];
+  delete db[oldName];
+  // update stars/errors keys
+  const newStars = {}, newErrors = {};
+  Object.keys(stars).forEach(k => {
+    newStars[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = stars[k];
+  });
+  Object.keys(errors).forEach(k => {
+    newErrors[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = errors[k];
+  });
+  stars = newStars; errors = newErrors;
+  saveDb(); saveStars();
+  renderVocabScreen(); renderLearnSetup();
+}
+
+// ─── MOVE VOCAB ──────────────────────────────────────────────────────
+function moveVocab(fromUnite, idx, toUnite) {
+  if (!toUnite || !db[fromUnite] || !db[fromUnite][idx]) return;
+  const vocab = db[fromUnite][idx];
+  if (!db[toUnite]) db[toUnite] = [];
+  // check dupe in target
+  const exists = db[toUnite].some(v => v.de.trim().toLowerCase()===vocab.de.trim().toLowerCase() && v.fr.trim().toLowerCase()===vocab.fr.trim().toLowerCase());
+  if (!exists) db[toUnite].push(vocab);
+  db[fromUnite].splice(idx, 1);
+  if (!db[fromUnite].length) delete db[fromUnite];
+  saveDb(); renderVocabScreen(); renderLearnSetup();
+}
+
+// ─── TEXT TO SPEECH ──────────────────────────────────────────────────
+let currentCard = null;
+function speak(which) {
+  if (!currentCard) return;
+  const isAskFR = (which === 'ask' && direction === 'fr-de') || (which === 'ans' && direction === 'de-fr');
+  const text = which === 'ask'
+    ? (direction === 'de-fr' ? currentCard.de : currentCard.fr)
+    : (direction === 'de-fr' ? currentCard.fr : currentCard.de);
+  const lang = isAskFR ? 'fr-FR' : 'de-DE';
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = lang;
+  utt.rate = 0.9;
+  // Try to find a matching voice
+  const voices = window.speechSynthesis.getVoices();
+  const match = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+  if (match) utt.voice = match;
+  window.speechSynthesis.speak(utt);
+}
+
+// ─── FILTER ──────────────────────────────────────────────────────────
+let cardFilter = 'all';
+function setFilter(f) {
+  cardFilter = f;
+  document.getElementById('filter-all').className = 'toggle-btn' + (f==='all' ? ' active-blue' : '');
+  document.getElementById('filter-new').className = 'toggle-btn' + (f==='new' ? ' active-blue' : '');
+}
 
 // ─── LEARN SETUP ─────────────────────────────────────────────────────
 let selectionInitialized = false;
@@ -1452,6 +1535,15 @@ function startQuiz() {
   // deduplicate by key
   const seen = new Set();
   all = all.filter(v => { if(seen.has(v.key)) return false; seen.add(v.key); return true; });
+  // apply filter
+  if (cardFilter === 'new') {
+    const filtered = all.filter(v => !v.key || ((errors[v.key]||0) === 0 && !stars[v.key]));
+    if (filtered.length === 0) {
+      alert('Keine neuen Wörter gefunden – alle wurden schon mindestens einmal beantwortet.');
+      return;
+    }
+    all = filtered;
+  }
   if (!all.length) {
     alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.');
     return;
@@ -1466,6 +1558,7 @@ function startQuiz() {
 
 function showCard() {
   const card = quizCards[qIdx];
+  currentCard = card;
   const total = quizCards.length;
   document.getElementById('q-progress').textContent = (qIdx+1)+' / '+total;
   document.getElementById('q-score-live').textContent = qScore+' richtig';
@@ -1627,7 +1720,7 @@ function dbxConnect() {
   if (!key) { dbxSetMsg('<span style="color:var(--red-text)">⚠️ App-Key eingeben</span>'); return; }
   dbxAppKey = key;
   try { localStorage.setItem('vt_dbx_appkey', key); } catch(e){}
-  const redirectUri = window.location.origin + window.location.pathname;
+  const redirectUri = (window.location.origin + window.location.pathname).replace('index.html', '');
   // Show exact URI being used so user can verify it matches Dropbox settings
   dbxSetMsg('<span style="color:var(--text2);font-size:12px;">Redirect URI: <code>' + redirectUri + '</code></span>');
   setTimeout(() => {
@@ -1675,15 +1768,44 @@ async function dbxLoad() {
         'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json' })
       }
     });
-    if (res.status === 409) { dbxSetIcon('☁️', 'var(--green-text)'); return; } // no file yet
+    if (res.status === 409) { dbxSetIcon('☁️', 'var(--green-text)'); return; } // no file yet → upload local
     if (res.status === 401) { dbxToken = ''; try{localStorage.removeItem('vt_dbx_token');}catch(e){} dbxSetIcon('⚠️','var(--red-text)'); dbxInitUI(); return; }
     if (!res.ok) { dbxSetIcon('⚠️', 'var(--red-text)'); return; }
-    const data = await res.json();
+    const remote = await res.json();
+
+    // ── MERGE ──────────────────────────────────────────────────────────
+    // db: merge remote into local — add missing unités and missing vocab pairs
     let changed = false;
-    if (data.db) { db = data.db; try{localStorage.setItem('vt_db', JSON.stringify(db));}catch(e){} changed = true; }
-    if (data.stars) { stars = data.stars; try{localStorage.setItem('vt_stars', JSON.stringify(stars));}catch(e){} }
-    if (data.errors) { errors = data.errors; try{localStorage.setItem('vt_errors', JSON.stringify(errors));}catch(e){} }
-    if (changed) { renderLearnSetup(); renderVocabScreen(); }
+    if (remote.db) {
+      Object.keys(remote.db).forEach(u => {
+        if (!db[u]) { db[u] = []; }
+        const existingSet = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+        remote.db[u].forEach(v => {
+          const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase();
+          if (!existingSet.has(k)) { db[u].push(v); existingSet.add(k); changed = true; }
+        });
+      });
+    }
+    // stars: merge (union — keep all stars from both)
+    if (remote.stars) {
+      Object.keys(remote.stars).forEach(k => { if (!stars[k]) { stars[k] = true; changed = true; } });
+    }
+    // errors: merge (take higher error count)
+    if (remote.errors) {
+      Object.keys(remote.errors).forEach(k => {
+        if ((remote.errors[k]||0) > (errors[k]||0)) { errors[k] = remote.errors[k]; changed = true; }
+      });
+    }
+    // ── END MERGE ──────────────────────────────────────────────────────
+
+    if (changed) {
+      try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){}
+      try { localStorage.setItem('vt_stars', JSON.stringify(stars)); } catch(e){}
+      try { localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){}
+      renderLearnSetup(); renderVocabScreen();
+      // upload merged result back to Dropbox
+      setTimeout(dbxUpload, 500);
+    }
     dbxSetIcon('☁️', 'var(--green-text)');
   } catch(e) { dbxSetIcon('⚠️', 'var(--red-text)'); }
 }

@@ -558,12 +558,8 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v29)</span></p>
-      <p style="margin-top:2px; display:flex; align-items:center; justify-content:flex-end; gap:8px;">
-        <span style="font-size:12px;color:var(--text2);">by sEpp</span>
-        <button onclick="dbxManualSync()" id="dbx-icon" style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px 4px;" title="Dropbox sync"></button>
-        <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:12px;color:var(--blue-text);cursor:pointer;padding:2px 6px;">↺ Update</button>
-      </p>
+      <p>Jule Édition <span style="opacity:0.5;">(v30)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
 
@@ -634,7 +630,7 @@
           <div class="q-lang" id="q-ask-lang">Deutsch</div>
           <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
             <div class="q-word" id="q-ask-word">–</div>
-            <button id="q-speak-ask" onclick="speak('ask')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.5;padding:4px;" title="Vorlesen">🔊</button>
+            <button onclick="speak('ask')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.4;padding:4px;">🔊</button>
           </div>
         </div>
 
@@ -644,7 +640,7 @@
             <div class="q-lang" id="q-ans-lang">Französisch</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:20px 16px;">
               <div class="q-word" id="q-ans-word"></div>
-              <button id="q-speak-ans" onclick="speak('ans')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.5;padding:4px;" title="Vorlesen">🔊</button>
+              <button onclick="speak('ans')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.4;padding:4px;">🔊</button>
             </div>
           </div>
         </div>
@@ -692,9 +688,11 @@
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h2 style="margin-bottom:0;">Gespeicherte Vokabeln</h2>
-          <div style="display:flex;gap:6px;">
-            <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')" title="Deutsch ausblenden">DE</button>
-            <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')" title="Französisch ausblenden">FR</button>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')">DE</button>
+            <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')">FR</button>
+            <button class="hide-col-btn" onclick="exportData()" title="Exportieren">⬆️</button>
+            <label class="hide-col-btn" style="cursor:pointer;" title="Importieren">⬇️<input type="file" accept=".json" onchange="importData(event)" style="display:none;"></label>
           </div>
         </div>
         <div id="vocab-content"></div>
@@ -941,29 +939,6 @@
       </div>
 
       <!-- API Key Einrichtung -->
-      <!-- Dropbox Sync -->
-      <div class="card two-col-full" id="dropbox-section">
-        <h3>☁️ Dropbox Sync</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">Vokabeln geräteübergreifend synchronisieren – automatisch bei jeder Änderung.</p>
-        <div class="help-step"><span class="step-num">1</span><span><strong>dropbox.com/developers/apps</strong> → „Create app" → Scoped access → App folder → Name z.B. „VokabeltrainerJule"</span></div>
-        <div class="help-step"><span class="step-num">2</span><span>Tab <strong>Permissions</strong>: <code>files.content.read</code> + <code>files.content.write</code> aktivieren → Submit</span></div>
-        <div class="help-step"><span class="step-num">3</span><span>Tab <strong>Settings</strong> → <strong>Redirect URIs</strong>: <code>https://seppofaz.github.io/vokabeltrainer/</code> → Add → Submit</span></div>
-        <div class="help-step"><span class="step-num">4</span><span>Tab <strong>Settings</strong> → <strong>Allow implicit grant / Legacy</strong> → <strong>Allow</strong> → Submit</span></div>
-        <div class="help-step" style="border:none;"><span class="step-num">5</span><span><strong>App key</strong> kopieren und unten eingeben:</span></div>
-        <div style="margin-top:12px;">
-          <input type="text" id="dbx-appkey-input" placeholder="App-Key (z.B. abc123xyz)" style="margin-bottom:8px;" />
-          <div id="dbx-status-msg" style="font-size:13px;min-height:20px;margin-bottom:8px;"></div>
-          <div id="dbx-connect-wrap">
-            <button class="btn btn-dark" onclick="dbxConnect()">Mit Dropbox verbinden</button>
-          </div>
-          <div id="dbx-connected-wrap" style="display:none;">
-            <div style="padding:10px 12px;background:var(--green-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--green-text);margin-bottom:8px;">✅ Dropbox verbunden – Sync aktiv</div>
-            <button class="btn btn-secondary" onclick="dbxDisconnect()">Dropbox trennen</button>
-          </div>
-        </div>
-        <div class="help-hint" style="margin-top:12px;">💡 Vokabeln landen in <code>/Apps/VokabeltrainerJule/vokabeln.json</code> auf deiner Dropbox. Kostenlos.</div>
-      </div>
-
       <div class="card two-col-full" id="apikey-section">
         <h3>🔑 API-Key einrichten</h3>
         <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
@@ -1003,8 +978,8 @@ try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){}
 try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){}
 try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){}
 try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){}
-function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} if(typeof dbxSchedule==='function') dbxSchedule(); }
-function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} if(typeof dbxSchedule==='function') dbxSchedule(); }
+function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} }
+function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} }
 
 function saveApiKey() {
   const val = document.getElementById('apikey-input').value.trim();
@@ -1324,6 +1299,7 @@ function renderVocabScreen() {
   }
   el.innerHTML = unites.map(u => {
     const pairs = db[u];
+    const otherUnites = unites.filter(x => x !== u);
     const rows = pairs.map((v,i) => {
       const k = vkey(u,i);
       const isStarred = !!stars[k];
@@ -1335,12 +1311,7 @@ function renderVocabScreen() {
       const frHtml = hideFR
         ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.fr)}</span>`
         : esc(v.fr);
-      // Move-to select (other unites only)
-      const otherUnites = unites.filter(x => x !== u);
-      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px 4px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:80px;">
-        <option value="">↗</option>
-        ${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
-      </select>` : '';
+      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:70px;"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
       return `<div class="vocab-row">
         <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
         <span class="de" style="flex:1;">${deHtml}</span>
@@ -1357,7 +1328,7 @@ function renderVocabScreen() {
     ].filter(Boolean).join(' ');
     return `<div class="unite-section">
       <div class="unite-header">
-        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;" title="Antippen zum Umbenennen">
+        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;" title="Tippen zum Umbenennen">
           ${esc(u)} ✏️ <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span>
         </span>
         <button class="del-btn" onclick="delUnite('${esc(u)}')">Löschen</button>
@@ -1376,33 +1347,23 @@ function toggleStar(unite, idx) {
 function delItem(unite, i) { db[unite].splice(i,1); if(!db[unite].length) delete db[unite]; saveDb(); renderVocabScreen(); }
 function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); renderLearnSetup(); }
 
-// ─── RENAME UNITE ────────────────────────────────────────────────────
 function renameUnite(oldName) {
   const newName = prompt('Neuer Name für „' + oldName + '":', oldName);
   if (!newName || newName.trim() === oldName) return;
   const n = newName.trim();
   if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
-  db[n] = db[oldName];
-  delete db[oldName];
-  // update stars/errors keys
+  db[n] = db[oldName]; delete db[oldName];
   const newStars = {}, newErrors = {};
-  Object.keys(stars).forEach(k => {
-    newStars[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = stars[k];
-  });
-  Object.keys(errors).forEach(k => {
-    newErrors[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = errors[k];
-  });
+  Object.keys(stars).forEach(k => { newStars[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = stars[k]; });
+  Object.keys(errors).forEach(k => { newErrors[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = errors[k]; });
   stars = newStars; errors = newErrors;
-  saveDb(); saveStars();
-  renderVocabScreen(); renderLearnSetup();
+  saveDb(); saveStars(); renderVocabScreen(); renderLearnSetup();
 }
 
-// ─── MOVE VOCAB ──────────────────────────────────────────────────────
 function moveVocab(fromUnite, idx, toUnite) {
   if (!toUnite || !db[fromUnite] || !db[fromUnite][idx]) return;
   const vocab = db[fromUnite][idx];
   if (!db[toUnite]) db[toUnite] = [];
-  // check dupe in target
   const exists = db[toUnite].some(v => v.de.trim().toLowerCase()===vocab.de.trim().toLowerCase() && v.fr.trim().toLowerCase()===vocab.fr.trim().toLowerCase());
   if (!exists) db[toUnite].push(vocab);
   db[fromUnite].splice(idx, 1);
@@ -1410,23 +1371,56 @@ function moveVocab(fromUnite, idx, toUnite) {
   saveDb(); renderVocabScreen(); renderLearnSetup();
 }
 
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────
+function exportData() {
+  const data = JSON.stringify({ db, stars, errors }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'vokabeln_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.db) { alert('Ungültige Datei.'); return; }
+      // Merge
+      Object.keys(data.db).forEach(u => {
+        if (!db[u]) db[u] = [];
+        const existing = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+        data.db[u].forEach(v => { const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase(); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
+      });
+      if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
+      if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
+      saveDb(); saveStars();
+      renderVocabScreen(); renderLearnSetup();
+      alert('✓ Import erfolgreich!');
+    } catch(err) { alert('Fehler beim Import: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
 // ─── TEXT TO SPEECH ──────────────────────────────────────────────────
 let currentCard = null;
 function speak(which) {
   if (!currentCard) return;
-  const isAskFR = (which === 'ask' && direction === 'fr-de') || (which === 'ans' && direction === 'de-fr');
-  const text = which === 'ask'
-    ? (direction === 'de-fr' ? currentCard.de : currentCard.fr)
-    : (direction === 'de-fr' ? currentCard.fr : currentCard.de);
-  const lang = isAskFR ? 'fr-FR' : 'de-DE';
+  const isFR = (which==='ask' && direction==='fr-de') || (which==='ans' && direction==='de-fr');
+  const text = which==='ask' ? (direction==='de-fr'?currentCard.de:currentCard.fr) : (direction==='de-fr'?currentCard.fr:currentCard.de);
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = lang;
+  utt.lang = isFR ? 'fr-FR' : 'de-DE';
   utt.rate = 0.9;
-  // Try to find a matching voice
   const voices = window.speechSynthesis.getVoices();
-  const match = voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+  const match = voices.find(v => v.lang.startsWith(isFR?'fr':'de'));
   if (match) utt.voice = match;
   window.speechSynthesis.speak(utt);
 }
@@ -1435,8 +1429,8 @@ function speak(which) {
 let cardFilter = 'all';
 function setFilter(f) {
   cardFilter = f;
-  document.getElementById('filter-all').className = 'toggle-btn' + (f==='all' ? ' active-blue' : '');
-  document.getElementById('filter-new').className = 'toggle-btn' + (f==='new' ? ' active-blue' : '');
+  document.getElementById('filter-all').className = 'toggle-btn' + (f==='all'?' active-blue':'');
+  document.getElementById('filter-new').className = 'toggle-btn' + (f==='new'?' active-blue':'');
 }
 
 // ─── LEARN SETUP ─────────────────────────────────────────────────────
@@ -1541,17 +1535,11 @@ function startQuiz() {
   all = all.filter(v => { if(seen.has(v.key)) return false; seen.add(v.key); return true; });
   // apply filter
   if (cardFilter === 'new') {
-    const filtered = all.filter(v => !v.key || ((errors[v.key]||0) === 0 && !stars[v.key]));
-    if (filtered.length === 0) {
-      alert('Keine neuen Wörter gefunden – alle wurden schon mindestens einmal beantwortet.');
-      return;
-    }
+    const filtered = all.filter(v => !v.key || (!(errors[v.key]||0) && !stars[v.key]));
+    if (!filtered.length) { alert('Keine neuen Wörter – alle wurden schon mindestens einmal beantwortet.'); return; }
     all = filtered;
   }
-  if (!all.length) {
-    alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.');
-    return;
-  }
+  if (!all.length) { alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.'); return; }
   quizCards = cardOrder === 'random' ? shuffle(all) : all;
   qIdx=0; qScore=0; qMissed=[];
   document.getElementById('learn-setup').style.display='none';
@@ -1694,164 +1682,6 @@ if ('serviceWorker' in navigator) {
 // Init
 renderLearnSetup();
 initApiKeyUI();
-
-// ─── DROPBOX (isolated, starts after app is fully ready) ──────────────
-let dbxAppKey = '', dbxToken = '';
-try { dbxAppKey = localStorage.getItem('vt_dbx_appkey') || ''; } catch(e){}
-try { dbxToken = localStorage.getItem('vt_dbx_token') || ''; } catch(e){}
-let dbxTimer = null;
-
-function dbxSetIcon(icon, color) {
-  const el = document.getElementById('dbx-icon');
-  if (!el) return;
-  el.textContent = icon;
-  el.style.color = color;
-  el.title = icon === '☁️' ? 'Dropbox sync aktiv – antippen zum manuellen Sync' : icon === '↑' ? 'Lädt hoch…' : icon === '↓' ? 'Lädt herunter…' : icon === '⚠️' ? 'Sync Fehler – antippen für Details' : 'Dropbox einrichten';
-}
-function dbxSetMsg(html) {
-  const el = document.getElementById('dbx-status-msg');
-  if (el) el.innerHTML = html;
-}
-function dbxManualSync() {
-  if (!dbxToken) {
-    showMain('hilfe');
-    setTimeout(()=>document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'}),100);
-    return;
-  }
-  dbxLoad();
-}
-function dbxInitUI() {
-  const connected = !!dbxToken;
-  const cw = document.getElementById('dbx-connected-wrap');
-  const dw = document.getElementById('dbx-connect-wrap');
-  if (cw) cw.style.display = connected ? 'block' : 'none';
-  if (dw) dw.style.display = connected ? 'none' : 'block';
-  const inp = document.getElementById('dbx-appkey-input');
-  if (inp && dbxAppKey) inp.value = dbxAppKey;
-  if (connected) dbxSetIcon('☁️', 'var(--green-text)');
-}
-function dbxConnect() {
-  const key = (document.getElementById('dbx-appkey-input').value || '').trim();
-  if (!key) { dbxSetMsg('<span style="color:var(--red-text)">⚠️ App-Key eingeben</span>'); return; }
-  dbxAppKey = key;
-  try { localStorage.setItem('vt_dbx_appkey', key); } catch(e){}
-  const redirectUri = (window.location.origin + window.location.pathname).replace('index.html', '');
-  // Show exact URI being used so user can verify it matches Dropbox settings
-  dbxSetMsg('<span style="color:var(--text2);font-size:12px;">Redirect URI: <code>' + redirectUri + '</code></span>');
-  setTimeout(() => {
-    const redirect = encodeURIComponent(redirectUri);
-    window.location.href = `https://www.dropbox.com/oauth2/authorize?client_id=${key}&response_type=token&redirect_uri=${redirect}&token_access_type=legacy`;
-  }, 1500); // show URI for 1.5s before redirecting
-}
-function dbxDisconnect() {
-  dbxToken = ''; dbxAppKey = '';
-  try { localStorage.removeItem('vt_dbx_token'); localStorage.removeItem('vt_dbx_appkey'); } catch(e){}
-  dbxSetIcon('', '');
-  dbxInitUI();
-}
-function dbxSchedule() {
-  if (!dbxToken) return;
-  clearTimeout(dbxTimer);
-  dbxTimer = setTimeout(dbxUpload, 2000);
-}
-async function dbxUpload() {
-  if (!dbxToken) return;
-  try {
-    dbxSetIcon('↑', 'var(--blue-text)');
-    const body = JSON.stringify({ db, stars, errors });
-    const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + dbxToken,
-        'Content-Type': 'application/octet-stream',
-        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json', mode: 'overwrite' })
-      },
-      body
-    });
-    if (res.status === 401) { dbxToken = ''; try{localStorage.removeItem('vt_dbx_token');}catch(e){} dbxSetIcon('⚠️','var(--red-text)'); dbxInitUI(); return; }
-    dbxSetIcon('☁️', 'var(--green-text)');
-  } catch(e) { dbxSetIcon('⚠️', 'var(--red-text)'); }
-}
-async function dbxLoad() {
-  if (!dbxToken) return;
-  try {
-    dbxSetIcon('↓', 'var(--blue-text)');
-    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + dbxToken,
-        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json' })
-      }
-    });
-    if (res.status === 409) { dbxSetIcon('☁️', 'var(--green-text)'); dbxUpload(); return; } // no file yet → upload local
-    if (res.status === 401) { dbxToken = ''; try{localStorage.removeItem('vt_dbx_token');}catch(e){} dbxSetIcon('⚠️','var(--red-text)'); dbxInitUI(); return; }
-    if (!res.ok) { 
-      const errText = await res.text().catch(()=>'');
-      console.error('Dropbox download error:', res.status, errText);
-      dbxSetIcon('⚠️', 'var(--red-text)'); 
-      dbxSetMsg('<span style="color:var(--red-text);font-size:12px;">Sync Fehler ' + res.status + '</span>');
-      return; 
-    }
-    const remote = await res.json();
-
-    // ── MERGE ──────────────────────────────────────────────────────────
-    // db: merge remote into local — add missing unités and missing vocab pairs
-    let changed = false;
-    if (remote.db) {
-      Object.keys(remote.db).forEach(u => {
-        if (!db[u]) { db[u] = []; }
-        const existingSet = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
-        remote.db[u].forEach(v => {
-          const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase();
-          if (!existingSet.has(k)) { db[u].push(v); existingSet.add(k); changed = true; }
-        });
-      });
-    }
-    // stars: merge (union — keep all stars from both)
-    if (remote.stars) {
-      Object.keys(remote.stars).forEach(k => { if (!stars[k]) { stars[k] = true; changed = true; } });
-    }
-    // errors: merge (take higher error count)
-    if (remote.errors) {
-      Object.keys(remote.errors).forEach(k => {
-        if ((remote.errors[k]||0) > (errors[k]||0)) { errors[k] = remote.errors[k]; changed = true; }
-      });
-    }
-    // ── END MERGE ──────────────────────────────────────────────────────
-
-    if (changed) {
-      try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){}
-      try { localStorage.setItem('vt_stars', JSON.stringify(stars)); } catch(e){}
-      try { localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){}
-      renderLearnSetup(); renderVocabScreen();
-      // upload merged result back to Dropbox
-      setTimeout(dbxUpload, 500);
-    }
-    dbxSetIcon('☁️', 'var(--green-text)');
-  } catch(e) { dbxSetIcon('⚠️', 'var(--red-text)'); }
-}
-
-// Handle OAuth redirect — runs AFTER app is ready
-setTimeout(() => {
-  try {
-    // Check for token in URL hash
-    if (window.location.hash && window.location.hash.includes('access_token=')) {
-      const params = new URLSearchParams(window.location.hash.replace('#',''));
-      const token = params.get('access_token');
-      if (token) {
-        dbxToken = token;
-        try { localStorage.setItem('vt_dbx_token', token); } catch(e){}
-        window.history.replaceState({}, '', window.location.pathname);
-        dbxInitUI();
-        dbxLoad();
-        return;
-      }
-    }
-    // Normal startup with existing token
-    dbxInitUI();
-    if (dbxToken) dbxLoad();
-  } catch(e) { console.error('Dropbox init:', e); }
-}, 500);
 </script>
 </body>
 </html>

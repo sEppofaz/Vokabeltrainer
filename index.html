@@ -558,8 +558,8 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v23)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
-      <p style="margin-top:1px;">by sEpp <span id="dbx-status-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'})"></span></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v19)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
 
@@ -925,36 +925,6 @@
         <div class="help-hint">💡 Deine Vokabeln bleiben beim Update erhalten.</div>
       </div>
 
-      <!-- Dropbox Sync -->
-      <div class="card two-col-full" id="dropbox-section">
-        <h3>☁️ Dropbox Sync</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
-          Vokabeln geräteübergreifend auf Dropbox speichern – automatisch bei jeder Änderung. Einmalig einrichten:
-        </p>
-        <div class="help-step"><span class="step-num">1</span><span>Auf <strong>dropbox.com/developers/apps</strong> einloggen</span></div>
-        <div class="help-step"><span class="step-num">2</span><span>„Create app" → <strong>Scoped access</strong> → <strong>App folder</strong> → Name z.B. „VokabeltrainerJule"</span></div>
-        <div class="help-step"><span class="step-num">3</span><span>Unter <strong>Permissions</strong>: <code>files.content.write</code> und <code>files.content.read</code> aktivieren → Submit</span></div>
-        <div class="help-step"><span class="step-num">4</span><span>Unter <strong>Settings</strong> → <strong>Redirect URIs</strong>: GitHub-URL eintragen (z.B. <code>https://seppofaz.github.io/vokabeltrainer/</code>) → Add</span></div>
-        <div class="help-step"><span class="step-num">5</span><span>Unter <strong>Settings</strong> → <strong>Allow implicit grant</strong> → <strong>Allow</strong> wählen → Submit</span></div>
-        <div class="help-step" style="border:none;"><span class="step-num">6</span><span><strong>App key</strong> kopieren und unten eingeben:</span></div>
-        <div style="margin-top:12px;">
-          <input type="text" id="dbx-appkey-input" placeholder="App-Key (z.B. abc123xyz)" style="margin-bottom:8px;" />
-          <div id="dbx-appkey-status" style="font-size:13px;margin-bottom:8px;min-height:18px;"></div>
-          <div id="dbx-connect-wrap">
-            <button class="btn btn-dark" onclick="dbxConnect()">Mit Dropbox verbinden</button>
-          </div>
-          <div id="dbx-connected-wrap" style="display:none;">
-            <div style="padding:10px 12px;background:var(--green-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--green-text);margin-bottom:8px;">
-              ✅ Dropbox verbunden · Sync aktiv
-            </div>
-            <button class="btn btn-secondary" onclick="dbxDisconnect()">Dropbox trennen</button>
-          </div>
-        </div>
-        <div class="help-hint" style="margin-top:12px;">
-          💡 Die Vokabeln liegen in <code>/Apps/VokabeltrainerJule/vokabeln.json</code> auf deiner Dropbox. Kostenlos, kein Abo nötig.
-        </div>
-      </div>
-
       <!-- API Key Einrichtung -->
       <div class="card two-col-full" id="apikey-section">
         <h3>🔑 API-Key einrichten</h3>
@@ -991,159 +961,12 @@ let db = {};
 let stars = {};
 let errors = {};
 let apiKey = '';
-let dbxAppKey = '';
-let dbxToken = '';
-let dbxSyncTimer = null;
 try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){}
 try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){}
 try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){}
 try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){}
-try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(e){}
-try { dbxToken = (localStorage.getItem('vt_dbx_token') || '').trim(); } catch(e){}
-
-function saveDb() {
-  try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){}
-  dbxScheduleSync();
-}
-function saveStars() {
-  try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){}
-  dbxScheduleSync();
-}
-
-// ─── DROPBOX ─────────────────────────────────────────────────────────
-const DBX_FILE = '/vokabeln.json';
-
-function dbxScheduleSync() {
-  if (!dbxToken) return;
-  clearTimeout(dbxSyncTimer);
-  dbxSyncTimer = setTimeout(dbxUpload, 1500); // debounce 1.5s
-}
-
-async function dbxUpload() {
-  if (!dbxToken) return;
-  try {
-    dbxSetStatus('↑', 'syncing');
-    const data = JSON.stringify({ db, stars, errors });
-    const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + dbxToken,
-        'Content-Type': 'application/octet-stream',
-        'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE, mode: 'overwrite', autorename: false })
-      },
-      body: data
-    });
-    if (res.status === 401) { dbxToken = ''; localStorage.removeItem('vt_dbx_token'); dbxSetStatus('⚠️', 'error'); return; }
-    if (!res.ok) throw new Error(res.status);
-    dbxSetStatus('☁️', 'ok');
-  } catch(e) {
-    dbxSetStatus('⚠️', 'error');
-  }
-}
-
-async function dbxDownload() {
-  if (!dbxToken) return false;
-  try {
-    dbxSetStatus('↓', 'syncing');
-    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + dbxToken,
-        'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE })
-      }
-    });
-    if (res.status === 409) { dbxSetStatus('☁️', 'ok'); return false; } // file not found yet
-    if (res.status === 401) { dbxToken = ''; localStorage.removeItem('vt_dbx_token'); dbxSetStatus('⚠️', 'error'); return false; }
-    if (!res.ok) throw new Error(res.status);
-    const data = await res.json();
-    if (data.db) { db = data.db; localStorage.setItem('vt_db', JSON.stringify(db)); }
-    if (data.stars) { stars = data.stars; localStorage.setItem('vt_stars', JSON.stringify(stars)); }
-    if (data.errors) { errors = data.errors; localStorage.setItem('vt_errors', JSON.stringify(errors)); }
-    dbxSetStatus('☁️', 'ok');
-    return true;
-  } catch(e) {
-    dbxSetStatus('⚠️', 'error');
-    return false;
-  }
-}
-
-function dbxSetStatus(icon, state) {
-  const el = document.getElementById('dbx-status-icon');
-  if (!el) return;
-  const colors = { ok: 'var(--green-text)', syncing: 'var(--blue-text)', error: 'var(--red-text)' };
-  el.textContent = icon;
-  el.style.color = colors[state] || 'var(--text2)';
-  el.title = state === 'ok' ? 'Dropbox sync aktiv' : state === 'syncing' ? 'Synchronisiert...' : 'Sync Fehler – Dropbox Einstellungen prüfen';
-}
-
-function dbxConnect() {
-  const key = document.getElementById('dbx-appkey-input').value.trim();
-  if (!key) { document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ App-Key eingeben</span>'; return; }
-  dbxAppKey = key;
-  localStorage.setItem('vt_dbx_appkey', key);
-  const verifier = generateVerifier();
-  localStorage.setItem('vt_dbx_verifier', verifier);
-  generateChallenge(verifier).then(challenge => {
-    const redirectUri = window.location.origin + window.location.pathname;
-    const url = 'https://www.dropbox.com/oauth2/authorize' +
-      '?client_id=' + key +
-      '&response_type=token' +
-      '&redirect_uri=' + encodeURIComponent(redirectUri) +
-      '&token_access_type=legacy';
-    window.location.href = url;
-  });
-}
-
-function generateVerifier() {
-  const arr = new Uint8Array(32);
-  crypto.getRandomValues(arr);
-  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}
-
-async function generateChallenge(verifier) {
-  const enc = new TextEncoder().encode(verifier);
-  const hash = await crypto.subtle.digest('SHA-256', enc);
-  return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}
-
-async function dbxHandleOAuthCallback() {
-  // Handle token in URL hash (implicit flow)
-  const hash = window.location.hash;
-  if (hash && hash.includes('access_token=')) {
-    const params = new URLSearchParams(hash.replace('#',''));
-    const token = params.get('access_token');
-    if (token) {
-      dbxToken = token;
-      localStorage.setItem('vt_dbx_token', token);
-      window.history.replaceState({}, '', window.location.pathname);
-      return true;
-    }
-  }
-  // Handle error
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('error')) {
-    window.history.replaceState({}, '', window.location.pathname);
-  }
-  return false;
-}
-
-function dbxDisconnect() {
-  dbxToken = ''; dbxAppKey = '';
-  localStorage.removeItem('vt_dbx_token');
-  localStorage.removeItem('vt_dbx_appkey');
-  localStorage.removeItem('vt_dbx_verifier');
-  dbxSetStatus('', '');
-  initDropboxUI();
-}
-  const connected = !!dbxToken;
-  const wrap = document.getElementById('dbx-connected-wrap');
-  const connectWrap = document.getElementById('dbx-connect-wrap');
-  if (wrap) wrap.style.display = connected ? 'block' : 'none';
-  if (connectWrap) connectWrap.style.display = connected ? 'none' : 'block';
-  const inp = document.getElementById('dbx-appkey-input');
-  if (inp && dbxAppKey) inp.value = dbxAppKey;
-  if (connected) dbxSetStatus('☁️', 'ok');
-}
+function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} }
+function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} }
 
 function saveApiKey() {
   const val = document.getElementById('apikey-input').value.trim();
@@ -1748,21 +1571,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
-// Init — synchronous, never blocks
+// Init
 renderLearnSetup();
 initApiKeyUI();
-initDropboxUI();
-// Dropbox: handle OAuth callback + load, fully in background
-setTimeout(async () => {
-  try {
-    const wasCallback = await dbxHandleOAuthCallback();
-    if (wasCallback || dbxToken) {
-      initDropboxUI();
-      const loaded = await dbxDownload();
-      if (loaded) { renderLearnSetup(); renderVocabScreen(); }
-    }
-  } catch(e) { console.error('Dropbox:', e); }
-}, 0);
 </script>
 </body>
 </html>

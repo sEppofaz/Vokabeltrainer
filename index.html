@@ -558,8 +558,12 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v28)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
-      <p style="margin-top:1px;">by sEpp <span id="dbx-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');setTimeout(()=>document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'}),100)"></span></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v29)</span></p>
+      <p style="margin-top:2px; display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+        <span style="font-size:12px;color:var(--text2);">by sEpp</span>
+        <button onclick="dbxManualSync()" id="dbx-icon" style="background:none;border:none;font-size:13px;cursor:pointer;padding:2px 4px;" title="Dropbox sync"></button>
+        <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:12px;color:var(--blue-text);cursor:pointer;padding:2px 6px;">↺ Update</button>
+      </p>
     </div>
   </div>
 
@@ -1699,11 +1703,22 @@ let dbxTimer = null;
 
 function dbxSetIcon(icon, color) {
   const el = document.getElementById('dbx-icon');
-  if (el) { el.textContent = icon; el.style.color = color; }
+  if (!el) return;
+  el.textContent = icon;
+  el.style.color = color;
+  el.title = icon === '☁️' ? 'Dropbox sync aktiv – antippen zum manuellen Sync' : icon === '↑' ? 'Lädt hoch…' : icon === '↓' ? 'Lädt herunter…' : icon === '⚠️' ? 'Sync Fehler – antippen für Details' : 'Dropbox einrichten';
 }
 function dbxSetMsg(html) {
   const el = document.getElementById('dbx-status-msg');
   if (el) el.innerHTML = html;
+}
+function dbxManualSync() {
+  if (!dbxToken) {
+    showMain('hilfe');
+    setTimeout(()=>document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'}),100);
+    return;
+  }
+  dbxLoad();
 }
 function dbxInitUI() {
   const connected = !!dbxToken;
@@ -1768,9 +1783,15 @@ async function dbxLoad() {
         'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json' })
       }
     });
-    if (res.status === 409) { dbxSetIcon('☁️', 'var(--green-text)'); return; } // no file yet → upload local
+    if (res.status === 409) { dbxSetIcon('☁️', 'var(--green-text)'); dbxUpload(); return; } // no file yet → upload local
     if (res.status === 401) { dbxToken = ''; try{localStorage.removeItem('vt_dbx_token');}catch(e){} dbxSetIcon('⚠️','var(--red-text)'); dbxInitUI(); return; }
-    if (!res.ok) { dbxSetIcon('⚠️', 'var(--red-text)'); return; }
+    if (!res.ok) { 
+      const errText = await res.text().catch(()=>'');
+      console.error('Dropbox download error:', res.status, errText);
+      dbxSetIcon('⚠️', 'var(--red-text)'); 
+      dbxSetMsg('<span style="color:var(--red-text);font-size:12px;">Sync Fehler ' + res.status + '</span>');
+      return; 
+    }
     const remote = await res.json();
 
     // ── MERGE ──────────────────────────────────────────────────────────

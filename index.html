@@ -558,7 +558,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v24)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v25)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp <span id="dbx-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');setTimeout(()=>document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'}),100)"></span></p>
     </div>
   </div>
@@ -1627,8 +1627,13 @@ function dbxConnect() {
   if (!key) { dbxSetMsg('<span style="color:var(--red-text)">⚠️ App-Key eingeben</span>'); return; }
   dbxAppKey = key;
   try { localStorage.setItem('vt_dbx_appkey', key); } catch(e){}
-  const redirect = encodeURIComponent(window.location.origin + window.location.pathname);
-  window.location.href = `https://www.dropbox.com/oauth2/authorize?client_id=${key}&response_type=token&redirect_uri=${redirect}&token_access_type=legacy`;
+  const redirectUri = window.location.origin + window.location.pathname;
+  // Show exact URI being used so user can verify it matches Dropbox settings
+  dbxSetMsg('<span style="color:var(--text2);font-size:12px;">Redirect URI: <code>' + redirectUri + '</code></span>');
+  setTimeout(() => {
+    const redirect = encodeURIComponent(redirectUri);
+    window.location.href = `https://www.dropbox.com/oauth2/authorize?client_id=${key}&response_type=token&redirect_uri=${redirect}&token_access_type=legacy`;
+  }, 1500); // show URI for 1.5s before redirecting
 }
 function dbxDisconnect() {
   dbxToken = ''; dbxAppKey = '';

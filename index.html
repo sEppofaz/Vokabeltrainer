@@ -558,7 +558,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v20)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v21)</span> <button onclick="forceUpdate()" style="background:none;border:none;font-size:11px;color:var(--blue-text);cursor:pointer;padding:0 0 0 4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp <span id="dbx-status-icon" style="font-size:11px;margin-left:4px;cursor:pointer;" onclick="showMain('hilfe');document.getElementById('dropbox-section').scrollIntoView({behavior:'smooth'})"></span></p>
     </div>
   </div>
@@ -1080,38 +1080,76 @@ function dbxConnect() {
   if (!key) { document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ App-Key eingeben</span>'; return; }
   dbxAppKey = key;
   localStorage.setItem('vt_dbx_appkey', key);
-  // PKCE OAuth flow
-  const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-  const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${key}&response_type=token&redirect_uri=${redirectUri}&token_access_type=offline`;
-  window.location.href = authUrl;
+  // PKCE flow
+  const verifier = generateVerifier();
+  localStorage.setItem('vt_dbx_verifier', verifier);
+  generateChallenge(verifier).then(challenge => {
+    const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
+    const url = `https://www.dropbox.com/oauth2/authorize?client_id=${key}&response_type=code&redirect_uri=${redirectUri}&code_challenge=${challenge}&code_challenge_method=S256&token_access_type=offline`;
+    window.location.href = url;
+  });
+}
+
+function generateVerifier() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function generateChallenge(verifier) {
+  const enc = new TextEncoder().encode(verifier);
+  const hash = await crypto.subtle.digest('SHA-256', enc);
+  return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function dbxExchangeCode(code) {
+  const verifier = localStorage.getItem('vt_dbx_verifier');
+  const redirectUri = window.location.origin + window.location.pathname;
+  const res = await fetch('https://api.dropboxapi.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code, grant_type: 'authorization_code',
+      client_id: dbxAppKey,
+      redirect_uri: redirectUri,
+      code_verifier: verifier
+    })
+  });
+  if (!res.ok) throw new Error('Token exchange failed: ' + res.status);
+  const data = await res.json();
+  return data.access_token;
+}
+
+async function dbxHandleOAuthCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (!code) return;
+  // Clean URL immediately
+  window.history.replaceState({}, '', window.location.pathname);
+  try {
+    dbxSetStatus('↓', 'syncing');
+    const token = await dbxExchangeCode(code);
+    dbxToken = token;
+    localStorage.setItem('vt_dbx_token', token);
+    localStorage.removeItem('vt_dbx_verifier');
+    initDropboxUI();
+    const loaded = await dbxDownload();
+    if (loaded) { renderLearnSetup(); renderVocabScreen(); }
+    dbxSetStatus('☁️', 'ok');
+  } catch(e) {
+    dbxSetStatus('⚠️', 'error');
+    console.error('Dropbox auth error:', e);
+  }
 }
 
 function dbxDisconnect() {
   dbxToken = ''; dbxAppKey = '';
   localStorage.removeItem('vt_dbx_token');
   localStorage.removeItem('vt_dbx_appkey');
+  localStorage.removeItem('vt_dbx_verifier');
   dbxSetStatus('', '');
   initDropboxUI();
 }
-
-function dbxHandleOAuthCallback() {
-  const hash = window.location.hash;
-  if (!hash.includes('access_token=')) return;
-  const params = new URLSearchParams(hash.replace('#', ''));
-  const token = params.get('access_token');
-  if (token) {
-    dbxToken = token;
-    localStorage.setItem('vt_dbx_token', token);
-    window.history.replaceState({}, '', window.location.pathname);
-    initDropboxUI();
-    dbxDownload().then(loaded => {
-      if (loaded) { renderLearnSetup(); renderVocabScreen(); }
-      dbxSetStatus('☁️', 'ok');
-    });
-  }
-}
-
-function initDropboxUI() {
   const connected = !!dbxToken;
   const wrap = document.getElementById('dbx-connected-wrap');
   const connectWrap = document.getElementById('dbx-connect-wrap');
@@ -1726,16 +1764,16 @@ if ('serviceWorker' in navigator) {
 }
 
 // Init
-dbxHandleOAuthCallback(); // check for OAuth token in URL hash first
-renderLearnSetup();
-initApiKeyUI();
-initDropboxUI();
-// Load from Dropbox on startup if connected
-if (dbxToken) {
-  dbxDownload().then(loaded => {
+(async () => {
+  await dbxHandleOAuthCallback(); // async PKCE token exchange
+  renderLearnSetup();
+  initApiKeyUI();
+  initDropboxUI();
+  if (dbxToken) {
+    const loaded = await dbxDownload();
     if (loaded) { renderLearnSetup(); renderVocabScreen(); }
-  });
-}
+  }
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Vokabeltrainer" />
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <title>Vokabeltrainer Français</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f5;
+      --bg3: #ebebeb;
+      --text: #1a1a1a;
+      --text2: #666666;
+      --text3: #999999;
+      --border: rgba(0,0,0,0.12);
+      --border2: rgba(0,0,0,0.22);
+      --accent: #1a1a1a;
+      --blue-bg: #e8f0fe;
+      --blue-text: #1a56db;
+      --blue-border: #a4c2f7;
+      --green-bg: #e6f4ea;
+      --green-text: #1e7e34;
+      --green-border: #a8d5b5;
+      --red-bg: #fce8e6;
+      --red-text: #c0392b;
+      --red-border: #f4a9a4;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1e;
+        --bg2: #2c2c2e;
+        --bg3: #3a3a3c;
+        --text: #f2f2f7;
+        --text2: #aeaeb2;
+        --text3: #636366;
+        --border: rgba(255,255,255,0.1);
+        --border2: rgba(255,255,255,0.2);
+        --accent: #f2f2f7;
+        --blue-bg: #1a2a4a;
+        --blue-text: #6fa3ef;
+        --blue-border: #2a4a8a;
+        --green-bg: #1a3a22;
+        --green-text: #6fcf97;
+        --green-border: #2a5a32;
+        --red-bg: #3a1a18;
+        --red-text: #e07070;
+        --red-border: #6a2a28;
+      }
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg3, #f2f2f7);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      overflow: hidden;
+    }
+
+    /* Safe area for iPhone notch / home indicator */
+    .app {
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ── HEADER ── */
+    .header {
+      padding: 12px 20px 8px;
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .header p {
+      font-size: 12px;
+      color: var(--text2);
+      margin-top: 1px;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex;
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+      background: var(--bg);
+    }
+    .tab-bar button {
+      flex: 1;
+      padding: 10px 4px;
+      font-size: 12px;
+      font-weight: 500;
+      background: none;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab-bar button.active {
+      color: var(--blue-text);
+      border-bottom-color: var(--blue-text);
+    }
+
+    /* ── CONTENT ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px;
+      background: var(--bg2);
+    }
+
+    /* ── iPad: centered max-width container ── */
+    @media (min-width: 600px) {
+      .header { padding: 16px 32px 12px; }
+      .header h1 { font-size: 24px; }
+      .tab-bar button { font-size: 14px; padding: 12px 8px; }
+      .content { padding: 24px; }
+      .screen { max-width: 700px; margin: 0 auto; }
+      h2 { font-size: 20px; }
+      h3 { font-size: 17px; }
+      .btn { font-size: 17px; padding: 15px; }
+      .q-word { font-size: 36px; }
+      .q-card { min-height: 200px; }
+      .result-score { font-size: 72px; }
+    }
+
+    /* ── iPad landscape: two-column layout ── */
+    @media (min-width: 900px) {
+      .screen { max-width: 860px; }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: start;
+      }
+      .two-col-full { grid-column: 1 / -1; }
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    h2 { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+    h3 { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 5px; }
+
+    /* ── INPUTS ── */
+    input[type=text], input[type=url], textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px; /* prevent iOS zoom */
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      color: var(--text);
+      margin-bottom: 12px;
+      font-family: inherit;
+      -webkit-appearance: none;
+    }
+    textarea { resize: vertical; font-size: 14px; font-family: monospace; }
+    input:focus, textarea:focus { outline: none; border-color: var(--blue-text); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+    .btn:active { transform: scale(0.98); opacity: 0.85; }
+    .btn-dark { background: var(--accent); color: var(--bg); }
+    .btn-secondary { background: var(--bg2); color: var(--text); border: 0.5px solid var(--border2); font-weight: 500; }
+    .btn:disabled { opacity: 0.35; cursor: default; }
+
+    /* ── TOGGLE GROUP ── */
+    .toggle-group { display: flex; gap: 6px; margin-bottom: 12px; }
+    .toggle-btn {
+      flex: 1;
+      padding: 9px 6px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      color: var(--text2);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .toggle-btn.active-blue { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-border); }
+    .toggle-btn.active-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+
+    /* ── UNITE ITEMS ── */
+    .unite-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 12px;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 6px;
+      background: var(--bg2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .unite-item.selected {
+      background: var(--blue-bg);
+      border-color: var(--blue-border);
+    }
+    .unite-item .uname { font-size: 14px; font-weight: 500; color: var(--text); }
+    .unite-item.selected .uname { color: var(--blue-text); }
+    .unite-item .ucount { font-size: 12px; color: var(--text2); }
+    .unite-item .check { font-size: 16px; color: var(--blue-text); display: none; }
+    .unite-item.selected .check { display: inline; }
+
+    /* ── UPLOAD ── */
+    .upload-zone-wrap { margin-bottom: 12px; }
+    .upload-zone {
+      display: block;
+      border: 1.5px dashed var(--border2);
+      border-radius: var(--radius);
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--bg2);
+      margin-bottom: 8px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .upload-zone:active { background: var(--bg3); }
+    .upload-zone .uz-icon { font-size: 36px; margin-bottom: 8px; display: block; }
+    .upload-zone p { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
+    .upload-zone small { font-size: 12px; color: var(--text3); }
+    .upload-zone input[type=file],
+    .upload-zone-camera input[type=file] { display: none; }
+
+    .upload-zone-camera {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 12px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .upload-zone-camera:active { background: var(--bg3); }
+
+    .ocr-type-row { display: flex; gap: 6px; margin-bottom: 12px; }
+    .ocr-type-btn {
+      flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 500;
+      border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+      background: var(--bg2); color: var(--text2); cursor: pointer; text-align: center;
+      font-family: inherit;
+    }
+    .ocr-type-btn.active { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-border); }
+
+    .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; margin-bottom: 12px; }
+    .preview-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: var(--radius-sm); border: 0.5px solid var(--border); }
+
+    .status-msg { font-size: 13px; text-align: center; padding: 8px; color: var(--text2); min-height: 32px; }
+    .status-loading { color: var(--blue-text); }
+    .status-error { color: var(--red-text); }
+    .status-success { color: var(--green-text); }
+
+    /* ── VOCAB LIST ── */
+    .vocab-scroll { margin-bottom: 10px; }
+    .vocab-scroll-limited { max-height: 200px; overflow-y: auto; margin-bottom: 10px; }
+    .vocab-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 0.5px solid var(--border);
+      gap: 6px;
+      font-size: 13px;
+    }
+    .vocab-row:last-child { border-bottom: none; }
+    .vocab-row .de { color: var(--text2); flex: 1; }
+    .vocab-row .fr { color: var(--text); font-weight: 500; flex: 1; }
+    .vocab-row .del-btn { background: none; border: none; color: var(--red-text); font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+
+    /* Editable extracted rows */
+    .edit-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .edit-row:last-child { border-bottom: none; }
+    .edit-row.is-dupe { background: var(--yellow-bg, #fffbe6); opacity: 0.6; }
+    .edit-row.is-dupe .edit-cell { text-decoration: line-through; color: var(--text2); }
+    .dupe-badge { font-size: 10px; color: var(--yellow-text, #92600a); background: var(--yellow-bg, #fffbe6); border: 0.5px solid var(--yellow-border, #f0c040); border-radius: 4px; padding: 1px 5px; white-space: nowrap; align-self: center; }
+    .edit-cell {
+      padding: 5px 7px;
+      font-size: 13px;
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg2);
+      color: var(--text);
+      font-family: inherit;
+      width: 100%;
+    }
+    .edit-cell:focus { outline: none; border-color: var(--blue-text); background: var(--bg); }
+    .edit-cell.de-cell { color: var(--text2); }
+
+    /* Unite select all/none */
+    .unite-select-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .unite-select-header span { font-size: 13px; color: var(--text2); }
+    .link-btn { background: none; border: none; color: var(--blue-text); font-size: 13px; cursor: pointer; padding: 2px 6px; font-family: inherit; }
+
+    /* ── QUIZ ── */
+    .progress-wrap { margin-bottom: 16px; }
+    .progress-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+    .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green-text); border-radius: 2px; transition: width 0.3s; }
+
+    .q-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 16px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .q-answer-card {
+      min-height: 100px;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0;
+      margin-bottom: 12px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .q-answer-card-inner {
+      padding: 20px 16px;
+    }
+    .q-lang { font-size: 11px; color: var(--text3); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+    .q-word { font-size: 28px; font-weight: 600; color: var(--text); line-height: 1.2; }
+    .q-cover {
+      position: absolute; inset: 0;
+      background: var(--bg2);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1.5px dashed var(--border2);
+      min-height: 100px;
+    }
+    .q-cover span { font-size: 14px; color: var(--text2); }
+
+    .answer-input {
+      width: 100%;
+      padding: 13px;
+      font-size: 18px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      background: var(--bg2);
+      color: var(--text);
+      margin-bottom: 8px;
+      font-family: inherit;
+      -webkit-appearance: none;
+    }
+    .answer-input:focus { outline: none; border-color: var(--blue-text); }
+    .answer-input.correct { border-color: var(--green-border); background: var(--green-bg); color: var(--green-text); }
+    .answer-input.wrong { border-color: var(--red-border); background: var(--red-bg); color: var(--red-text); }
+
+    .feedback-pill {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .pill-ok { background: var(--green-bg); color: var(--green-text); }
+    .pill-nok { background: var(--red-bg); color: var(--red-text); }
+    .correct-hint { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+    .correct-hint strong { color: var(--text); }
+
+    .nav-btns { display: flex; gap: 8px; margin-bottom: 8px; }
+    .nav-btn {
+      flex: 1; padding: 14px; font-size: 15px; font-weight: 600;
+      border: none; border-radius: var(--radius-sm);
+      cursor: pointer; transition: transform 0.1s, opacity 0.15s;
+      font-family: inherit;
+    }
+    .nav-btn:active { transform: scale(0.97); opacity: 0.85; }
+    .nav-nok { background: var(--red-bg); color: var(--red-text); }
+    .nav-ok { background: var(--green-bg); color: var(--green-text); }
+    .nav-next { background: var(--accent); color: var(--bg); }
+
+    /* ── RESULTS ── */
+    .result-score { font-size: 56px; font-weight: 700; text-align: center; color: var(--text); margin: 16px 0 4px; }
+    .result-sub { font-size: 15px; color: var(--text2); text-align: center; margin-bottom: 20px; }
+
+    /* ── EMPTY ── */
+    .empty { text-align: center; padding: 32px 16px; color: var(--text2); font-size: 14px; line-height: 1.6; }
+    .empty .emoji { font-size: 40px; margin-bottom: 12px; display: block; }
+
+    /* ── VOCAB SCREEN ── */
+    .unite-section { margin-bottom: 16px; }
+    .unite-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .unite-header .utitle { font-size: 14px; font-weight: 600; color: var(--text); }
+    .unite-header .uinfo { font-size: 12px; color: var(--text2); }
+    .unite-header .del-btn { background: none; border: none; color: var(--red-text); font-size: 13px; cursor: pointer; }
+
+    /* ── VOCAB HIDE COLUMNS ── */
+    .hide-col-btn {
+      padding: 4px 10px; font-size: 12px; font-weight: 600;
+      border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+      background: var(--bg2); color: var(--text2); cursor: pointer;
+      font-family: inherit; transition: all 0.15s;
+      -webkit-user-select: none; user-select: none;
+    }
+    .hide-col-btn.active { background: var(--accent); color: var(--bg); border-color: transparent; }
+    .vocab-word-hidden {
+      color: transparent !important;
+      background: var(--bg3);
+      border-radius: 4px;
+      cursor: pointer;
+      -webkit-user-select: none; user-select: none;
+      padding: 1px 6px; margin: -1px -6px;
+      display: inline-block; min-width: 60px;
+      transition: color 0.1s, background 0.1s;
+    }
+    .vocab-word-hidden.revealed { color: var(--text) !important; background: var(--blue-bg); }
+
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border2); border-top-color: var(--blue-text); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Separator */
+    .sep { height: 0.5px; background: var(--border); margin: 12px 0; }
+
+    /* ── HILFE ── */
+    .help-row {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 0; border-bottom: 0.5px solid var(--border);
+      font-size: 13px; color: var(--text2); line-height: 1.5;
+    }
+    .help-row:last-of-type { border-bottom: none; }
+    .help-row strong { color: var(--text); display: block; margin-bottom: 2px; }
+    .help-icon { font-size: 18px; flex-shrink: 0; width: 26px; text-align: center; margin-top: 1px; }
+    .help-hint {
+      margin-top: 10px; padding: 10px 12px;
+      background: var(--blue-bg); border-radius: var(--radius-sm);
+      font-size: 13px; color: var(--blue-text); line-height: 1.6;
+    }
+    .help-step {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 8px 0; font-size: 13px; color: var(--text2); line-height: 1.5;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .help-step:last-of-type { border-bottom: none; }
+    .step-num {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: var(--bg);
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    code {
+      font-family: monospace; font-size: 12px;
+      background: var(--bg3); padding: 1px 5px; border-radius: 4px;
+      color: var(--text);
+    }
+
+    /* ── STAR / SCHWIERIG ── */
+    .star-btn {
+      background: none; border: none; font-size: 18px; cursor: pointer;
+      padding: 2px 4px; flex-shrink: 0; line-height: 1; opacity: 0.3;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .star-btn.starred { opacity: 1; }
+    .star-btn:active { transform: scale(1.3); }
+
+    .schwierig-card {
+      background: #fffbea;
+      border: 0.5px solid #f0c040;
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: opacity 0.15s;
+    }
+    @media (prefers-color-scheme: dark) {
+      .schwierig-card { background: #2a2200; border-color: #7a6000; }
+    }
+    .schwierig-card.selected { border-width: 1.5px; border-color: #e6a800; }
+    .schwierig-card .sc-left .sc-title { font-size: 15px; font-weight: 600; color: #92650a; }
+    .schwierig-card .sc-left .sc-sub { font-size: 12px; color: #b07d20; margin-top: 2px; }
+    @media (prefers-color-scheme: dark) {
+      .schwierig-card .sc-left .sc-title { color: #f0c040; }
+      .schwierig-card .sc-left .sc-sub { color: #c09030; }
+    }
+    .schwierig-card .sc-check { font-size: 18px; opacity: 0; transition: opacity 0.15s; }
+    .schwierig-card.selected .sc-check { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="header">
+    <h1>Vokabeltrainer 🇫🇷</h1>
+    <div style="text-align:right;">
+      <p>Jule Édition <span style="opacity:0.5;">(v31)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p style="margin-top:1px;">by sEpp</p>
+    </div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <button id="nav-learn" class="active" onclick="showMain('learn')">📚 Lernen</button>
+    <button id="nav-vocab" onclick="showMain('vocab')">📋 Vokabeln</button>
+    <button id="nav-upload" onclick="showMain('upload')">➕ Hinzufügen</button>
+    <button id="nav-hilfe" onclick="showMain('hilfe')">❓ Hilfe</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ═══ LEARN ═══ -->
+    <div id="main-learn" class="screen active">
+
+      <!-- Setup -->
+      <div id="learn-setup">
+        <div class="two-col">
+          <div class="card">
+            <h2>Abfrage starten</h2>
+            <div id="schwierig-card-wrap"></div>
+            <div id="unite-select-list"></div>
+            <div id="learn-empty" class="empty" style="display:none;">
+              <span class="emoji">📖</span>
+              Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.
+            </div>
+          </div>
+          <div id="learn-options" style="display:none;" class="card">
+            <h3>Einstellungen</h3>
+            <label>Richtung</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active-blue" id="dir-de-fr" onclick="setDir('de-fr')">Deutsch → Französisch</button>
+              <button class="toggle-btn" id="dir-fr-de" onclick="setDir('fr-de')">Französisch → Deutsch</button>
+            </div>
+            <label>Modus</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active-green" id="mode-cover" onclick="setMode('cover')">Aufdecken</button>
+              <button class="toggle-btn" id="mode-type" onclick="setMode('type')">Eintippen</button>
+            </div>
+            <label>Reihenfolge</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')">🔀 Zufällig</button>
+              <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')">↕ Nacheinander</button>
+            </div>
+            <label>Filter</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active-blue" id="filter-all" onclick="setFilter('all')">Alle</button>
+              <button class="toggle-btn" id="filter-new" onclick="setFilter('new')">🆕 Nur neue</button>
+            </div>
+            <button class="btn btn-dark" id="start-btn" onclick="startQuiz()">Abfrage starten</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quiz -->
+      <div id="learn-quiz" style="display:none;">
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span id="q-progress">1 / 10</span>
+            <span id="q-score-live">0 richtig</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="q-fill" style="width:0%"></div></div>
+        </div>
+
+        <div class="q-card" id="q-card">
+          <div class="q-lang" id="q-ask-lang">Deutsch</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
+            <div class="q-word" id="q-ask-word">–</div>
+            <button onclick="speak('ask')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.4;padding:4px;">🔊</button>
+          </div>
+        </div>
+
+        <div class="q-answer-card" id="q-answer-card">
+          <div class="q-cover" id="q-cover" onclick="reveal()"><span>Antippen zum Aufdecken</span></div>
+          <div id="q-revealed" style="display:none;">
+            <div class="q-lang" id="q-ans-lang">Französisch</div>
+            <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:20px 16px;">
+              <div class="q-word" id="q-ans-word"></div>
+              <button onclick="speak('ans')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.4;padding:4px;">🔊</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="q-type-area" style="display:none;">
+          <input class="answer-input" id="q-type-input" placeholder="Antwort eingeben …" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkAnswer()" />
+          <div id="q-type-feedback"></div>
+        </div>
+
+        <div class="nav-btns" id="q-nav-cover" style="display:none;">
+          <button class="nav-btn nav-nok" onclick="nextCard(false)">✗ Falsch</button>
+          <button class="nav-btn nav-ok" onclick="nextCard(true)">✓ Richtig</button>
+        </div>
+
+        <div id="q-check-wrap" style="display:none;">
+          <button class="btn btn-dark" onclick="checkAnswer()" id="q-check-btn">Überprüfen</button>
+        </div>
+        <div class="nav-btns" id="q-nav-after" style="display:none;">
+          <button class="nav-btn nav-next" onclick="nextCard(lastCorrect)">Weiter →</button>
+        </div>
+
+        <button class="btn btn-secondary" onclick="abortQuiz()" style="margin-top:4px;">Abbrechen</button>
+      </div>
+
+      <!-- Results -->
+      <div id="learn-results" style="display:none;">
+        <div class="card">
+          <h2>Ergebnis</h2>
+          <div class="result-score" id="r-score">–</div>
+          <div class="result-sub" id="r-sub">–</div>
+          <div id="r-missed-sec" style="display:none;">
+            <label style="margin-bottom:8px;">Noch üben:</label>
+            <div class="vocab-scroll-limited">
+              <ul id="r-missed" style="list-style:none;"></ul>
+            </div>
+          </div>
+          <button class="btn btn-dark" onclick="restartMissed()" id="r-retry-btn">Nur Falsche wiederholen</button>
+          <button class="btn btn-secondary" onclick="backToSetup()">Neue Auswahl</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VOCAB ═══ -->
+    <div id="main-vocab" class="screen">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="margin-bottom:0;">Gespeicherte Vokabeln</h2>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')">DE</button>
+            <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')">FR</button>
+            <button class="hide-col-btn" onclick="exportData()" title="Exportieren">⬆️</button>
+            <label class="hide-col-btn" style="cursor:pointer;" title="Importieren">⬇️<input type="file" accept=".json" onchange="importData(event)" style="display:none;"></label>
+            <button class="hide-col-btn" id="dbx-up-btn" onclick="syncToDropbox()" title="Zu Dropbox hochladen" style="display:none;">☁️↑</button>
+            <button class="hide-col-btn" id="dbx-dn-btn" onclick="syncFromDropbox()" title="Von Dropbox laden" style="display:none;">☁️↓</button>
+          </div>
+        </div>
+        <div id="vocab-content"></div>
+      </div>
+    </div>
+
+    <!-- ═══ UPLOAD ═══ -->
+    <div id="main-upload" class="screen">
+      <div class="two-col">
+
+      <!-- API Key Banner (shown when no key set) -->
+      <div id="apikey-banner" class="card two-col-full" style="display:none; border-color: var(--red-border); background: var(--red-bg);">
+        <h3 style="color:var(--red-text);">⚠️ API-Key fehlt</h3>
+        <p style="font-size:13px;color:var(--red-text);line-height:1.6;margin-bottom:10px;">
+          Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>
+          Einmalig eingeben unter <strong>❓ Hilfe → API-Key</strong>.
+        </p>
+        <button class="btn btn-secondary" onclick="showMain('hilfe');document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'})">→ Jetzt einrichten</button>
+      </div>
+
+      <div class="card">
+        <h2>Vokabeln hinzufügen</h2>
+
+        <div class="toggle-group" style="margin-bottom:16px;">
+          <button class="toggle-btn active-blue" id="tab-photo" onclick="setUploadTab('photo')">📷 Foto / Screenshot</button>
+          <button class="toggle-btn" id="tab-manual" onclick="setUploadTab('manual')">✏️ Manuell</button>
+        </div>
+
+        <!-- Photo -->
+        <div id="upload-photo">
+          <label>Unité / Kapitel</label>
+          <input type="text" id="up-unite-name" placeholder="z.B. Unité 3" oninput="renderExtracted()" />
+
+          <label>Art der Vorlage</label>
+          <div class="ocr-type-row">
+            <button class="ocr-type-btn active" id="ocr-print" onclick="setOcrType('print')">📖 Schulbuch / Druck</button>
+            <button class="ocr-type-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')">✏️ Handschrift / Heft</button>
+          </div>
+
+          <div class="upload-zone-wrap">
+            <label for="file-input" class="upload-zone">
+              <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" />
+              <div class="uz-icon" id="up-icon">📷</div>
+              <p id="up-zone-text">Foto oder Screenshot auswählen</p>
+              <small>Galerie · Kamera · Screenshots</small>
+            </label>
+            <label for="file-input-camera" class="upload-zone-camera">
+              <input type="file" id="file-input-camera" accept="image/*" capture="environment" onchange="handleFiles(event)" />
+              📸 Direkt fotografieren
+            </label>
+          </div>
+
+          <div class="preview-grid" id="up-previews"></div>
+          <div class="status-msg" id="up-status"></div>
+
+          <div id="up-extracted" style="display:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Erkannte Vokabeln (<span id="up-count">0</span>) – direkt editierbar</label>
+              <button class="link-btn" onclick="addEmptyRow()">+ Zeile</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:4px;padding:4px 0;border-bottom:0.5px solid var(--border);margin-bottom:4px;">
+              <span style="font-size:11px;color:var(--text3);padding-left:4px;">Deutsch</span>
+              <span style="font-size:11px;color:var(--text3);padding-left:4px;">Französisch</span>
+              <span></span>
+            </div>
+            <div class="vocab-scroll-limited" id="up-vocab-list"></div>
+            <button class="btn btn-dark" onclick="saveVocab()" style="margin-top:8px;">Speichern</button>
+            <button class="btn btn-secondary" onclick="resetUpload()">Neues Bild laden</button>
+          </div>
+        </div>
+
+        <!-- Manual -->
+        <div id="upload-manual" style="display:none;">
+          <label>Unité / Kapitel</label>
+          <input type="text" id="man-unite-name" placeholder="z.B. Unité 2" />
+          <label>Vokabeln (eine pro Zeile: deutsch;französisch)</label>
+          <textarea id="man-text" rows="10" placeholder="der Hund;le chien&#10;die Katze;le chat&#10;schön;beau / belle"></textarea>
+          <button class="btn btn-dark" onclick="saveManual()">Speichern</button>
+        </div>
+      </div>
+
+      <!-- Install hint -->
+      <div class="card" id="install-hint" style="display:none;">
+        <h3>📲 App installieren</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;">
+          Tippe auf <strong>Teilen</strong> (□↑) und dann auf<br>
+          <strong>„Zum Home-Bildschirm"</strong> – fertig!<br>
+          Die App läuft dann offline wie eine normale App.
+        </p>
+      </div>
+      </div><!-- end two-col -->
+    </div>
+
+    <!-- ═══ HILFE ═══ -->
+    <div id="main-hilfe" class="screen">
+      <div class="two-col">
+
+      <div class="card two-col-full">
+        <h2>Vokabeltrainer 🇫🇷</h2>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;">Dein persönlicher Französisch-Trainer für das Schulbuch <em>À toi! Bayern</em>. Fotos vom Heft oder Schulbuch hochladen – die KI erkennt die Vokabeln automatisch. Dann gezielt üben, einzelne Wörter markieren und den Fortschritt verfolgen.</p>
+      </div>
+
+      <!-- Schritt 1 -->
+      <div class="card">
+        <h3>1️⃣ Vokabeln hinzufügen</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Tab <strong>➕ Hinzufügen</strong> öffnen und Methode wählen:</p>
+        <div class="help-row">
+          <span class="help-icon">📷</span>
+          <div><strong>Foto / Screenshot</strong><br><span>Foto vom Schulbuch oder Screenshot von der Schulplattform. Art der Vorlage wählen (Druck oder Handschrift), dann lädt die KI alle Vokabeln automatisch.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">📸</span>
+          <div><strong>Direkt fotografieren</strong><br><span>Öffnet sofort die Kamera – ideal für das Vokabelheft. Die KI erkennt auch Handschrift mit Akzenten (é, è, ç, œ …).</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">⌨️</span>
+          <div><strong>Manuell</strong><br><span>Eine Vokabel pro Zeile im Format <code>deutsch;französisch</code> – z.B. <code>der Hund;le chien</code></span></div>
+        </div>
+        <div class="help-hint">
+          💡 Immer einen <strong>Unité-Namen</strong> eingeben (z.B. „Unité 4"). Dieselbe Seite kann mehrfach fotografiert werden – Duplikate werden automatisch erkannt und übersprungen.
+        </div>
+      </div>
+
+      <!-- Schritt 2 -->
+      <div class="card">
+        <h3>2️⃣ Erkannte Vokabeln prüfen</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Nach dem Foto siehst du alle erkannten Wörter – direkt bearbeitbar:</p>
+        <div class="help-row">
+          <span class="help-icon">✏️</span>
+          <div><strong>Korrigieren</strong><br><span>Einfach in ein Feld tippen und den Text anpassen – z.B. fehlende Akzente ergänzen.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">✕</span>
+          <div><strong>Löschen</strong><br><span>Falsch erkannte Zeilen mit ✕ entfernen.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">＋</span>
+          <div><strong>Ergänzen</strong><br><span>Mit „+ Zeile" fehlende Vokabeln manuell hinzufügen.</span></div>
+        </div>
+        <div class="help-hint">
+          💡 Dann <strong>Speichern</strong> – die Vokabeln werden dauerhaft auf diesem Gerät gespeichert.
+        </div>
+      </div>
+
+      <!-- Schritt 3 -->
+      <div class="card">
+        <h3>3️⃣ Abfragen</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Tab <strong>📚 Lernen</strong> öffnen und Abfrage zusammenstellen:</p>
+        <div class="help-row">
+          <span class="help-icon">☑️</span>
+          <div><strong>Unités wählen</strong><br><span>Einzelne Unités antippen um sie an- oder abzuwählen. Mit <strong>Alle / Keine</strong> schnell alles umschalten. Mehrere Unités gleichzeitig möglich.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">🔄</span>
+          <div><strong>Richtung</strong><br><span><strong>Deutsch → Französisch</strong> oder <strong>Französisch → Deutsch</strong>.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">🃏</span>
+          <div><strong>Aufdecken</strong><br><span>Das abzufragende Wort steht oben, die Antwort ist verdeckt. Antippen zum Aufdecken, dann selbst beurteilen: ✗ Falsch oder ✓ Richtig.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">⌨️</span>
+          <div><strong>Eintippen</strong><br><span>Übersetzung selbst eintippen und auf „Überprüfen" tippen. Varianten wie <em>beau / belle</em> werden akzeptiert.</span></div>
+        </div>
+        <div class="help-hint">
+          💡 Nach dem Ergebnis kann man direkt nur die falsch beantworteten Wörter nochmal wiederholen.
+        </div>
+      </div>
+
+      <!-- Schritt 4 -->
+      <div class="card">
+        <h3>4️⃣ Schwierige Wörter ⭐</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Die App merkt sich automatisch welche Wörter schwer fallen:</p>
+        <div class="help-row">
+          <span class="help-icon">🔴</span>
+          <div><strong>Automatisch</strong><br><span>Wörter die <strong>2× oder öfter falsch</strong> beantwortet werden, erscheinen mit einem roten Zähler (z.B. <span style="color:var(--red-text);">2✗</span>) im Vokabeln-Tab.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">⭐</span>
+          <div><strong>Manuell markieren</strong><br><span>Im Tab <strong>📋 Vokabeln</strong> den ⭐-Button neben einem Wort antippen – z.B. gezielt vor einer Schulaufgabe.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">🎯</span>
+          <div><strong>Nur Schwierige üben</strong><br><span>Im Lernen-Tab erscheint die goldene Kachel <strong>⭐ Schwierige Wörter</strong> – antippen und gezielt üben. Kombinierbar mit einzelnen Unités.</span></div>
+        </div>
+        <div class="help-hint">
+          💡 ⭐ lässt sich wieder entfernen sobald du das Wort sicher kannst.
+        </div>
+      </div>
+
+      <!-- Schritt 5 -->
+      <div class="card">
+        <h3>5️⃣ Vokabeln ausblenden</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Im Tab <strong>📋 Vokabeln</strong> gibt es oben rechts zwei Buttons:</p>
+        <div class="help-row">
+          <span class="help-icon">DE</span>
+          <div><strong>Deutsch ausblenden</strong><br><span>Alle deutschen Wörter werden unsichtbar – nur die französische Seite ist sichtbar. Ideal zum stillen Vokabeln-Durchgehen.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">FR</span>
+          <div><strong>Französisch ausblenden</strong><br><span>Alle französischen Wörter werden ausgeblendet – nur Deutsch ist sichtbar.</span></div>
+        </div>
+        <div class="help-row">
+          <span class="help-icon">👆</span>
+          <div><strong>Wort einblenden</strong><br><span>Auf ein ausgeblendetes Wort tippen – es erscheint für <strong>2 Sekunden</strong> blau hinterlegt, dann verschwindet es wieder.</span></div>
+        </div>
+        <div class="help-hint">
+          💡 Beide Buttons gleichzeitig aktiv → alles ausgeblendet, einzeln aufdecken.
+        </div>
+      </div>
+
+      <!-- Speicherung -->
+      <div class="card">
+        <h3>💾 Datenspeicherung</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px;">Alle Vokabeln werden <strong>lokal auf diesem Gerät</strong> gespeichert:</p>
+        <div class="help-row"><span class="help-icon">✅</span><div>Funktioniert offline</div></div>
+        <div class="help-row"><span class="help-icon">✅</span><div>Bleibt nach App-Neustart erhalten</div></div>
+        <div class="help-row"><span class="help-icon">☁️</span><div>Mit <strong>Dropbox-Sync</strong> (siehe unten) zwischen iPhone und iPad synchronisieren</div></div>
+        <div class="help-row"><span class="help-icon">⚠️</span><div>Geht verloren wenn Safari-Daten gelöscht werden (<em>Einstellungen → Safari → Verlauf löschen</em>)</div></div>
+        <div class="help-hint">
+          💡 App auf dem Home-Bildschirm installieren (siehe unten) – dann ist der Speicher vom Safari-Cache getrennt und sicherer.
+        </div>
+      </div>
+
+      <!-- Installieren -->
+      <div class="card">
+        <h3>📲 App installieren</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Als Icon auf dem Home-Bildschirm installieren:</p>
+        <div class="help-step"><span class="step-num">1</span><span>App-URL in <strong>Safari</strong> öffnen (nicht Chrome!)</span></div>
+        <div class="help-step"><span class="step-num">2</span><span>Unten auf das <strong>Teilen-Symbol</strong> tippen (□↑)</span></div>
+        <div class="help-step"><span class="step-num">3</span><span><strong>„Zum Home-Bildschirm"</strong> antippen</span></div>
+        <div class="help-step"><span class="step-num">4</span><span>Namen bestätigen → <strong>„Hinzufügen"</strong></span></div>
+        <div class="help-hint" style="margin-top:10px;">
+          ✅ Läuft danach wie eine normale App – ohne Browser-Leiste, offline-fähig.
+        </div>
+      </div>
+
+      <!-- Update -->
+      <div class="card">
+        <h3>🔄 App aktualisieren</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px;">Die Versionsnummer steht oben rechts neben „Jule Édition". So aktualisieren:</p>
+        <div class="help-row"><span class="help-icon">↺</span><div>Das <strong>↺-Symbol</strong> neben der Versionsnummer antippen – löscht den Cache und lädt die neueste Version.</div></div>
+        <div class="help-hint">💡 Deine Vokabeln bleiben beim Update erhalten.</div>
+      </div>
+
+      <!-- API Key Einrichtung -->
+      <div class="card two-col-full" id="apikey-section">
+        <h3>🔑 API-Key einrichten</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
+          Für die automatische Foto-Erkennung (OCR) wird ein Anthropic API-Key benötigt. Der Key wird <strong>nur lokal auf diesem Gerät</strong> gespeichert – nirgendwo hochgeladen. Jedes Gerät (iPhone, iPad) braucht den Key einmalig.
+        </p>
+        <div class="help-step"><span class="step-num">1</span><span>Auf <strong>console.anthropic.com</strong> registrieren</span></div>
+        <div class="help-step"><span class="step-num">2</span><span>Unter <strong>Billing</strong> mindestens $5 Guthaben aufladen (~300–500 Fotos)</span></div>
+        <div class="help-step"><span class="step-num">3</span><span>Unter <strong>API Keys</strong> → „Create Key" → Key kopieren (<code>sk-ant-...</code>)</span></div>
+        <div class="help-step" style="border:none;"><span class="step-num">4</span><span>Key unten einfügen und speichern:</span></div>
+        <div style="margin-top:12px;">
+          <div style="position:relative;">
+            <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." style="padding-right:44px;" />
+            <button onclick="toggleKeyVis()" id="key-vis-btn" style="position:absolute;right:8px;top:50%;transform:translateY(-50%) translateY(-6px);background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">👁</button>
+          </div>
+          <div id="apikey-status" style="font-size:13px;margin-bottom:8px;min-height:20px;"></div>
+          <button class="btn btn-dark" onclick="saveApiKey()">Key speichern</button>
+          <button class="btn btn-secondary" id="apikey-clear-btn" onclick="clearApiKey()" style="display:none;">Key löschen</button>
+        </div>
+        <div class="help-hint" style="margin-top:12px;">
+          💡 Kosten: ca. 1–2 Cent pro Foto.
+        </div>
+      </div>
+
+      <!-- Dropbox Sync -->
+      <div class="card two-col-full" id="dropbox-section">
+        <h3>☁️ Dropbox-Sync einrichten</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
+          Vokabeln zwischen iPhone und iPad synchronisieren – über eine <code>vokabeln.json</code> in deiner Dropbox. Einmalig pro Gerät einrichten.
+        </p>
+        <div class="help-step"><span class="step-num">1</span><span>Auf <strong>dropbox.com/developers</strong> → „App Console" → „Create app"</span></div>
+        <div class="help-step"><span class="step-num">2</span><span>Scoped access · App folder · beliebiger Name (z.B. <em>Vokabeltrainer</em>)</span></div>
+        <div class="help-step"><span class="step-num">3</span><span>Tab <strong>„Permissions"</strong>: <code>files.content.read</code> und <code>files.content.write</code> aktivieren → Submit</span></div>
+        <div class="help-step"><span class="step-num">4</span><span>Tab <strong>„Settings"</strong> → ganz unten: <strong>„Generated access token"</strong> → „Generate" → kopieren</span></div>
+        <div class="help-step" style="border:none;"><span class="step-num">5</span><span>Token unten einfügen und speichern:</span></div>
+        <div style="margin-top:12px;">
+          <div style="position:relative;">
+            <input type="password" id="dbxtoken-input" placeholder="sl.B.xxxxx..." style="padding-right:44px;" />
+            <button onclick="toggleDbxVis()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%) translateY(-6px);background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">👁</button>
+          </div>
+          <div id="dbxtoken-status" style="font-size:13px;margin-bottom:8px;min-height:20px;"></div>
+          <button class="btn btn-dark" onclick="saveDbxToken()">Token speichern</button>
+          <button class="btn btn-secondary" id="dbxtoken-clear-btn" onclick="clearDbxToken()" style="display:none;">Token löschen</button>
+        </div>
+        <div class="help-hint" style="margin-top:12px;">
+          💡 Nach dem Speichern erscheinen <strong>☁️↑</strong> und <strong>☁️↓</strong> im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen).
+        </div>
+      </div>
+
+      </div><!-- end two-col -->
+    </div><!-- end main-hilfe -->
+
+  </div><!-- end .content -->
+</div><!-- end .app -->
+
+<script>
+// ─── DB ──────────────────────────────────────────────────────────────
+let db = {};
+let stars = {};
+let errors = {};
+let apiKey = '';
+let dbxToken = '';
+try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){}
+try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){}
+try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){}
+try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){}
+try { dbxToken = (localStorage.getItem('vt_dbxtoken') || '').trim(); } catch(e){}
+function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} }
+function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} }
+
+function saveApiKey() {
+  const val = document.getElementById('apikey-input').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    document.getElementById('apikey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ Key muss mit sk-ant- beginnen</span>';
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('vt_apikey', apiKey);
+  const preview = val.substring(0, 14) + '...' + val.substring(val.length - 4);
+  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert: ' + preview + '</span>';
+  document.getElementById('apikey-input').value = '••••••••••••••••••••';
+  document.getElementById('apikey-clear-btn').style.display = 'block';
+  renderInstallHint();
+}
+
+function clearApiKey() {
+  apiKey = '';
+  localStorage.removeItem('vt_apikey');
+  document.getElementById('apikey-input').value = '';
+  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--text2);">Key gelöscht</span>';
+  document.getElementById('apikey-clear-btn').style.display = 'none';
+  renderInstallHint();
+}
+
+function toggleKeyVis() {
+  const inp = document.getElementById('apikey-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function initApiKeyUI() {
+  if (apiKey) {
+    document.getElementById('apikey-input').value = '••••••••••••••••••••';
+    document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">✓ Key gespeichert</span>';
+    document.getElementById('apikey-clear-btn').style.display = 'block';
+  }
+}
+
+// ─── DROPBOX SYNC ────────────────────────────────────────────────────
+function saveDbxToken() {
+  const val = document.getElementById('dbxtoken-input').value.trim();
+  if (!val) { document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--red-text);">⚠️ Token darf nicht leer sein</span>'; return; }
+  dbxToken = val;
+  localStorage.setItem('vt_dbxtoken', dbxToken);
+  const preview = val.substring(0, 8) + '...' + val.substring(val.length - 4);
+  document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert: ' + preview + '</span>';
+  document.getElementById('dbxtoken-input').value = '••••••••••••••••••••';
+  document.getElementById('dbxtoken-clear-btn').style.display = 'block';
+  updateDbxButtons();
+}
+
+function clearDbxToken() {
+  dbxToken = '';
+  localStorage.removeItem('vt_dbxtoken');
+  document.getElementById('dbxtoken-input').value = '';
+  document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--text2);">Token gelöscht</span>';
+  document.getElementById('dbxtoken-clear-btn').style.display = 'none';
+  updateDbxButtons();
+}
+
+function toggleDbxVis() {
+  const inp = document.getElementById('dbxtoken-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function initDbxTokenUI() {
+  if (dbxToken) {
+    document.getElementById('dbxtoken-input').value = '••••••••••••••••••••';
+    document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--green-text);">✓ Token gespeichert</span>';
+    document.getElementById('dbxtoken-clear-btn').style.display = 'block';
+  }
+  updateDbxButtons();
+}
+
+function updateDbxButtons() {
+  const show = !!dbxToken;
+  document.getElementById('dbx-up-btn').style.display = show ? '' : 'none';
+  document.getElementById('dbx-dn-btn').style.display = show ? '' : 'none';
+}
+
+async function syncToDropbox() {
+  if (!dbxToken) { alert('Kein Dropbox-Token gespeichert.'); return; }
+  const btn = document.getElementById('dbx-up-btn');
+  btn.textContent = '⏳'; btn.disabled = true;
+  try {
+    const payload = JSON.stringify({ db, stars, errors }, null, 2);
+    const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + dbxToken,
+        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json', mode: 'overwrite', autorename: false }),
+        'Content-Type': 'application/octet-stream'
+      },
+      body: payload
+    });
+    if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = '☁️↑'; btn.disabled = false; }, 1500);
+  } catch(e) {
+    alert('Hochladen fehlgeschlagen:\n' + e.message);
+    btn.textContent = '☁️↑'; btn.disabled = false;
+  }
+}
+
+async function syncFromDropbox() {
+  if (!dbxToken) { alert('Kein Dropbox-Token gespeichert.'); return; }
+  const btn = document.getElementById('dbx-dn-btn');
+  btn.textContent = '⏳'; btn.disabled = true;
+  try {
+    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + dbxToken,
+        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json' })
+      }
+    });
+    if (res.status === 409) { alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen (☁️↑).'); btn.textContent = '☁️↓'; btn.disabled = false; return; }
+    if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
+    const data = await res.json();
+    if (!data.db) throw new Error('Ungültiges Dateiformat');
+    // merge: add missing vocabs, keep higher error counts, keep stars
+    Object.keys(data.db).forEach(u => {
+      if (!db[u]) db[u] = [];
+      const existing = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+      data.db[u].forEach(v => { const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase(); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
+    });
+    if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
+    if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
+    saveDb(); saveStars();
+    renderVocabScreen(); renderLearnSetup();
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = '☁️↓'; btn.disabled = false; }, 1500);
+  } catch(e) {
+    alert('Laden fehlgeschlagen:\n' + e.message);
+    btn.textContent = '☁️↓'; btn.disabled = false;
+  }
+}
+
+// key for a vocab item
+function vkey(unite, idx) { return unite + '__' + idx; }
+
+// returns all starred/difficult vocab as array of {de,fr,unite,idx}
+function getSchwierig() {
+  const result = [];
+  Object.keys(db).forEach(u => {
+    (db[u]||[]).forEach((v,i) => {
+      const k = vkey(u,i);
+      if (stars[k] || (errors[k]||0) >= 2) result.push({...v, unite:u, idx:i, key:k});
+    });
+  });
+  return result;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────
+let direction = 'de-fr';
+let quizMode = 'cover';
+let cardOrder = 'random';
+let selectedUnites = new Set();
+let quizCards = [], qIdx = 0, qScore = 0, qMissed = [], lastCorrect = false;
+let pendingVocab = [], pendingImages = [];
+let ocrType = 'print';
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────
+function showMain(tab) {
+  ['learn','vocab','upload','hilfe'].forEach(t => {
+    document.getElementById('main-'+t).classList.toggle('active', t===tab);
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+  if (tab==='learn') renderLearnSetup();
+  if (tab==='vocab') renderVocabScreen();
+  if (tab==='upload') renderInstallHint();
+}
+
+// ─── OCR TYPE ────────────────────────────────────────────────────────
+function setOcrType(t) {
+  ocrType = t;
+  document.getElementById('ocr-print').className = 'ocr-type-btn' + (t==='print'?' active':'');
+  document.getElementById('ocr-handwritten').className = 'ocr-type-btn' + (t==='handwritten'?' active':'');
+  document.getElementById('up-icon').textContent = t==='handwritten' ? '✏️' : '📷';
+  document.getElementById('up-zone-text').textContent = t==='handwritten'
+    ? 'Foto vom Heft oder handgeschriebener Liste' : 'Foto oder Screenshot auswählen';
+}
+
+// ─── UPLOAD TAB ──────────────────────────────────────────────────────
+function setUploadTab(t) {
+  document.getElementById('tab-photo').className = 'toggle-btn' + (t==='photo' ? ' active-blue' : '');
+  document.getElementById('tab-manual').className = 'toggle-btn' + (t==='manual' ? ' active-blue' : '');
+  document.getElementById('upload-photo').style.display = t==='photo' ? 'block' : 'none';
+  document.getElementById('upload-manual').style.display = t==='manual' ? 'block' : 'none';
+}
+
+async function handleFiles(e) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  // Reset input so same file can be selected again
+  e.target.value = '';
+  pendingImages = []; pendingVocab = [];
+  document.getElementById('up-previews').innerHTML = '';
+  document.getElementById('up-extracted').style.display = 'none';
+  setStatus('<span class="spinner"></span>Bilder werden geladen…', 'loading');
+  try {
+    for (const file of files) {
+      const b64 = await toBase64(file);
+      pendingImages.push({ b64, mediaType: 'image/jpeg' }); // canvas always outputs jpeg
+      const img = document.createElement('img');
+      img.src = 'data:image/jpeg;base64,' + b64;
+      img.className = 'preview-img';
+      document.getElementById('up-previews').appendChild(img);
+    }
+  } catch(err) {
+    setStatus('⚠️ Foto konnte nicht geladen werden. Bitte in Safari (nicht als App) versuchen, oder "Direkt fotografieren" nutzen.', 'error');
+    return;
+  }
+  const label = ocrType === 'handwritten'
+    ? '<span class="spinner"></span>Handschrift wird erkannt – einen Moment…'
+    : '<span class="spinner"></span>KI erkennt Vokabeln…';
+  setStatus(label, 'loading');
+  await extractVocab();
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    // Step 1: load via object URL into an Image
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      // Step 2: resize to max 1600px (keeps file well under 5MB)
+      const MAX = 1600;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      // Step 3: export as JPEG at 85% quality
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const b64 = dataUrl.split(',')[1];
+      if (b64) { res(b64); return; }
+      rej(new Error('Canvas export fehlgeschlagen'));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      // Canvas failed — fallback to arrayBuffer
+      const url2 = URL.createObjectURL(file);
+      fetch(url2).then(r => r.arrayBuffer()).then(buf => {
+        URL.revokeObjectURL(url2);
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i += 8192)
+          binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+        res(btoa(binary));
+      }).catch(() => {
+        URL.revokeObjectURL(url2);
+        rej(new Error('Foto konnte nicht geladen werden'));
+      });
+    };
+    img.src = url;
+  });
+}
+
+async function extractVocab() {
+  try {
+    const imageBlocks = pendingImages.map(img => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.mediaType, data: img.b64 }
+    }));
+
+    const handwrittenExtra = ocrType === 'handwritten'
+      ? `\nWICHTIG – Handschrift-Erkennung:\n- Dies ist ein Foto von handgeschriebenen Vokabeln (Schülerheft o.ä.)\n- Erkenne die Handschrift so genau wie möglich\n- Französische Akzente korrekt: é, è, ê, à, â, ù, û, î, ô, ç, œ\n- Artikel vollständig: le, la, l', les, un, une\n- Bei unleserlichen Wörtern beste Schätzung eintragen\n- Zwei Spalten: links Französisch, rechts Deutsch (oder umgekehrt)`
+      : `\nWICHTIG:\n- Französische Akzente exakt: é, è, ê, à, â, ù, û, î, ô, ç, œ\n- Artikel vollständig: le, la, l', les, un, une`;
+
+    const prompt = `Analysiere dieses Bild aus dem Französisch-Unterricht.
+Extrahiere ALLE Vokabelpaare Deutsch–Französisch.${handwrittenExtra}
+Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
+[{"de":"das Wort","fr":"le mot"},{"de":"schön","fr":"beau / belle"}]`;
+
+    setStatus('<span class="spinner"></span>Verbinde mit KI…', 'loading');
+
+    if (!apiKey) {
+      setStatus('⚠️ Kein API-Key. Bitte unter <strong>❓ Hilfe → API-Key einrichten</strong>.', 'error');
+      return;
+    }
+
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }]
+        })
+      });
+    } catch(netErr) {
+      setStatus('⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>', 'error');
+      return;
+    }
+
+    if (!res.ok) {
+      let errMsg = 'API Fehler ' + res.status;
+      try {
+        const errData = await res.json();
+        if (errData.error && errData.error.message) errMsg += ': ' + errData.error.message;
+      } catch(e) {}
+      setStatus('⚠️ ' + errMsg, 'error');
+      return;
+    }
+
+    const data = await res.json();
+    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    txt = txt.replace(/```json|```/g,'').trim();
+    const s = txt.indexOf('['), e = txt.lastIndexOf(']');
+    if (s!==-1 && e!==-1) pendingVocab = JSON.parse(txt.slice(s,e+1));
+    if (!pendingVocab.length) throw new Error('Keine Vokabeln erkannt – bitte klareres Foto versuchen');
+    renderExtracted();
+    setStatus('✓ ' + pendingVocab.length + ' Vokabeln erkannt – bitte prüfen und ggf. korrigieren', 'success');
+  } catch(err) {
+    setStatus('⚠️ ' + err.message, 'error');
+  }
+}
+
+function renderExtracted() {
+  const unite = document.getElementById('up-unite-name').value.trim() || 'Unité ?';
+  const existing = new Set((db[unite]||[]).map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  let dupeCount = 0;
+  document.getElementById('up-vocab-list').innerHTML = pendingVocab.map((v,i) => {
+    const isDupe = v.de && v.fr && existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase());
+    if (isDupe) dupeCount++;
+    return `<div class="edit-row${isDupe?' is-dupe':''}">
+      <input class="edit-cell de-cell" value="${esc(v.de)}" placeholder="Deutsch" oninput="updatePending(${i},'de',this.value)" />
+      <input class="edit-cell" value="${esc(v.fr)}" placeholder="Französisch" oninput="updatePending(${i},'fr',this.value)" />
+      ${isDupe ? '<span class="dupe-badge">Duplikat</span>' : ''}
+      <button class="del-btn" onclick="removePending(${i})" style="font-size:16px;">✕</button>
+    </div>`;
+  }).join('');
+  const total = pendingVocab.length;
+  document.getElementById('up-count').textContent = dupeCount > 0 ? `${total} (${dupeCount} Duplikat${dupeCount>1?'e':''})` : total;
+  document.getElementById('up-extracted').style.display = 'block';
+}
+
+function updatePending(i, field, val) { if(pendingVocab[i]) pendingVocab[i][field] = val; }
+function removePending(i) { pendingVocab.splice(i,1); document.getElementById('up-count').textContent=pendingVocab.length; renderExtracted(); }
+function addEmptyRow() { pendingVocab.push({de:'',fr:''}); renderExtracted(); document.getElementById('up-extracted').style.display='block'; }
+
+function saveVocab() {
+  const unite = document.getElementById('up-unite-name').value.trim() || 'Unité ?';
+  const valid = pendingVocab.filter(v => v.de && v.de.trim() && v.fr && v.fr.trim());
+  if (!valid.length) return;
+  if (!db[unite]) db[unite] = [];
+  const existing = new Set(db[unite].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const newOnes = valid.filter(v => !existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const dupes = valid.length - newOnes.length;
+  db[unite].push(...newOnes);
+  saveDb();
+  const msg = dupes > 0
+    ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.`
+    : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`;
+  setStatus(msg, 'success');
+  pendingVocab = []; pendingImages = [];
+  setTimeout(resetUpload, 2000);
+}
+
+function resetUpload() {
+  document.getElementById('up-previews').innerHTML = '';
+  document.getElementById('up-extracted').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  setStatus('', '');
+}
+
+function saveManual() {
+  const unite = document.getElementById('man-unite-name').value.trim() || 'Unité ?';
+  const lines = document.getElementById('man-text').value.trim().split('\n').filter(Boolean);
+  const pairs = lines.map(l => { const p = l.split(';'); return p.length>=2 ? {de:p[0].trim(),fr:p[1].trim()} : null; }).filter(Boolean);
+  if (!pairs.length) { alert('Keine gültigen Einträge gefunden.\nFormat: deutsch;französisch'); return; }
+  if (!db[unite]) db[unite] = [];
+  const existing = new Set(db[unite].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const newOnes = pairs.filter(v => !existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const dupes = pairs.length - newOnes.length;
+  db[unite].push(...newOnes);
+  saveDb();
+  document.getElementById('man-text').value = '';
+  document.getElementById('man-unite-name').value = '';
+  alert(dupes > 0 ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.` : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`);
+}
+
+function setStatus(html, cls) {
+  const el = document.getElementById('up-status');
+  el.innerHTML = html;
+  el.className = 'status-msg' + (cls ? ' status-' + cls : '');
+}
+
+// ─── VOCAB SCREEN ────────────────────────────────────────────────────
+let hideDE = false;
+let hideFR = false;
+
+function toggleHide(col) {
+  if (col === 'de') hideDE = !hideDE;
+  else hideFR = !hideFR;
+  document.getElementById('hide-de-btn').classList.toggle('active', hideDE);
+  document.getElementById('hide-fr-btn').classList.toggle('active', hideFR);
+  renderVocabScreen();
+}
+
+function revealWord(el) {
+  el.classList.add('revealed');
+  setTimeout(() => el.classList.remove('revealed'), 2000);
+}
+
+function renderVocabScreen() {
+  const unites = Object.keys(db);
+  const el = document.getElementById('vocab-content');
+  if (!unites.length) {
+    el.innerHTML = '<div class="empty"><span class="emoji">📭</span>Noch keine Vokabeln.<br>Füge Screenshots hinzu.</div>';
+    return;
+  }
+  el.innerHTML = unites.map(u => {
+    const pairs = db[u];
+    const otherUnites = unites.filter(x => x !== u);
+    const rows = pairs.map((v,i) => {
+      const k = vkey(u,i);
+      const isStarred = !!stars[k];
+      const errCount = errors[k]||0;
+      const autoFlag = errCount >= 2 ? `<span style="font-size:11px;color:var(--red-text);margin-left:4px;">${errCount}✗</span>` : '';
+      const deHtml = hideDE
+        ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.de)}</span>${autoFlag}`
+        : `${esc(v.de)}${autoFlag}`;
+      const frHtml = hideFR
+        ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.fr)}</span>`
+        : esc(v.fr);
+      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:44px;"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
+      return `<div class="vocab-row">
+        <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
+        <span class="de" style="flex:1;">${deHtml}</span>
+        <span class="fr" style="flex:1;">${frHtml}</span>
+        ${moveSelect}
+        <button class="del-btn" onclick="delItem('${esc(u)}',${i})">✕</button>
+      </div>`;
+    }).join('');
+    const starredCount = pairs.filter((_,i)=>stars[vkey(u,i)]).length;
+    const hardCount = pairs.filter((_,i)=>(errors[vkey(u,i)]||0)>=2).length;
+    const badges = [
+      starredCount ? `<span style="color:#b07d20;">⭐${starredCount}</span>` : '',
+      hardCount ? `<span style="color:var(--red-text);">✗${hardCount}</span>` : ''
+    ].filter(Boolean).join(' ');
+    return `<div class="unite-section">
+      <div class="unite-header">
+        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;" title="Tippen zum Umbenennen">
+          ${esc(u)} ✏️ <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span>
+        </span>
+        <button class="del-btn" onclick="delUnite('${esc(u)}')">Löschen</button>
+      </div>
+      <div class="vocab-scroll">${rows}</div>
+    </div>`;
+  }).join('<div class="sep"></div>');
+}
+
+function toggleStar(unite, idx) {
+  const k = vkey(unite, idx);
+  if (stars[k]) delete stars[k]; else stars[k] = true;
+  saveStars(); renderVocabScreen();
+}
+
+function delItem(unite, i) { db[unite].splice(i,1); if(!db[unite].length) delete db[unite]; saveDb(); renderVocabScreen(); }
+function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); renderLearnSetup(); }
+
+function renameUnite(oldName) {
+  const newName = prompt('Neuer Name für „' + oldName + '":', oldName);
+  if (!newName || newName.trim() === oldName) return;
+  const n = newName.trim();
+  if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
+  db[n] = db[oldName]; delete db[oldName];
+  const newStars = {}, newErrors = {};
+  Object.keys(stars).forEach(k => { newStars[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = stars[k]; });
+  Object.keys(errors).forEach(k => { newErrors[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = errors[k]; });
+  stars = newStars; errors = newErrors;
+  saveDb(); saveStars(); renderVocabScreen(); renderLearnSetup();
+}
+
+function moveVocab(fromUnite, idx, toUnite) {
+  if (!toUnite || !db[fromUnite] || !db[fromUnite][idx]) return;
+  const vocab = db[fromUnite][idx];
+  if (!db[toUnite]) db[toUnite] = [];
+  const exists = db[toUnite].some(v => v.de.trim().toLowerCase()===vocab.de.trim().toLowerCase() && v.fr.trim().toLowerCase()===vocab.fr.trim().toLowerCase());
+  if (!exists) db[toUnite].push(vocab);
+  db[fromUnite].splice(idx, 1);
+  if (!db[fromUnite].length) delete db[fromUnite];
+  saveDb(); renderVocabScreen(); renderLearnSetup();
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────
+function exportData() {
+  const data = JSON.stringify({ db, stars, errors }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'vokabeln_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.db) { alert('Ungültige Datei.'); return; }
+      // Merge
+      Object.keys(data.db).forEach(u => {
+        if (!db[u]) db[u] = [];
+        const existing = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+        data.db[u].forEach(v => { const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase(); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
+      });
+      if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
+      if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
+      saveDb(); saveStars();
+      renderVocabScreen(); renderLearnSetup();
+      alert('✓ Import erfolgreich!');
+    } catch(err) { alert('Fehler beim Import: ' + err.message); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ─── TEXT TO SPEECH ──────────────────────────────────────────────────
+let currentCard = null;
+function speak(which) {
+  if (!currentCard) return;
+  const isFR = (which==='ask' && direction==='fr-de') || (which==='ans' && direction==='de-fr');
+  const text = which==='ask' ? (direction==='de-fr'?currentCard.de:currentCard.fr) : (direction==='de-fr'?currentCard.fr:currentCard.de);
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = isFR ? 'fr-FR' : 'de-DE';
+  utt.rate = 0.9;
+  const voices = window.speechSynthesis.getVoices();
+  const match = voices.find(v => v.lang.startsWith(isFR?'fr':'de'));
+  if (match) utt.voice = match;
+  window.speechSynthesis.speak(utt);
+}
+
+// ─── FILTER ──────────────────────────────────────────────────────────
+let cardFilter = 'all';
+function setFilter(f) {
+  cardFilter = f;
+  document.getElementById('filter-all').className = 'toggle-btn' + (f==='all'?' active-blue':'');
+  document.getElementById('filter-new').className = 'toggle-btn' + (f==='new'?' active-blue':'');
+}
+
+// ─── LEARN SETUP ─────────────────────────────────────────────────────
+let selectionInitialized = false;
+
+function renderLearnSetup() {
+  const unites = Object.keys(db);
+  const listEl = document.getElementById('unite-select-list');
+  const emptyEl = document.getElementById('learn-empty');
+  const optEl = document.getElementById('learn-options');
+  const schwEl = document.getElementById('schwierig-card-wrap');
+
+  // Schwierig card
+  const schwList = getSchwierig();
+  if (schwList.length) {
+    const selSch = selectedUnites.has('__schwierig__');
+    schwEl.innerHTML = `<div class="schwierig-card${selSch?' selected':''}" onclick="toggleUnite('__schwierig__')">
+      <div class="sc-left">
+        <div class="sc-title">⭐ Schwierige Wörter</div>
+        <div class="sc-sub">${schwList.length} Wörter · ${schwList.filter(v=>stars[v.key]).length} manuell markiert · ${schwList.filter(v=>(errors[v.key]||0)>=2).length} oft falsch</div>
+      </div>
+      <span class="sc-check">✓</span>
+    </div>`;
+  } else {
+    schwEl.innerHTML = '';
+    selectedUnites.delete('__schwierig__');
+  }
+
+  if (!unites.length && !schwList.length) {
+    listEl.innerHTML = ''; emptyEl.style.display='block'; optEl.style.display='none';
+    selectionInitialized = false; return;
+  }
+  emptyEl.style.display = 'none';
+  optEl.style.display = 'block';
+
+  // Only auto-select all on very first load, never after user interaction
+  if (!selectionInitialized) {
+    unites.forEach(u => selectedUnites.add(u));
+    selectionInitialized = true;
+  }
+
+  // Remove selected unites that no longer exist in db
+  [...selectedUnites].forEach(u => { if (u !== '__schwierig__' && !db[u]) selectedUnites.delete(u); });
+
+  const selNormalCount = [...selectedUnites].filter(u => u!=='__schwierig__' && db[u]).length;
+  const selWordCount = [...selectedUnites].filter(u=>u!=='__schwierig__'&&db[u]).reduce((s,u)=>s+(db[u].length),0);
+  const selSchCount = selectedUnites.has('__schwierig__') ? schwList.length : 0;
+  const totalSelWords = selWordCount + selSchCount;
+
+  listEl.innerHTML = (unites.length ? `
+    <div class="unite-select-header">
+      <span>${selNormalCount} von ${unites.length} · ${totalSelWords} Wörter</span>
+      <div>
+        <button class="link-btn" onclick="selectAll()">Alle</button>
+        <button class="link-btn" onclick="selectNone()">Keine</button>
+      </div>
+    </div>` : '') +
+    unites.map(u => {
+      const sel = selectedUnites.has(u);
+      return `<div class="unite-item${sel?' selected':''}" onclick="toggleUnite('${esc(u)}')">
+        <div>
+          <div class="uname">${esc(u)}</div>
+          <div class="ucount">${db[u].length} Wörter</div>
+        </div>
+        <span class="check">✓</span>
+      </div>`;
+    }).join('');
+}
+
+function selectAll() { Object.keys(db).forEach(u=>selectedUnites.add(u)); renderLearnSetup(); }
+function selectNone() { selectedUnites.clear(); renderLearnSetup(); }
+function toggleUnite(u) { selectedUnites.has(u)?selectedUnites.delete(u):selectedUnites.add(u); renderLearnSetup(); }
+
+function setDir(d) {
+  direction = d;
+  document.getElementById('dir-de-fr').className = 'toggle-btn' + (d==='de-fr'?' active-blue':'');
+  document.getElementById('dir-fr-de').className = 'toggle-btn' + (d==='fr-de'?' active-blue':'');
+}
+function setMode(m) {
+  quizMode = m;
+  document.getElementById('mode-cover').className = 'toggle-btn' + (m==='cover'?' active-green':'');
+  document.getElementById('mode-type').className = 'toggle-btn' + (m==='type'?' active-green':'');
+}
+function setOrder(o) {
+  cardOrder = o;
+  document.getElementById('order-random').className = 'toggle-btn' + (o==='random'?' active-blue':'');
+  document.getElementById('order-sequential').className = 'toggle-btn' + (o==='sequential'?' active-blue':'');
+}
+
+// ─── QUIZ ────────────────────────────────────────────────────────────
+function startQuiz() {
+  let all = [];
+  if (selectedUnites.has('__schwierig__')) {
+    all.push(...getSchwierig());
+  }
+  selectedUnites.forEach(u => {
+    if (u === '__schwierig__') return;
+    if (db[u]) db[u].forEach((v,i) => all.push({...v, unite:u, idx:i, key:vkey(u,i)}));
+  });
+  // deduplicate by key
+  const seen = new Set();
+  all = all.filter(v => { if(seen.has(v.key)) return false; seen.add(v.key); return true; });
+  // apply filter
+  if (cardFilter === 'new') {
+    const filtered = all.filter(v => !v.key || (!(errors[v.key]||0) && !stars[v.key]));
+    if (!filtered.length) { alert('Keine neuen Wörter – alle wurden schon mindestens einmal beantwortet.'); return; }
+    all = filtered;
+  }
+  if (!all.length) { alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.'); return; }
+  quizCards = cardOrder === 'random' ? shuffle(all) : all;
+  qIdx=0; qScore=0; qMissed=[];
+  document.getElementById('learn-setup').style.display='none';
+  document.getElementById('learn-results').style.display='none';
+  document.getElementById('learn-quiz').style.display='block';
+  showCard();
+}
+
+function showCard() {
+  const card = quizCards[qIdx];
+  currentCard = card;
+  const total = quizCards.length;
+  document.getElementById('q-progress').textContent = (qIdx+1)+' / '+total;
+  document.getElementById('q-score-live').textContent = qScore+' richtig';
+  document.getElementById('q-fill').style.width = (qIdx/total*100)+'%';
+  document.getElementById('q-ask-lang').textContent = direction==='de-fr'?'Deutsch':'Französisch';
+  document.getElementById('q-ask-word').textContent = direction==='de-fr'?card.de:card.fr;
+  document.getElementById('q-ans-lang').textContent = direction==='de-fr'?'Französisch':'Deutsch';
+  document.getElementById('q-ans-word').textContent = direction==='de-fr'?card.fr:card.de;
+  lastCorrect = false;
+  document.getElementById('q-revealed').style.display='none';
+  document.getElementById('q-nav-after').style.display='none';
+  document.getElementById('q-type-feedback').innerHTML='';
+  if (quizMode==='cover') {
+    document.getElementById('q-answer-card').style.display='block';
+    document.getElementById('q-cover').style.display='flex';
+    document.getElementById('q-type-area').style.display='none';
+    document.getElementById('q-nav-cover').style.display='none';
+    document.getElementById('q-check-wrap').style.display='none';
+  } else {
+    document.getElementById('q-answer-card').style.display='none';
+    document.getElementById('q-cover').style.display='none';
+    document.getElementById('q-type-area').style.display='block';
+    document.getElementById('q-check-wrap').style.display='block';
+    document.getElementById('q-nav-cover').style.display='none';
+    const inp=document.getElementById('q-type-input');
+    inp.value=''; inp.className='answer-input';
+    document.getElementById('q-check-btn').disabled=false;
+    setTimeout(()=>inp.focus(),100);
+  }
+}
+
+function reveal() {
+  document.getElementById('q-cover').style.display='none';
+  document.getElementById('q-revealed').style.display='block';
+  document.getElementById('q-nav-cover').style.display='flex';
+}
+
+function checkAnswer() {
+  const card = quizCards[qIdx];
+  const correct = direction==='de-fr'?card.fr:card.de;
+  const inp = document.getElementById('q-type-input');
+  const user = inp.value.trim().toLowerCase();
+  const corr = correct.toLowerCase().replace(/[()]/g,'').trim();
+  const ok = user===corr || corr.split('/').map(s=>s.trim()).includes(user);
+  lastCorrect = ok;
+  inp.className = 'answer-input ' + (ok?'correct':'wrong');
+  const fb = document.getElementById('q-type-feedback');
+  fb.innerHTML = ok
+    ? '<div class="feedback-pill pill-ok">✓ Richtig!</div>'
+    : `<div class="feedback-pill pill-nok">✗ Falsch</div><div class="correct-hint">Richtig: <strong>${esc(correct)}</strong></div>`;
+  document.getElementById('q-check-btn').disabled=true;
+  document.getElementById('q-check-wrap').style.display='none';
+  document.getElementById('q-nav-after').style.display='flex';
+  if (ok) {
+    qScore++;
+  } else {
+    qMissed.push(card);
+    if (card.key) { errors[card.key] = (errors[card.key]||0)+1; saveStars(); }
+  }
+}
+
+function nextCard(correct) {
+  if (quizMode==='cover') {
+    if(correct) qScore++;
+    else {
+      qMissed.push(quizCards[qIdx]);
+      const card = quizCards[qIdx];
+      if (card.key) { errors[card.key] = (errors[card.key]||0)+1; saveStars(); }
+    }
+  }
+  qIdx++;
+  if (qIdx>=quizCards.length) showResults(); else showCard();
+}
+
+function showResults() {
+  document.getElementById('learn-quiz').style.display='none';
+  document.getElementById('learn-results').style.display='block';
+  const pct = Math.round(qScore/quizCards.length*100);
+  document.getElementById('r-score').textContent = qScore+'/'+quizCards.length;
+  document.getElementById('r-sub').textContent = pct+'% richtig – '+emoji(pct);
+  const ms = document.getElementById('r-missed-sec');
+  const rb = document.getElementById('r-retry-btn');
+  if (qMissed.length) {
+    ms.style.display='block'; rb.style.display='block';
+    document.getElementById('r-missed').innerHTML = qMissed.map(v=>
+      `<li class="vocab-row"><span class="de">${esc(v.de)}</span><span class="fr">${esc(v.fr)}</span></li>`
+    ).join('');
+  } else { ms.style.display='none'; rb.style.display='none'; }
+}
+
+function restartMissed() {
+  if (!qMissed.length) { backToSetup(); return; }
+  quizCards=shuffle(qMissed); qIdx=0; qScore=0; qMissed=[];
+  document.getElementById('learn-results').style.display='none';
+  document.getElementById('learn-quiz').style.display='block';
+  showCard();
+}
+
+function abortQuiz() { document.getElementById('learn-quiz').style.display='none'; document.getElementById('learn-setup').style.display='block'; }
+function backToSetup() { document.getElementById('learn-results').style.display='none'; document.getElementById('learn-setup').style.display='block'; renderLearnSetup(); }
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+function shuffle(arr) { return [...arr].sort(()=>Math.random()-0.5); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function emoji(pct) { if(pct===100)return'🏆 Perfekt!'; if(pct>=80)return'🌟 Super!'; if(pct>=60)return'👍 Gut!'; if(pct>=40)return'💪 Weiter üben!'; return'📚 Noch mal!'; }
+
+function renderInstallHint() {
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  document.getElementById('install-hint').style.display = (isIOS && !isStandalone) ? 'block' : 'none';
+  document.getElementById('apikey-banner').style.display = apiKey ? 'none' : 'block';
+}
+
+// ─── SERVICE WORKER ───────────────────────────────────────────────────
+async function forceUpdate() {
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const reg of regs) await reg.unregister();
+  }
+  const keys = await caches.keys();
+  for (const key of keys) await caches.delete(key);
+  window.location.reload(true);
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// Init
+renderLearnSetup();
+initApiKeyUI();
+initDbxTokenUI();
+</script>
+</body>
+</html>

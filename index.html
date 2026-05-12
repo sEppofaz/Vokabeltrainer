@@ -470,6 +470,23 @@
       -webkit-user-select: none; user-select: none;
     }
     .hide-col-btn.active { background: var(--accent); color: var(--bg); border-color: transparent; }
+    .btn-group { position: relative; display: inline-block; }
+    .btn-dropdown {
+      display: none; position: absolute; right: 0; top: calc(100% + 5px);
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: var(--radius); box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      z-index: 200; min-width: 150px; overflow: hidden;
+    }
+    .btn-dropdown button, .btn-dropdown label {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 11px 14px; background: none; border: none;
+      text-align: left; font-size: 14px; color: var(--text);
+      cursor: pointer; font-family: inherit; box-sizing: border-box;
+    }
+    .btn-dropdown button:hover, .btn-dropdown label:hover { background: var(--bg3); }
+    .btn-dropdown button:not(:last-child), .btn-dropdown label:not(:last-child) {
+      border-bottom: 0.5px solid var(--border);
+    }
     .vocab-word-hidden {
       color: transparent !important;
       background: var(--bg3);
@@ -561,7 +578,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v33)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v34)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -694,10 +711,20 @@
           <div style="display:flex;gap:6px;align-items:center;">
             <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')">DE</button>
             <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')">FR</button>
-            <button class="hide-col-btn" onclick="exportData()" title="Exportieren">⬆️</button>
-            <label class="hide-col-btn" style="cursor:pointer;" title="Importieren">⬇️<input type="file" accept=".json" onchange="importData(event)" style="display:none;"></label>
-            <button class="hide-col-btn" id="dbx-up-btn" onclick="syncToDropbox()" title="Zu Dropbox hochladen" style="display:none;">☁️↑</button>
-            <button class="hide-col-btn" id="dbx-dn-btn" onclick="syncFromDropbox()" title="Von Dropbox laden" style="display:none;">☁️↓</button>
+            <div class="btn-group">
+              <button class="hide-col-btn" onclick="toggleMenu('menu-file')">📁 ▾</button>
+              <div id="menu-file" class="btn-dropdown">
+                <button onclick="exportData();closeMenus()">⬆️ Exportieren</button>
+                <label>⬇️ Importieren<input type="file" accept=".json" onchange="importData(event);closeMenus()" style="display:none;"></label>
+              </div>
+            </div>
+            <div class="btn-group" id="dbx-group" style="display:none;">
+              <button class="hide-col-btn" onclick="toggleMenu('menu-dbx')">☁️ ▾</button>
+              <div id="menu-dbx" class="btn-dropdown">
+                <button id="dbx-up-btn" onclick="syncToDropbox();closeMenus()">☁️↑ Hochladen</button>
+                <button id="dbx-dn-btn" onclick="syncFromDropbox();closeMenus()">☁️↓ Laden</button>
+              </div>
+            </div>
           </div>
         </div>
         <div id="vocab-content"></div>
@@ -1175,10 +1202,21 @@ function disconnectDropbox() {
   updateDbxButtons();
 }
 
+function toggleMenu(id) {
+  const el = document.getElementById(id);
+  const isOpen = el.style.display === 'block';
+  closeMenus();
+  if (!isOpen) el.style.display = 'block';
+}
+function closeMenus() {
+  document.querySelectorAll('.btn-dropdown').forEach(d => d.style.display = 'none');
+}
+document.addEventListener('click', e => { if (!e.target.closest('.btn-group')) closeMenus(); });
+
 function updateDbxButtons() {
   const connected = !!dbxRefreshToken;
-  document.getElementById('dbx-up-btn').style.display = connected ? '' : 'none';
-  document.getElementById('dbx-dn-btn').style.display = connected ? '' : 'none';
+  const grp = document.getElementById('dbx-group');
+  if (grp) grp.style.display = connected ? '' : 'none';
   const sec = document.getElementById('dbx-connected-section');
   if (sec) sec.style.display = connected ? 'block' : 'none';
   const connectBtn = document.getElementById('dbx-connect-btn');

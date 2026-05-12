@@ -971,24 +971,31 @@
       <div class="card two-col-full" id="dropbox-section">
         <h3>☁️ Dropbox-Sync einrichten</h3>
         <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px;">
-          Vokabeln zwischen iPhone und iPad synchronisieren – über eine <code>vokabeln.json</code> in deiner Dropbox. Einmalig pro Gerät einrichten.
+          Vokabeln zwischen iPhone und iPad synchronisieren – jeder bringt seinen eigenen Dropbox-Account mit. Einmalige Einrichtung pro Gerät, danach dauerhaft aktiv.
         </p>
+
         <div class="help-step"><span class="step-num">1</span><span>Auf <strong>dropbox.com/developers</strong> → „App Console" → „Create app"</span></div>
         <div class="help-step"><span class="step-num">2</span><span>Scoped access · App folder · beliebiger Name (z.B. <em>Vokabeltrainer</em>)</span></div>
-        <div class="help-step"><span class="step-num">3</span><span>Tab <strong>„Permissions"</strong>: <code>files.content.read</code> und <code>files.content.write</code> aktivieren → Submit</span></div>
-        <div class="help-step"><span class="step-num">4</span><span>Tab <strong>„Settings"</strong> → ganz unten: <strong>„Generated access token"</strong> → „Generate" → kopieren</span></div>
-        <div class="help-step" style="border:none;"><span class="step-num">5</span><span>Token unten einfügen und speichern:</span></div>
+        <div class="help-step"><span class="step-num">3</span><span>Tab <strong>„Permissions"</strong>: <code>files.content.read</code> und <code>files.content.write</code> aktivieren → „Submit"</span></div>
+        <div class="help-step"><span class="step-num">4</span><span>Tab <strong>„Settings"</strong> → Abschnitt <strong>„OAuth 2"</strong> → Redirect URIs → diese URL eintragen und bestätigen:<br><code style="font-size:11px;word-break:break-all;">https://seppofaz.github.io/Vokabeltrainer/</code></span></div>
+        <div class="help-step" style="border:none;"><span class="step-num">5</span><span>Ebenfalls in „Settings": <strong>App key</strong> (kurzer alphanumerischer Code, kein Secret) kopieren und hier eintragen:</span></div>
+
         <div style="margin-top:12px;">
-          <div style="position:relative;">
-            <input type="password" id="dbxtoken-input" placeholder="sl.B.xxxxx..." style="padding-right:44px;" />
-            <button onclick="toggleDbxVis()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%) translateY(-6px);background:none;border:none;font-size:18px;cursor:pointer;color:var(--text2);">👁</button>
+          <input type="text" id="dbx-appkey-input" placeholder="App Key (z.B. abc123xyz...)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          <div id="dbx-appkey-status" style="font-size:13px;margin-bottom:8px;min-height:20px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <button class="btn btn-dark" onclick="saveDbxAppKey()">App Key speichern</button>
+            <button class="btn btn-secondary" id="dbx-connect-btn" onclick="startDropboxAuth()" style="display:none;">☁️ Mit Dropbox verbinden</button>
           </div>
-          <div id="dbxtoken-status" style="font-size:13px;margin-bottom:8px;min-height:20px;"></div>
-          <button class="btn btn-dark" onclick="saveDbxToken()">Token speichern</button>
-          <button class="btn btn-secondary" id="dbxtoken-clear-btn" onclick="clearDbxToken()" style="display:none;">Token löschen</button>
         </div>
+
+        <div id="dbx-connected-section" style="display:none;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:13px;color:var(--green-text);margin-bottom:10px;">✓ Mit Dropbox verbunden – Login bleibt dauerhaft aktiv</div>
+          <button class="btn btn-secondary" onclick="disconnectDropbox()">Verbindung trennen</button>
+        </div>
+
         <div class="help-hint" style="margin-top:12px;">
-          💡 Nach dem Speichern erscheinen <strong>☁️↑</strong> und <strong>☁️↓</strong> im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen).
+          💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen). Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".
         </div>
       </div>
 
@@ -1004,12 +1011,18 @@ let db = {};
 let stars = {};
 let errors = {};
 let apiKey = '';
-let dbxToken = '';
+let dbxAppKey = '';
+let dbxAccessToken = '';
+let dbxRefreshToken = '';
+let dbxTokenExpiry = 0;
 try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){}
 try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){}
 try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){}
 try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){}
-try { dbxToken = (localStorage.getItem('vt_dbxtoken') || '').trim(); } catch(e){}
+try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(e){}
+try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){}
+try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){}
+try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){}
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} }
 
@@ -1051,49 +1064,118 @@ function initApiKeyUI() {
 }
 
 // ─── DROPBOX SYNC ────────────────────────────────────────────────────
-function saveDbxToken() {
-  const val = document.getElementById('dbxtoken-input').value.trim();
-  if (!val) { document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--red-text);">⚠️ Token darf nicht leer sein</span>'; return; }
-  dbxToken = val;
-  localStorage.setItem('vt_dbxtoken', dbxToken);
-  const preview = val.substring(0, 8) + '...' + val.substring(val.length - 4);
-  document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert: ' + preview + '</span>';
-  document.getElementById('dbxtoken-input').value = '••••••••••••••••••••';
-  document.getElementById('dbxtoken-clear-btn').style.display = 'block';
+const DBX_REDIRECT = 'https://seppofaz.github.io/Vokabeltrainer/';
+
+function saveDbxAppKey() {
+  const val = document.getElementById('dbx-appkey-input').value.trim();
+  if (!val) { document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ App Key darf nicht leer sein</span>'; return; }
+  dbxAppKey = val;
+  localStorage.setItem('vt_dbx_appkey', dbxAppKey);
+  document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert</span>';
   updateDbxButtons();
 }
 
-function clearDbxToken() {
-  dbxToken = '';
-  localStorage.removeItem('vt_dbxtoken');
-  document.getElementById('dbxtoken-input').value = '';
-  document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--text2);">Token gelöscht</span>';
-  document.getElementById('dbxtoken-clear-btn').style.display = 'none';
+async function startDropboxAuth() {
+  if (!dbxAppKey) { alert('Bitte zuerst den App Key speichern.'); return; }
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const verifier = btoa(String.fromCharCode(...array)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  localStorage.setItem('vt_pkce_verifier', verifier);
+  const params = new URLSearchParams({
+    client_id: dbxAppKey, response_type: 'code',
+    code_challenge: challenge, code_challenge_method: 'S256',
+    token_access_type: 'offline', redirect_uri: DBX_REDIRECT
+  });
+  window.location.href = 'https://www.dropbox.com/oauth2/authorize?' + params;
+}
+
+async function handleDropboxCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (!code) return;
+  const verifier = localStorage.getItem('vt_pkce_verifier');
+  if (!verifier || !dbxAppKey) return;
+  try {
+    const res = await fetch('https://api.dropbox.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code, grant_type: 'authorization_code',
+        client_id: dbxAppKey, code_verifier: verifier, redirect_uri: DBX_REDIRECT
+      })
+    });
+    const d = await res.json();
+    if (d.access_token) {
+      dbxAccessToken = d.access_token;
+      dbxRefreshToken = d.refresh_token || '';
+      dbxTokenExpiry = Date.now() + (d.expires_in || 14400) * 1000;
+      localStorage.setItem('vt_dbx_access', dbxAccessToken);
+      localStorage.setItem('vt_dbx_refresh', dbxRefreshToken);
+      localStorage.setItem('vt_dbx_expiry', String(dbxTokenExpiry));
+      localStorage.removeItem('vt_pkce_verifier');
+      window.history.replaceState({}, '', DBX_REDIRECT);
+    }
+  } catch(e) {}
   updateDbxButtons();
 }
 
-function toggleDbxVis() {
-  const inp = document.getElementById('dbxtoken-input');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
+async function getValidAccessToken() {
+  if (!dbxRefreshToken) return null;
+  if (dbxAccessToken && Date.now() < dbxTokenExpiry - 300000) return dbxAccessToken;
+  try {
+    const res = await fetch('https://api.dropbox.com/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token', refresh_token: dbxRefreshToken, client_id: dbxAppKey
+      })
+    });
+    const d = await res.json();
+    if (d.access_token) {
+      dbxAccessToken = d.access_token;
+      dbxTokenExpiry = Date.now() + (d.expires_in || 14400) * 1000;
+      localStorage.setItem('vt_dbx_access', dbxAccessToken);
+      localStorage.setItem('vt_dbx_expiry', String(dbxTokenExpiry));
+      return dbxAccessToken;
+    }
+  } catch(e) {}
+  return null;
 }
 
-function initDbxTokenUI() {
-  if (dbxToken) {
-    document.getElementById('dbxtoken-input').value = '••••••••••••••••••••';
-    document.getElementById('dbxtoken-status').innerHTML = '<span style="color:var(--green-text);">✓ Token gespeichert</span>';
-    document.getElementById('dbxtoken-clear-btn').style.display = 'block';
-  }
+function disconnectDropbox() {
+  if (!confirm('Dropbox-Verbindung wirklich trennen?')) return;
+  dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0;
+  localStorage.removeItem('vt_dbx_access');
+  localStorage.removeItem('vt_dbx_refresh');
+  localStorage.removeItem('vt_dbx_expiry');
   updateDbxButtons();
 }
 
 function updateDbxButtons() {
-  const show = !!dbxToken;
-  document.getElementById('dbx-up-btn').style.display = show ? '' : 'none';
-  document.getElementById('dbx-dn-btn').style.display = show ? '' : 'none';
+  const connected = !!dbxRefreshToken;
+  document.getElementById('dbx-up-btn').style.display = connected ? '' : 'none';
+  document.getElementById('dbx-dn-btn').style.display = connected ? '' : 'none';
+  const sec = document.getElementById('dbx-connected-section');
+  if (sec) sec.style.display = connected ? 'block' : 'none';
+  const connectBtn = document.getElementById('dbx-connect-btn');
+  if (connectBtn) connectBtn.style.display = (dbxAppKey && !connected) ? 'inline-block' : 'none';
+}
+
+function initDbxUI() {
+  if (dbxAppKey) {
+    const inp = document.getElementById('dbx-appkey-input');
+    if (inp) { inp.value = dbxAppKey.substring(0,4) + '••••' + dbxAppKey.slice(-2); }
+    const st = document.getElementById('dbx-appkey-status');
+    if (st) st.innerHTML = '<span style="color:var(--green-text);">✓ App Key gespeichert</span>';
+  }
+  updateDbxButtons();
 }
 
 async function syncToDropbox() {
-  if (!dbxToken) { alert('Kein Dropbox-Token gespeichert.'); return; }
+  const token = await getValidAccessToken();
+  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Hilfe-Tab (❓) → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-up-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
@@ -1101,7 +1183,7 @@ async function syncToDropbox() {
     const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer ' + dbxToken,
+        'Authorization': 'Bearer ' + token,
         'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json', mode: 'overwrite', autorename: false }),
         'Content-Type': 'application/octet-stream'
       },
@@ -1111,20 +1193,21 @@ async function syncToDropbox() {
     btn.textContent = '✓';
     setTimeout(() => { btn.textContent = '☁️↑'; btn.disabled = false; }, 1500);
   } catch(e) {
-    alert('Hochladen fehlgeschlagen:\n' + e.message);
+    alert('Hochladen fehlgeschlagen:\n' + (e.message || String(e)));
     btn.textContent = '☁️↑'; btn.disabled = false;
   }
 }
 
 async function syncFromDropbox() {
-  if (!dbxToken) { alert('Kein Dropbox-Token gespeichert.'); return; }
+  const token = await getValidAccessToken();
+  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Hilfe-Tab (❓) → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-dn-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
     const res = await fetch('https://content.dropboxapi.com/2/files/download', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer ' + dbxToken,
+        'Authorization': 'Bearer ' + token,
         'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json' })
       }
     });
@@ -1132,7 +1215,6 @@ async function syncFromDropbox() {
     if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
     const data = await res.json();
     if (!data.db) throw new Error('Ungültiges Dateiformat');
-    // merge: add missing vocabs, keep higher error counts, keep stars
     Object.keys(data.db).forEach(u => {
       if (!db[u]) db[u] = [];
       const existing = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
@@ -1145,7 +1227,7 @@ async function syncFromDropbox() {
     btn.textContent = '✓';
     setTimeout(() => { btn.textContent = '☁️↓'; btn.disabled = false; }, 1500);
   } catch(e) {
-    alert('Laden fehlgeschlagen:\n' + e.message);
+    alert('Laden fehlgeschlagen:\n' + (e.message || String(e)));
     btn.textContent = '☁️↓'; btn.disabled = false;
   }
 }
@@ -1821,7 +1903,8 @@ if ('serviceWorker' in navigator) {
 // Init
 renderLearnSetup();
 initApiKeyUI();
-initDbxTokenUI();
+initDbxUI();
+handleDropboxCallback();
 </script>
 </body>
 </html>

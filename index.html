@@ -561,7 +561,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v32)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v33)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -1144,6 +1144,28 @@ async function getValidAccessToken() {
   return null;
 }
 
+async function autoSyncToDropbox() {
+  if (!dbxRefreshToken) return;
+  const token = await getValidAccessToken();
+  if (!token) return;
+  try {
+    const payload = JSON.stringify({ db, stars, errors }, null, 2);
+    const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json', mode: 'overwrite', autorename: false }),
+        'Content-Type': 'application/octet-stream'
+      },
+      body: payload
+    });
+    if (res.ok) {
+      const btn = document.getElementById('dbx-up-btn');
+      if (btn) { const prev = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = prev; }, 1500); }
+    }
+  } catch(e) {}
+}
+
 function disconnectDropbox() {
   if (!confirm('Dropbox-Verbindung wirklich trennen?')) return;
   dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0;
@@ -1457,6 +1479,7 @@ function saveVocab() {
   const dupes = valid.length - newOnes.length;
   db[unite].push(...newOnes);
   saveDb();
+  autoSyncToDropbox();
   const msg = dupes > 0
     ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.`
     : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`;
@@ -1483,6 +1506,7 @@ function saveManual() {
   const dupes = pairs.length - newOnes.length;
   db[unite].push(...newOnes);
   saveDb();
+  autoSyncToDropbox();
   document.getElementById('man-text').value = '';
   document.getElementById('man-unite-name').value = '';
   alert(dupes > 0 ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.` : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`);

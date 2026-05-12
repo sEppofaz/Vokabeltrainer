@@ -578,7 +578,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v35)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v36)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -1023,6 +1023,20 @@
 
         <div class="help-hint" style="margin-top:12px;">
           💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen). Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".
+        </div>
+
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px;">🏫 Schul-iPad / Cache wird regelmäßig gelöscht?</div>
+          <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px;">
+            Falls die Schule den Browser-Speicher zurücksetzt, geht der App Key verloren. Lösung: einen <strong>Lesezeichen-Link</strong> mit eingebettetem App Key anlegen. Beim Öffnen des Links wird der Key automatisch wiederhergestellt.
+          </p>
+          <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:8px;">
+            Link so aufbauen – <code>HIERAPPKEY</code> durch den eigenen App Key ersetzen:
+          </p>
+          <code style="display:block;font-size:11px;word-break:break-all;background:var(--bg3);padding:8px 10px;border-radius:6px;margin-bottom:8px;">https://seppofaz.github.io/Vokabeltrainer/?ak=HIERAPPKEY</code>
+          <p style="font-size:13px;color:var(--text2);line-height:1.7;">
+            Diesen Link als Safari-Lesezeichen speichern. Nach einem Cache-Reset: Lesezeichen öffnen → App Key ist sofort wieder da. Den Dropbox-Login (☁️ ▾ → „Mit Dropbox verbinden") einmalig neu durchführen.
+          </p>
         </div>
       </div>
 

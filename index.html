@@ -578,7 +578,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v34)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v35)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -1962,7 +1962,18 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
 
+function applyUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const ak = params.get('ak');
+  if (ak && ak.trim()) {
+    dbxAppKey = ak.trim();
+    localStorage.setItem('vt_dbx_appkey', dbxAppKey);
+    window.history.replaceState({}, '', DBX_REDIRECT);
+  }
+}
+
 // Init
+applyUrlParams();
 renderLearnSetup();
 initApiKeyUI();
 initDbxUI();

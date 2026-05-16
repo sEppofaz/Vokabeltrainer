@@ -290,13 +290,6 @@
     .upload-zone-camera:active { background: var(--bg3); }
 
     .ocr-type-row { display: flex; gap: 6px; margin-bottom: 12px; }
-    .ocr-type-btn {
-      flex: 1; padding: 8px 4px; font-size: 12px; font-weight: 500;
-      border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
-      background: var(--bg2); color: var(--text2); cursor: pointer; text-align: center;
-      font-family: inherit;
-    }
-    .ocr-type-btn.active { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-border); }
 
     .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; margin-bottom: 12px; }
     .preview-img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: var(--radius-sm); border: 0.5px solid var(--border); }
@@ -581,7 +574,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v43)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v44)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -682,7 +675,7 @@
           <button class="btn btn-dark" onclick="checkAnswer()" id="q-check-btn">Überprüfen</button>
         </div>
         <div class="nav-btns" id="q-nav-after" style="display:none;">
-          <button class="nav-btn nav-next" onclick="nextCard(lastCorrect)">Weiter →</button>
+          <button class="nav-btn nav-next" onclick="nextCard(quiz.lastCorrect)">Weiter →</button>
         </div>
 
         <button class="btn btn-secondary" onclick="abortQuiz()" style="margin-top:4px;">Abbrechen</button>
@@ -763,8 +756,8 @@
 
           <label>Art der Vorlage</label>
           <div class="ocr-type-row">
-            <button class="ocr-type-btn active" id="ocr-print" onclick="setOcrType('print')">📖 Schulbuch / Druck</button>
-            <button class="ocr-type-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')">✏️ Handschrift / Heft</button>
+            <button class="toggle-btn active-blue" id="ocr-print" onclick="setOcrType('print')">📖 Schulbuch / Druck</button>
+            <button class="toggle-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')">✏️ Handschrift / Heft</button>
           </div>
 
           <div class="upload-zone-wrap">
@@ -1068,6 +1061,13 @@
 </div><!-- end .app -->
 
 <script>
+// ─── CONSTANTS ──────────────────────────────────────────────────────── P7
+const MODEL          = 'claude-sonnet-4-20250514';
+const API_URL        = 'https://api.anthropic.com/v1/messages';
+const DBX_UPLOAD_URL   = 'https://content.dropboxapi.com/2/files/upload';
+const DBX_DOWNLOAD_URL = 'https://content.dropboxapi.com/2/files/download';
+const DBX_FILE_PATH    = '/vokabeln.json';
+
 // ─── DB ──────────────────────────────────────────────────────────────
 let db = {};
 let stars = {};
@@ -1077,16 +1077,42 @@ let dbxAppKey = '';
 let dbxAccessToken = '';
 let dbxRefreshToken = '';
 let dbxTokenExpiry = 0;
-try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){}
-try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){}
-try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){}
-try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){}
-try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(e){}
-try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){}
-try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){}
-try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){}
-function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){} }
-function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){} }
+try { db = JSON.parse(localStorage.getItem('vt_db') || '{}'); } catch(e){ console.warn('[load:db]', e); }
+try { stars = JSON.parse(localStorage.getItem('vt_stars') || '{}'); } catch(e){ console.warn('[load:stars]', e); }
+try { errors = JSON.parse(localStorage.getItem('vt_errors') || '{}'); } catch(e){ console.warn('[load:errors]', e); }
+try { apiKey = (localStorage.getItem('vt_apikey') || '').trim(); } catch(e){ console.warn('[load:apikey]', e); }
+try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(e){ console.warn('[load:dbxkey]', e); }
+try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){ console.warn('[load:dbxaccess]', e); }
+try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){ console.warn('[load:dbxrefresh]', e); }
+try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){ console.warn('[load:dbxexpiry]', e); }
+function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
+function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
+
+// ─── VOCAB KEY (content-based) ───────────────────────────────────── P1
+function vocabKey(v) { return v.de.trim().toLowerCase() + '|' + v.fr.trim().toLowerCase(); }
+
+// ─── EXISTING SET ─────────────────────────────────────────────────── P2
+function existingSet(unite) { return new Set((db[unite] || []).map(vocabKey)); }
+
+// ─── KEY MIGRATION (index-based → content-based) ─────────────────── P1
+function migrateKeys() {
+  const re = /^(.+)__(\d+)$/;
+  if (!Object.keys(stars).some(k => re.test(k)) && !Object.keys(errors).some(k => re.test(k))) return;
+  const ns = {}, ne = {};
+  Object.keys(stars).forEach(k => {
+    const m = k.match(re);
+    if (m) { const v = (db[m[1]] || [])[+m[2]]; if (v) ns[vocabKey(v)] = true; }
+    else ns[k] = stars[k];
+  });
+  Object.keys(errors).forEach(k => {
+    const m = k.match(re);
+    if (m) { const v = (db[m[1]] || [])[+m[2]]; if (v) { const nk = vocabKey(v); if (errors[k] > (ne[nk]||0)) ne[nk] = errors[k]; } }
+    else if (errors[k] > (ne[k]||0)) ne[k] = errors[k];
+  });
+  stars = ns; errors = ne;
+  saveStars();
+}
+migrateKeys();
 
 function saveApiKey() {
   const val = document.getElementById('apikey-input').value.trim();
@@ -1179,7 +1205,7 @@ async function handleDropboxCallback() {
       localStorage.removeItem('vt_pkce_verifier');
       window.history.replaceState({}, '', DBX_REDIRECT);
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[dropbox:callback]', e); }
   updateDbxButtons();
 }
 
@@ -1202,8 +1228,20 @@ async function getValidAccessToken() {
       localStorage.setItem('vt_dbx_expiry', String(dbxTokenExpiry));
       return dbxAccessToken;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[dropbox:refresh]', e); }
   return null;
+}
+
+async function _uploadPayload(token) {
+  return fetch(DBX_UPLOAD_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH, mode: 'overwrite', autorename: false }),
+      'Content-Type': 'application/octet-stream'
+    },
+    body: JSON.stringify({ db, stars, errors }, null, 2)
+  });
 }
 
 async function autoSyncToDropbox() {
@@ -1211,21 +1249,12 @@ async function autoSyncToDropbox() {
   const token = await getValidAccessToken();
   if (!token) return;
   try {
-    const payload = JSON.stringify({ db, stars, errors }, null, 2);
-    const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json', mode: 'overwrite', autorename: false }),
-        'Content-Type': 'application/octet-stream'
-      },
-      body: payload
-    });
+    const res = await _uploadPayload(token);
     if (res.ok) {
       const btn = document.getElementById('dbx-up-btn');
       if (btn) { const prev = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = prev; }, 1500); }
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[dropbox:auto]', e); }
 }
 
 function disconnectDropbox() {
@@ -1274,16 +1303,7 @@ async function syncToDropbox() {
   const btn = document.getElementById('dbx-up-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
-    const payload = JSON.stringify({ db, stars, errors }, null, 2);
-    const res = await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json', mode: 'overwrite', autorename: false }),
-        'Content-Type': 'application/octet-stream'
-      },
-      body: payload
-    });
+    const res = await _uploadPayload(token);
     if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
     btn.textContent = '✓';
     setTimeout(() => { btn.textContent = '☁️↑'; btn.disabled = false; }, 1500);
@@ -1299,11 +1319,11 @@ async function syncFromDropbox() {
   const btn = document.getElementById('dbx-dn-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
-    const res = await fetch('https://content.dropboxapi.com/2/files/download', {
+    const res = await fetch(DBX_DOWNLOAD_URL, {
       method: 'POST',
       headers: {
         'Authorization': 'Bearer ' + token,
-        'Dropbox-API-Arg': JSON.stringify({ path: '/vokabeln.json' })
+        'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH })
       }
     });
     if (res.status === 409) { alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen (☁️↑).'); btn.textContent = '☁️↓'; btn.disabled = false; return; }
@@ -1312,8 +1332,8 @@ async function syncFromDropbox() {
     if (!data.db) throw new Error('Ungültiges Dateiformat');
     Object.keys(data.db).forEach(u => {
       if (!db[u]) db[u] = [];
-      const existing = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
-      data.db[u].forEach(v => { const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase(); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
+      const existing = existingSet(u);
+      data.db[u].forEach(v => { const k = vocabKey(v); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
     });
     if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
     if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
@@ -1327,27 +1347,24 @@ async function syncFromDropbox() {
   }
 }
 
-// key for a vocab item
-function vkey(unite, idx) { return unite + '__' + idx; }
-
-// returns all starred/difficult vocab as array of {de,fr,unite,idx}
+// returns all starred/difficult vocab as array of {de,fr,unite,idx,key}
 function getSchwierig() {
   const result = [];
   Object.keys(db).forEach(u => {
     (db[u]||[]).forEach((v,i) => {
-      const k = vkey(u,i);
+      const k = vocabKey(v);
       if (stars[k] || (errors[k]||0) >= 2) result.push({...v, unite:u, idx:i, key:k});
     });
   });
   return result;
 }
 
-// ─── STATE ───────────────────────────────────────────────────────────
-let direction = 'de-fr';
-let quizMode = 'cover';
-let cardOrder = 'random';
+// ─── STATE ──────────────────────────────────────────────────────────── P5
+const quiz = {
+  direction: 'de-fr', mode: 'cover', order: 'random', filter: 'all',
+  cards: [], idx: 0, score: 0, missed: [], lastCorrect: false, current: null
+};
 let selectedUnites = new Set();
-let quizCards = [], qIdx = 0, qScore = 0, qMissed = [], lastCorrect = false;
 let pendingVocab = [], pendingImages = [];
 let ocrType = 'print';
 let _editingKey = null;
@@ -1366,8 +1383,8 @@ function showMain(tab) {
 // ─── OCR TYPE ────────────────────────────────────────────────────────
 function setOcrType(t) {
   ocrType = t;
-  document.getElementById('ocr-print').className = 'ocr-type-btn' + (t==='print'?' active':'');
-  document.getElementById('ocr-handwritten').className = 'ocr-type-btn' + (t==='handwritten'?' active':'');
+  document.getElementById('ocr-print').className = 'toggle-btn' + (t==='print'?' active-blue':'');
+  document.getElementById('ocr-handwritten').className = 'toggle-btn' + (t==='handwritten'?' active-blue':'');
   document.getElementById('up-icon').textContent = t==='handwritten' ? '✏️' : '📷';
   document.getElementById('up-zone-text').textContent = t==='handwritten'
     ? 'Foto vom Heft oder handgeschriebener Liste' : 'Foto oder Screenshot auswählen';
@@ -1478,7 +1495,7 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
 
     let res;
     try {
-      res = await fetch('https://api.anthropic.com/v1/messages', {
+      res = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1487,7 +1504,7 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
           'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: MODEL,
           max_tokens: 2000,
           messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }]
         })
@@ -1522,10 +1539,10 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
 
 function renderExtracted() {
   const unite = document.getElementById('up-unite-name').value.trim() || 'Unité ?';
-  const existing = new Set((db[unite]||[]).map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const existing = existingSet(unite);
   let dupeCount = 0;
   document.getElementById('up-vocab-list').innerHTML = pendingVocab.map((v,i) => {
-    const isDupe = v.de && v.fr && existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase());
+    const isDupe = v.de && v.fr && existing.has(vocabKey(v));
     if (isDupe) dupeCount++;
     return `<div class="edit-row${isDupe?' is-dupe':''}">
       <input class="edit-cell de-cell" value="${esc(v.de)}" placeholder="Deutsch" oninput="updatePending(${i},'de',this.value)" />
@@ -1548,8 +1565,8 @@ function saveVocab() {
   const valid = pendingVocab.filter(v => v.de && v.de.trim() && v.fr && v.fr.trim());
   if (!valid.length) return;
   if (!db[unite]) db[unite] = [];
-  const existing = new Set(db[unite].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
-  const newOnes = valid.filter(v => !existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const existing = existingSet(unite);
+  const newOnes = valid.filter(v => !existing.has(vocabKey(v)));
   const dupes = valid.length - newOnes.length;
   db[unite].push(...newOnes);
   saveDb();
@@ -1575,8 +1592,8 @@ function saveManual() {
   const pairs = lines.map(l => { const p = l.split(';'); return p.length>=2 ? {de:p[0].trim(),fr:p[1].trim()} : null; }).filter(Boolean);
   if (!pairs.length) { alert('Keine gültigen Einträge gefunden.\nFormat: deutsch;französisch'); return; }
   if (!db[unite]) db[unite] = [];
-  const existing = new Set(db[unite].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
-  const newOnes = pairs.filter(v => !existing.has(v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
+  const existing = existingSet(unite);
+  const newOnes = pairs.filter(v => !existing.has(vocabKey(v)));
   const dupes = pairs.length - newOnes.length;
   db[unite].push(...newOnes);
   saveDb();
@@ -1620,7 +1637,7 @@ function renderVocabScreen() {
     const pairs = db[u];
     const otherUnites = unites.filter(x => x !== u);
     const rows = pairs.map((v,i) => {
-      const k = vkey(u,i);
+      const k = vocabKey(v);
       const isStarred = !!stars[k];
       const errCount = errors[k]||0;
       const autoFlag = errCount >= 2 ? `<span style="font-size:11px;color:var(--red-text);margin-left:4px;">${errCount}✗</span>` : '';
@@ -1649,8 +1666,8 @@ function renderVocabScreen() {
         <button class="del-btn"  onclick="delItem('${esc(u)}',${i})" style="margin-left:4px;">✕</button>
       </div>`;
     }).join('');
-    const starredCount = pairs.filter((_,i)=>stars[vkey(u,i)]).length;
-    const hardCount = pairs.filter((_,i)=>(errors[vkey(u,i)]||0)>=2).length;
+    const starredCount = pairs.filter(v=>stars[vocabKey(v)]).length;
+    const hardCount = pairs.filter(v=>(errors[vocabKey(v)]||0)>=2).length;
     const badges = [
       starredCount ? `<span style="color:#b07d20;">⭐${starredCount}</span>` : '',
       hardCount ? `<span style="color:var(--red-text);">✗${hardCount}</span>` : ''
@@ -1668,7 +1685,7 @@ function renderVocabScreen() {
 }
 
 function toggleStar(unite, idx) {
-  const k = vkey(unite, idx);
+  const k = vocabKey(db[unite][idx]);
   if (stars[k]) delete stars[k]; else stars[k] = true;
   saveStars(); renderVocabScreen();
 }
@@ -1676,7 +1693,7 @@ function toggleStar(unite, idx) {
 function delItem(unite, i) { if (!confirm(`„${db[unite][i].de} – ${db[unite][i].fr}" löschen?`)) return; db[unite].splice(i,1); if(!db[unite].length) delete db[unite]; saveDb(); renderVocabScreen(); }
 
 function editItem(unite, idx) {
-  _editingKey = vkey(unite, idx);
+  _editingKey = vocabKey(db[unite][idx]);
   renderVocabScreen();
   const inp = document.getElementById('edit-fr');
   if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
@@ -1698,11 +1715,7 @@ function renameUnite(oldName) {
   const n = newName.trim();
   if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
   db[n] = db[oldName]; delete db[oldName];
-  const newStars = {}, newErrors = {};
-  Object.keys(stars).forEach(k => { newStars[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = stars[k]; });
-  Object.keys(errors).forEach(k => { newErrors[k.startsWith(oldName+'__') ? n+'__'+k.slice(oldName.length+2) : k] = errors[k]; });
-  stars = newStars; errors = newErrors;
-  saveDb(); saveStars(); renderVocabScreen(); renderLearnSetup();
+  saveDb(); renderVocabScreen(); renderLearnSetup();
 }
 
 function moveVocab(fromUnite, idx, toUnite) {
@@ -1739,8 +1752,8 @@ function importData(e) {
       // Merge
       Object.keys(data.db).forEach(u => {
         if (!db[u]) db[u] = [];
-        const existing = new Set(db[u].map(v => v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase()));
-        data.db[u].forEach(v => { const k = v.de.trim().toLowerCase()+'|'+v.fr.trim().toLowerCase(); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
+        const existing = existingSet(u);
+        data.db[u].forEach(v => { const k = vocabKey(v); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
       });
       if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
       if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
@@ -1754,11 +1767,10 @@ function importData(e) {
 }
 
 // ─── TEXT TO SPEECH ──────────────────────────────────────────────────
-let currentCard = null;
 function speak(which) {
-  if (!currentCard) return;
-  const isFR = (which==='ask' && direction==='fr-de') || (which==='ans' && direction==='de-fr');
-  const text = which==='ask' ? (direction==='de-fr'?currentCard.de:currentCard.fr) : (direction==='de-fr'?currentCard.fr:currentCard.de);
+  if (!quiz.current) return;
+  const isFR = (which==='ask' && quiz.direction==='fr-de') || (which==='ans' && quiz.direction==='de-fr');
+  const text = which==='ask' ? (quiz.direction==='de-fr'?quiz.current.de:quiz.current.fr) : (quiz.direction==='de-fr'?quiz.current.fr:quiz.current.de);
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
@@ -1771,9 +1783,8 @@ function speak(which) {
 }
 
 // ─── FILTER ──────────────────────────────────────────────────────────
-let cardFilter = 'all';
 function setFilter(f) {
-  cardFilter = f;
+  quiz.filter = f;
   document.getElementById('filter-all').className = 'toggle-btn' + (f==='all'?' active-blue':'');
   document.getElementById('filter-new').className = 'toggle-btn' + (f==='new'?' active-blue':'');
 }
@@ -1850,17 +1861,17 @@ function selectNone() { selectedUnites.clear(); renderLearnSetup(); }
 function toggleUnite(u) { selectedUnites.has(u)?selectedUnites.delete(u):selectedUnites.add(u); renderLearnSetup(); }
 
 function setDir(d) {
-  direction = d;
+  quiz.direction = d;
   document.getElementById('dir-de-fr').className = 'toggle-btn' + (d==='de-fr'?' active-blue':'');
   document.getElementById('dir-fr-de').className = 'toggle-btn' + (d==='fr-de'?' active-blue':'');
 }
 function setMode(m) {
-  quizMode = m;
+  quiz.mode = m;
   document.getElementById('mode-cover').className = 'toggle-btn' + (m==='cover'?' active-green':'');
   document.getElementById('mode-type').className = 'toggle-btn' + (m==='type'?' active-green':'');
 }
 function setOrder(o) {
-  cardOrder = o;
+  quiz.order = o;
   document.getElementById('order-random').className = 'toggle-btn' + (o==='random'?' active-blue':'');
   document.getElementById('order-sequential').className = 'toggle-btn' + (o==='sequential'?' active-blue':'');
 }
@@ -1873,20 +1884,20 @@ function startQuiz() {
   }
   selectedUnites.forEach(u => {
     if (u === '__schwierig__') return;
-    if (db[u]) db[u].forEach((v,i) => all.push({...v, unite:u, idx:i, key:vkey(u,i)}));
+    if (db[u]) db[u].forEach((v,i) => all.push({...v, unite:u, idx:i, key:vocabKey(v)}));
   });
   // deduplicate by key
   const seen = new Set();
   all = all.filter(v => { if(seen.has(v.key)) return false; seen.add(v.key); return true; });
   // apply filter
-  if (cardFilter === 'new') {
+  if (quiz.filter === 'new') {
     const filtered = all.filter(v => !v.key || (!(errors[v.key]||0) && !stars[v.key]));
     if (!filtered.length) { alert('Keine neuen Wörter – alle wurden schon mindestens einmal beantwortet.'); return; }
     all = filtered;
   }
   if (!all.length) { alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.'); return; }
-  quizCards = cardOrder === 'random' ? shuffle(all) : all;
-  qIdx=0; qScore=0; qMissed=[];
+  quiz.cards = quiz.order === 'random' ? shuffle(all) : all;
+  quiz.idx=0; quiz.score=0; quiz.missed=[];
   document.getElementById('learn-setup').style.display='none';
   document.getElementById('learn-results').style.display='none';
   document.getElementById('learn-quiz').style.display='block';
@@ -1894,21 +1905,21 @@ function startQuiz() {
 }
 
 function showCard() {
-  const card = quizCards[qIdx];
-  currentCard = card;
-  const total = quizCards.length;
-  document.getElementById('q-progress').textContent = (qIdx+1)+' / '+total;
-  document.getElementById('q-score-live').textContent = qScore+' richtig';
-  document.getElementById('q-fill').style.width = (qIdx/total*100)+'%';
-  document.getElementById('q-ask-lang').textContent = direction==='de-fr'?'Deutsch':'Französisch';
-  document.getElementById('q-ask-word').textContent = direction==='de-fr'?card.de:card.fr;
-  document.getElementById('q-ans-lang').textContent = direction==='de-fr'?'Französisch':'Deutsch';
-  document.getElementById('q-ans-word').textContent = direction==='de-fr'?card.fr:card.de;
-  lastCorrect = false;
+  const card = quiz.cards[quiz.idx];
+  quiz.current = card;
+  const total = quiz.cards.length;
+  document.getElementById('q-progress').textContent = (quiz.idx+1)+' / '+total;
+  document.getElementById('q-score-live').textContent = quiz.score+' richtig';
+  document.getElementById('q-fill').style.width = (quiz.idx/total*100)+'%';
+  document.getElementById('q-ask-lang').textContent = quiz.direction==='de-fr'?'Deutsch':'Französisch';
+  document.getElementById('q-ask-word').textContent = quiz.direction==='de-fr'?card.de:card.fr;
+  document.getElementById('q-ans-lang').textContent = quiz.direction==='de-fr'?'Französisch':'Deutsch';
+  document.getElementById('q-ans-word').textContent = quiz.direction==='de-fr'?card.fr:card.de;
+  quiz.lastCorrect = false;
   document.getElementById('q-revealed').style.display='none';
   document.getElementById('q-nav-after').style.display='none';
   document.getElementById('q-type-feedback').innerHTML='';
-  if (quizMode==='cover') {
+  if (quiz.mode==='cover') {
     document.getElementById('q-answer-card').style.display='block';
     document.getElementById('q-cover').style.display='flex';
     document.getElementById('q-type-area').style.display='none';
@@ -1934,13 +1945,13 @@ function reveal() {
 }
 
 function checkAnswer() {
-  const card = quizCards[qIdx];
-  const correct = direction==='de-fr'?card.fr:card.de;
+  const card = quiz.cards[quiz.idx];
+  const correct = quiz.direction==='de-fr'?card.fr:card.de;
   const inp = document.getElementById('q-type-input');
   const user = inp.value.trim().toLowerCase();
   const corr = correct.toLowerCase().replace(/[()]/g,'').trim();
   const ok = user===corr || corr.split('/').map(s=>s.trim()).includes(user);
-  lastCorrect = ok;
+  quiz.lastCorrect = ok;
   inp.className = 'answer-input ' + (ok?'correct':'wrong');
   const fb = document.getElementById('q-type-feedback');
   fb.innerHTML = ok
@@ -1950,45 +1961,45 @@ function checkAnswer() {
   document.getElementById('q-check-wrap').style.display='none';
   document.getElementById('q-nav-after').style.display='flex';
   if (ok) {
-    qScore++;
+    quiz.score++;
   } else {
-    qMissed.push(card);
+    quiz.missed.push(card);
     if (card.key) { errors[card.key] = (errors[card.key]||0)+1; saveStars(); }
   }
 }
 
 function nextCard(correct) {
-  if (quizMode==='cover') {
-    if(correct) qScore++;
+  if (quiz.mode==='cover') {
+    if(correct) quiz.score++;
     else {
-      qMissed.push(quizCards[qIdx]);
-      const card = quizCards[qIdx];
+      const card = quiz.cards[quiz.idx];
+      quiz.missed.push(card);
       if (card.key) { errors[card.key] = (errors[card.key]||0)+1; saveStars(); }
     }
   }
-  qIdx++;
-  if (qIdx>=quizCards.length) showResults(); else showCard();
+  quiz.idx++;
+  if (quiz.idx>=quiz.cards.length) showResults(); else showCard();
 }
 
 function showResults() {
   document.getElementById('learn-quiz').style.display='none';
   document.getElementById('learn-results').style.display='block';
-  const pct = Math.round(qScore/quizCards.length*100);
-  document.getElementById('r-score').textContent = qScore+'/'+quizCards.length;
+  const pct = Math.round(quiz.score/quiz.cards.length*100);
+  document.getElementById('r-score').textContent = quiz.score+'/'+quiz.cards.length;
   document.getElementById('r-sub').textContent = pct+'% richtig – '+emoji(pct);
   const ms = document.getElementById('r-missed-sec');
   const rb = document.getElementById('r-retry-btn');
-  if (qMissed.length) {
+  if (quiz.missed.length) {
     ms.style.display='block'; rb.style.display='block';
-    document.getElementById('r-missed').innerHTML = qMissed.map(v=>
+    document.getElementById('r-missed').innerHTML = quiz.missed.map(v=>
       `<li class="vocab-row"><span class="de">${esc(v.de)}</span><span class="fr">${esc(v.fr)}</span></li>`
     ).join('');
   } else { ms.style.display='none'; rb.style.display='none'; }
 }
 
 function restartMissed() {
-  if (!qMissed.length) { backToSetup(); return; }
-  quizCards=shuffle(qMissed); qIdx=0; qScore=0; qMissed=[];
+  if (!quiz.missed.length) { backToSetup(); return; }
+  quiz.cards=shuffle(quiz.missed); quiz.idx=0; quiz.score=0; quiz.missed=[];
   document.getElementById('learn-results').style.display='none';
   document.getElementById('learn-quiz').style.display='block';
   showCard();
@@ -2021,7 +2032,7 @@ async function forceUpdate() {
 }
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('[sw]', e));
 }
 
 function applyUrlParams() {

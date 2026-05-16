@@ -321,7 +321,10 @@
     .vocab-row:last-child { border-bottom: none; }
     .vocab-row .de { color: var(--text2); flex: 1; }
     .vocab-row .fr { color: var(--text); font-weight: 500; flex: 1; }
-    .vocab-row .del-btn { background: none; border: none; color: var(--red-text); font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+    .vocab-row .del-btn  { background: none; border: none; color: var(--red-text);   font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+    .vocab-row .edit-btn { background: none; border: none; color: var(--text2);      font-size: 13px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
+    .vocab-row .save-btn { background: none; border: none; color: var(--green-text); font-size: 16px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; font-weight: 600; }
+    .vocab-row--edit .edit-cell { flex: 1; min-width: 0; }
 
     /* Editable extracted rows */
     .edit-row {
@@ -578,7 +581,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v36)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v37)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -1329,6 +1332,7 @@ let selectedUnites = new Set();
 let quizCards = [], qIdx = 0, qScore = 0, qMissed = [], lastCorrect = false;
 let pendingVocab = [], pendingImages = [];
 let ocrType = 'print';
+let _editingKey = null;
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────
 function showMain(tab) {
@@ -1602,19 +1606,29 @@ function renderVocabScreen() {
       const isStarred = !!stars[k];
       const errCount = errors[k]||0;
       const autoFlag = errCount >= 2 ? `<span style="font-size:11px;color:var(--red-text);margin-left:4px;">${errCount}✗</span>` : '';
+      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:44px;"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
+      if (_editingKey === k) {
+        return `<div class="vocab-row vocab-row--edit">
+          <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
+          <input class="edit-cell de-cell" id="edit-de" value="${esc(v.de)}" onkeydown="if(event.key==='Enter')saveItem('${esc(u)}',${i});if(event.key==='Escape')cancelEdit()">
+          <input class="edit-cell"         id="edit-fr" value="${esc(v.fr)}" onkeydown="if(event.key==='Enter')saveItem('${esc(u)}',${i});if(event.key==='Escape')cancelEdit()">
+          <button class="save-btn" onclick="saveItem('${esc(u)}',${i})">✓</button>
+          <button class="edit-btn" onclick="cancelEdit()">✕</button>
+        </div>`;
+      }
       const deHtml = hideDE
         ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.de)}</span>${autoFlag}`
         : `${esc(v.de)}${autoFlag}`;
       const frHtml = hideFR
         ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.fr)}</span>`
         : esc(v.fr);
-      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:44px;"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
       return `<div class="vocab-row">
         <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
         <span class="de" style="flex:1;">${deHtml}</span>
         <span class="fr" style="flex:1;">${frHtml}</span>
         ${moveSelect}
-        <button class="del-btn" onclick="delItem('${esc(u)}',${i})">✕</button>
+        <button class="edit-btn" onclick="editItem('${esc(u)}',${i})" title="Bearbeiten">✏️</button>
+        <button class="del-btn"  onclick="delItem('${esc(u)}',${i})">✕</button>
       </div>`;
     }).join('');
     const starredCount = pairs.filter((_,i)=>stars[vkey(u,i)]).length;
@@ -1642,6 +1656,22 @@ function toggleStar(unite, idx) {
 }
 
 function delItem(unite, i) { db[unite].splice(i,1); if(!db[unite].length) delete db[unite]; saveDb(); renderVocabScreen(); }
+
+function editItem(unite, idx) {
+  _editingKey = vkey(unite, idx);
+  renderVocabScreen();
+  const inp = document.getElementById('edit-de');
+  if (inp) { inp.focus(); inp.select(); }
+}
+function saveItem(unite, idx) {
+  const deVal = (document.getElementById('edit-de')?.value || '').trim();
+  const frVal = (document.getElementById('edit-fr')?.value || '').trim();
+  if (!deVal || !frVal) return;
+  db[unite][idx] = { de: deVal, fr: frVal };
+  _editingKey = null;
+  saveDb(); renderVocabScreen();
+}
+function cancelEdit() { _editingKey = null; renderVocabScreen(); }
 function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); renderLearnSetup(); }
 
 function renameUnite(oldName) {

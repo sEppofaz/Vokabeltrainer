@@ -581,7 +581,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v37)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v38)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p style="margin-top:1px;">by sEpp</p>
     </div>
   </div>
@@ -1606,7 +1606,7 @@ function renderVocabScreen() {
       const isStarred = !!stars[k];
       const errCount = errors[k]||0;
       const autoFlag = errCount >= 2 ? `<span style="font-size:11px;color:var(--red-text);margin-left:4px;">${errCount}✗</span>` : '';
-      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:44px;"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
+      const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);max-width:44px;flex-shrink:0;"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
       if (_editingKey === k) {
         return `<div class="vocab-row vocab-row--edit">
           <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
@@ -1626,9 +1626,9 @@ function renderVocabScreen() {
         <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
         <span class="de" style="flex:1;">${deHtml}</span>
         <span class="fr" style="flex:1;">${frHtml}</span>
-        ${moveSelect}
         <button class="edit-btn" onclick="editItem('${esc(u)}',${i})" title="Bearbeiten">✏️</button>
-        <button class="del-btn"  onclick="delItem('${esc(u)}',${i})">✕</button>
+        ${moveSelect}
+        <button class="del-btn"  onclick="delItem('${esc(u)}',${i})" style="margin-left:4px;">✕</button>
       </div>`;
     }).join('');
     const starredCount = pairs.filter((_,i)=>stars[vkey(u,i)]).length;

@@ -1,4 +1,4 @@
-const CACHE = 'vokabeltrainer-v46';
+const CACHE = 'vokabeltrainer-v47';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

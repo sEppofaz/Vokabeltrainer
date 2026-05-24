@@ -632,6 +632,22 @@
     }
     .schwierig-card .sc-check { font-size: 18px; opacity: 0; transition: opacity 0.15s; }
     .schwierig-card.selected .sc-check { opacity: 1; }
+
+    /* ── LOOKUP MODAL ── */
+    .lookup-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom); }
+    .lookup-overlay.hidden { display:none; }
+    .lookup-sheet { background:var(--bg);border-radius:var(--radius) var(--radius) 0 0;padding:20px 16px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 -2px 20px rgba(0,0,0,0.15); }
+    .lookup-result { background:var(--bg2);border-radius:var(--radius-sm);padding:14px;margin:12px 0; }
+    .lookup-fr { font-size:22px;font-weight:700;color:var(--text); }
+    .lookup-de { font-size:15px;color:var(--text2);margin-top:4px; }
+    .lookup-info { font-size:12px;color:var(--text3);margin-top:2px; }
+    .lookup-ex { font-size:13px;color:var(--text2);margin-top:8px;font-style:italic;border-top:0.5px solid var(--border);padding-top:8px; }
+
+    /* ── GRAMMAR ── */
+    .gramm-sentence { font-size:20px;font-weight:500;color:var(--text);text-align:center;padding:24px 16px;line-height:1.8; }
+    .gramm-blank { display:inline-block;min-width:60px;border-bottom:2px solid var(--blue-text);vertical-align:bottom;color:var(--blue-text);font-weight:700; }
+    .gramm-hint { font-size:12px;color:var(--text3);text-align:center;margin-top:4px; }
+    .gramm-loading { text-align:center;padding:40px;color:var(--text2);font-size:14px; }
   </style>
 </head>
 <body>
@@ -640,7 +656,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v48)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v49)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -650,6 +666,7 @@
     <button id="nav-learn" class="active" onclick="showMain('learn')">📚 Lernen</button>
     <button id="nav-vocab" onclick="showMain('vocab')">📋 Vokabeln</button>
     <button id="nav-upload" onclick="showMain('upload')">➕ Hinzufügen</button>
+    <button id="nav-gramm" onclick="showMain('gramm')">📝 Grammatik</button>
     <button id="nav-hilfe" onclick="showMain('hilfe')">❓ Hilfe</button>
     <button id="nav-stats" onclick="showMain('stats')">🏆 Fortschritt</button>
   </div>
@@ -782,6 +799,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h2 style="margin-bottom:0;">Gespeicherte Vokabeln</h2>
           <div style="display:flex;gap:6px;align-items:center;">
+            <button class="hide-col-btn" onclick="showLookup()" title="Wort nachschlagen">🔍</button>
             <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')">DE</button>
             <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')">FR</button>
             <div class="btn-group">
@@ -890,6 +908,77 @@
       </div>
       </div><!-- end two-col -->
     </div>
+
+    <!-- ═══ GRAMMATIK ═══ -->
+    <div id="main-gramm" class="screen">
+
+      <!-- Setup -->
+      <div id="gramm-setup">
+        <div class="card">
+          <h2>Grammatik üben</h2>
+          <label>Jahrgangsstufe</label>
+          <div class="toggle-group" id="gramm-class-group">
+            <button class="toggle-btn active-blue" onclick="setGrammClass(6)">Klasse 6</button>
+            <button class="toggle-btn" onclick="setGrammClass(7)">Klasse 7</button>
+            <button class="toggle-btn" onclick="setGrammClass(8)">Klasse 8</button>
+            <button class="toggle-btn" onclick="setGrammClass(9)">Klasse 9</button>
+          </div>
+          <label>Thema</label>
+          <select id="gramm-topic-select" onchange="grammTopicChanged(this.value)"></select>
+          <div id="gramm-cache-info" style="font-size:12px;color:var(--green-text);margin-bottom:12px;display:none;">✓ Gespeicherte Fragen vorhanden – werden ohne API-Aufruf geladen</div>
+          <button class="btn btn-dark" onclick="startGrammSession()">Üben starten</button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="gramm-loading" style="display:none;">
+        <div class="card"><div class="gramm-loading"><span class="spinner"></span>KI generiert Fragen …</div></div>
+      </div>
+
+      <!-- Quiz -->
+      <div id="gramm-quiz" style="display:none;">
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span id="gq-progress">1 / 8</span>
+            <span id="gq-score-live">0 richtig</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="gq-fill" style="width:0%"></div></div>
+        </div>
+        <div class="q-card">
+          <div class="gramm-sentence" id="gq-sentence">–</div>
+          <div class="gramm-hint" id="gq-hint"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <input class="answer-input" id="gq-input" placeholder="Fehlende Form eingeben …" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkGrammAnswer()" />
+          <div id="gq-feedback"></div>
+        </div>
+        <div id="gq-check-wrap">
+          <button class="btn btn-dark" onclick="checkGrammAnswer()" id="gq-check-btn">Überprüfen</button>
+        </div>
+        <div class="nav-btns" id="gq-nav-after" style="display:none;">
+          <button class="nav-btn nav-next" onclick="nextGrammQ()">Weiter →</button>
+        </div>
+        <button class="btn btn-secondary" onclick="abortGrammQuiz()" style="margin-top:4px;">Abbrechen</button>
+      </div>
+
+      <!-- Results -->
+      <div id="gramm-results" style="display:none;">
+        <div class="card">
+          <h2>Ergebnis</h2>
+          <div class="result-score" id="gr-score">–</div>
+          <div class="result-sub" id="gr-sub">–</div>
+          <div id="gr-missed-sec" style="display:none;">
+            <label style="margin-bottom:8px;">Noch üben:</label>
+            <div class="vocab-scroll-limited">
+              <ul id="gr-missed" style="list-style:none;"></ul>
+            </div>
+          </div>
+          <button class="btn btn-dark" id="gr-retry-btn" onclick="retryGrammMissed()">Nur Falsche wiederholen</button>
+          <button class="btn btn-secondary" onclick="backToGrammSetup()">Neue Auswahl</button>
+        </div>
+      </div>
+
+    </div><!-- end main-gramm -->
 
     <!-- ═══ HILFE ═══ -->
     <div id="main-hilfe" class="screen">
@@ -1222,6 +1311,30 @@
 
   </div><!-- end .content -->
 </div><!-- end .app -->
+<!-- ── LOOKUP MODAL ── -->
+<div id="lookup-overlay" class="lookup-overlay hidden" onclick="if(event.target===this)closeLookup()">
+  <div class="lookup-sheet">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="margin-bottom:0;">🔍 Wort nachschlagen</h2>
+      <button onclick="closeLookup()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);padding:4px;">✕</button>
+    </div>
+    <input type="text" id="lookup-input" placeholder="Französisch oder Deutsch eingeben …" onkeydown="if(event.key==='Enter')doLookup()" style="margin-bottom:8px;" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    <button class="btn btn-dark" id="lookup-btn" onclick="doLookup()">Nachschlagen</button>
+    <div id="lookup-status" style="font-size:13px;color:var(--text2);margin:8px 0;min-height:20px;"></div>
+    <div id="lookup-result-wrap" style="display:none;">
+      <div class="lookup-result">
+        <div class="lookup-fr" id="lr-fr"></div>
+        <div class="lookup-de" id="lr-de"></div>
+        <div class="lookup-info" id="lr-info"></div>
+        <div class="lookup-ex" id="lr-ex"></div>
+      </div>
+      <label>Zu Unité hinzufügen</label>
+      <select id="lookup-unite-select" style="margin-bottom:8px;"></select>
+      <button class="btn btn-dark" onclick="addLookupVocab()">➕ Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
 <div id="vt-toast"></div>
 
 <script>
@@ -1249,7 +1362,10 @@ try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(
 try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){ console.warn('[load:dbxaccess]', e); }
 try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){ console.warn('[load:dbxrefresh]', e); }
 try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){ console.warn('[load:dbxexpiry]', e); }
+let grammCache = {};
+try { grammCache = JSON.parse(localStorage.getItem('vt_grammar_cache') || '{}'); } catch(e) { console.warn('[load:grammcache]', e); }
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
+function saveGrammCache() { try { localStorage.setItem('vt_grammar_cache', JSON.stringify(grammCache)); } catch(e) { console.warn('[save:grammcache]', e); } }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
 
 // ─── BONUS SYSTEM ────────────────────────────────────────────────────
@@ -1265,6 +1381,37 @@ const LEVELS = [
   { min:  8500, name: 'Expert',      emoji: '🏆' },
   { min: 13000, name: 'Maître',      emoji: '👑' },
 ];
+
+const GRAMMAR_TOPICS = {
+  6: [
+    { id: 'artikel',    label: 'Bestimmter & unbestimmter Artikel (le, la, un, une)' },
+    { id: 'adjektiv',   label: 'Adjektivangleichung (grand/grande)' },
+    { id: 'present_er', label: 'Présent – regelmäßige -er Verben' },
+    { id: 'negation',   label: 'Verneinung (ne … pas)' },
+    { id: 'pronomen',   label: 'Personalpronomen & Verbformen (je, tu, il …)' },
+  ],
+  7: [
+    { id: 'passe_avoir',  label: 'Passé composé mit avoir' },
+    { id: 'passe_etre',   label: 'Passé composé mit être' },
+    { id: 'reflexif',     label: 'Reflexive Verben (se lever, se coucher …)' },
+    { id: 'futur_proche', label: 'Futur proche (aller + Infinitiv)' },
+    { id: 'imparfait_1',  label: 'Imparfait – Einführung' },
+  ],
+  8: [
+    { id: 'imparfait',    label: 'Imparfait (Beschreibungen in der Vergangenheit)' },
+    { id: 'pc_vs_imp',    label: 'Passé composé vs. Imparfait' },
+    { id: 'relative',     label: 'Relativpronomen (qui, que)' },
+    { id: 'comparatif',   label: 'Komparativ & Superlativ' },
+    { id: 'futur_simple', label: 'Futur simple' },
+  ],
+  9: [
+    { id: 'conditionnel', label: 'Conditionnel présent' },
+    { id: 'subjonctif',   label: 'Subjonctif présent' },
+    { id: 'plusque',      label: 'Plus-que-parfait' },
+    { id: 'pronom_y_en',  label: 'Pronomen y und en' },
+    { id: 'passive',      label: 'Passiv (être + participe passé)' },
+  ]
+};
 
 let xp = 0, streak = 0, streakBest = 0, xpToday = 0;
 let quizDate = '', freezeKey = '';
@@ -1671,6 +1818,7 @@ const quiz = {
   direction: 'de-fr', mode: 'cover', order: 'random', filter: 'all',
   cards: [], idx: 0, score: 0, missed: [], lastCorrect: false, current: null
 };
+const gramm = { jahrgangsstufe: 6, topicIdx: 0, questions: [], idx: 0, score: 0, missed: [] };
 let selectedUnites = new Set();
 let pendingVocab = [], pendingImages = [];
 let ocrType = 'print';
@@ -1678,13 +1826,14 @@ let _editingKey = null;
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────
 function showMain(tab) {
-  ['learn','vocab','upload','hilfe','stats'].forEach(t => {
+  ['learn','vocab','upload','gramm','hilfe','stats'].forEach(t => {
     document.getElementById('main-'+t).classList.toggle('active', t===tab);
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='learn') renderLearnSetup();
   if (tab==='vocab') renderVocabScreen();
   if (tab==='upload') renderInstallHint();
+  if (tab==='gramm') renderGrammSetup();
   if (tab==='stats') renderStats();
 }
 
@@ -2461,6 +2610,244 @@ function restartMissed() {
 function abortQuiz() { document.getElementById('learn-quiz').style.display='none'; document.getElementById('learn-setup').style.display='block'; }
 function backToSetup() { document.getElementById('learn-results').style.display='none'; document.getElementById('learn-setup').style.display='block'; renderLearnSetup(); }
 
+// ─── GRAMMAR ─────────────────────────────────────────────────────────
+function renderGrammSetup() {
+  const topics = GRAMMAR_TOPICS[gramm.jahrgangsstufe] || [];
+  const sel = document.getElementById('gramm-topic-select');
+  if (!sel) return;
+  sel.innerHTML = topics.map((t,i) => `<option value="${i}">${esc(t.label)}</option>`).join('');
+  gramm.topicIdx = Math.min(gramm.topicIdx, topics.length - 1);
+  sel.value = gramm.topicIdx;
+  const cacheKey = gramm.jahrgangsstufe + '_' + (topics[gramm.topicIdx]?.id || '');
+  document.getElementById('gramm-cache-info').style.display = (grammCache[cacheKey]?.length >= 8) ? 'block' : 'none';
+  const btns = document.getElementById('gramm-class-group').querySelectorAll('button');
+  [6,7,8,9].forEach((n,i) => { btns[i].className = 'toggle-btn' + (n===gramm.jahrgangsstufe?' active-blue':''); });
+}
+
+function grammTopicChanged(val) {
+  gramm.topicIdx = parseInt(val) || 0;
+  const topics = GRAMMAR_TOPICS[gramm.jahrgangsstufe] || [];
+  const cacheKey = gramm.jahrgangsstufe + '_' + (topics[gramm.topicIdx]?.id || '');
+  document.getElementById('gramm-cache-info').style.display = (grammCache[cacheKey]?.length >= 8) ? 'block' : 'none';
+}
+
+function setGrammClass(n) {
+  gramm.jahrgangsstufe = n;
+  gramm.topicIdx = 0;
+  renderGrammSetup();
+}
+
+async function startGrammSession() {
+  const topics = GRAMMAR_TOPICS[gramm.jahrgangsstufe] || [];
+  const topic = topics[gramm.topicIdx];
+  if (!topic) return;
+  const cacheKey = gramm.jahrgangsstufe + '_' + topic.id;
+  if (grammCache[cacheKey]?.length >= 8) {
+    gramm.questions = shuffle(grammCache[cacheKey]);
+    beginGrammQuiz();
+    return;
+  }
+  if (!apiKey) { showToast('⚠️ Kein API-Key – bitte unter ❓ Hilfe einrichten'); return; }
+  document.getElementById('gramm-setup').style.display = 'none';
+  document.getElementById('gramm-loading').style.display = 'block';
+  try {
+    const prompt = `Du bist Französischlehrer an einer bayerischen Realschule (Lehrwerk À toi! Bayern).
+Erstelle 10 Lückentext-Aufgaben zum Thema "${topic.label}" für Jahrgangsstufe ${gramm.jahrgangsstufe}.
+Regeln:
+- Jeder Satz hat genau EINE Lücke, markiert mit ___
+- Die Lücke ist die grammatikalisch korrekte Form
+- Kurze, schülergerechte Sätze
+- Variiere Subjekte und Kontexte
+Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
+[{"q":"J'___ mangé une pomme.","a":"ai","hint":"avoir (je)"},...]`;
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model: MODEL, max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
+    });
+    if (!res.ok) throw new Error('API Fehler ' + res.status);
+    const data = await res.json();
+    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    txt = txt.replace(/```json|```/g,'').trim();
+    const s = txt.indexOf('['), e = txt.lastIndexOf(']');
+    const qs = JSON.parse(txt.slice(s, e+1));
+    if (!qs.length) throw new Error('Keine Fragen generiert');
+    grammCache[cacheKey] = qs;
+    saveGrammCache();
+    gramm.questions = shuffle(qs);
+    document.getElementById('gramm-loading').style.display = 'none';
+    beginGrammQuiz();
+  } catch(err) {
+    document.getElementById('gramm-loading').style.display = 'none';
+    document.getElementById('gramm-setup').style.display = 'block';
+    showToast('⚠️ ' + err.message);
+  }
+}
+
+function beginGrammQuiz() {
+  gramm.idx = 0; gramm.score = 0; gramm.missed = [];
+  document.getElementById('gramm-setup').style.display = 'none';
+  document.getElementById('gramm-loading').style.display = 'none';
+  document.getElementById('gramm-results').style.display = 'none';
+  document.getElementById('gramm-quiz').style.display = 'block';
+  showGrammQ();
+}
+
+function showGrammQ() {
+  const total = Math.min(gramm.questions.length, 8);
+  const q = gramm.questions[gramm.idx];
+  document.getElementById('gq-progress').textContent = (gramm.idx+1) + ' / ' + total;
+  document.getElementById('gq-score-live').textContent = gramm.score + ' richtig';
+  document.getElementById('gq-fill').style.width = (gramm.idx / total * 100) + '%';
+  const parts = q.q.split('___');
+  const sentHtml = parts.map((p,i) => esc(p) + (i < parts.length-1 ? '<span class="gramm-blank">&nbsp;</span>' : '')).join('');
+  document.getElementById('gq-sentence').innerHTML = sentHtml;
+  document.getElementById('gq-hint').textContent = q.hint ? '💡 ' + q.hint : '';
+  const inp = document.getElementById('gq-input');
+  inp.value = ''; inp.className = 'answer-input';
+  document.getElementById('gq-feedback').innerHTML = '';
+  document.getElementById('gq-check-wrap').style.display = 'block';
+  document.getElementById('gq-check-btn').disabled = false;
+  document.getElementById('gq-nav-after').style.display = 'none';
+  setTimeout(() => inp.focus(), 100);
+}
+
+function checkGrammAnswer() {
+  const q = gramm.questions[gramm.idx];
+  const inp = document.getElementById('gq-input');
+  const user = inp.value.trim().toLowerCase().replace(/['']/g,"'");
+  const corr = q.a.trim().toLowerCase().replace(/['']/g,"'");
+  const ok = user === corr || corr.split('/').map(s=>s.trim()).includes(user);
+  inp.className = 'answer-input ' + (ok ? 'correct' : 'wrong');
+  const parts = q.q.split('___');
+  const fillColor = ok ? 'var(--green-text)' : 'var(--red-text)';
+  const sentHtml = parts.map((p,i) => esc(p) + (i < parts.length-1 ? `<span class="gramm-blank" style="color:${fillColor}">${esc(q.a)}</span>` : '')).join('');
+  document.getElementById('gq-sentence').innerHTML = sentHtml;
+  const fb = document.getElementById('gq-feedback');
+  fb.innerHTML = ok
+    ? '<div class="feedback-pill pill-ok">✓ Richtig!</div>'
+    : `<div class="feedback-pill pill-nok">✗ Falsch</div><div class="correct-hint">Richtig: <strong>${esc(q.a)}</strong></div>`;
+  document.getElementById('gq-check-wrap').style.display = 'none';
+  document.getElementById('gq-nav-after').style.display = 'flex';
+  if (ok) { gramm.score++; } else { gramm.missed.push(q); }
+}
+
+function nextGrammQ() {
+  gramm.idx++;
+  if (gramm.idx >= Math.min(gramm.questions.length, 8)) showGrammResults(); else showGrammQ();
+}
+
+function showGrammResults() {
+  document.getElementById('gramm-quiz').style.display = 'none';
+  document.getElementById('gramm-results').style.display = 'block';
+  const total = Math.min(gramm.questions.length, 8);
+  const pct = Math.round(gramm.score / total * 100);
+  document.getElementById('gr-score').textContent = gramm.score + '/' + total;
+  document.getElementById('gr-sub').textContent = pct + '% richtig – ' + emoji(pct);
+  const ms = document.getElementById('gr-missed-sec');
+  const rb = document.getElementById('gr-retry-btn');
+  if (gramm.missed.length) {
+    ms.style.display = 'block'; rb.style.display = 'block';
+    document.getElementById('gr-missed').innerHTML = gramm.missed.map(q =>
+      `<li class="vocab-row"><span class="de">${esc(q.q)}</span><span class="fr">${esc(q.a)}</span></li>`
+    ).join('');
+  } else { ms.style.display='none'; rb.style.display='none'; }
+}
+
+function retryGrammMissed() {
+  if (!gramm.missed.length) { backToGrammSetup(); return; }
+  gramm.questions = shuffle(gramm.missed);
+  gramm.idx = 0; gramm.score = 0; gramm.missed = [];
+  document.getElementById('gramm-results').style.display = 'none';
+  document.getElementById('gramm-quiz').style.display = 'block';
+  showGrammQ();
+}
+
+function abortGrammQuiz() {
+  document.getElementById('gramm-quiz').style.display = 'none';
+  document.getElementById('gramm-setup').style.display = 'block';
+}
+
+function backToGrammSetup() {
+  document.getElementById('gramm-results').style.display = 'none';
+  document.getElementById('gramm-setup').style.display = 'block';
+  renderGrammSetup();
+}
+
+// ─── LOOKUP ──────────────────────────────────────────────────────────
+let _lookupResult = null;
+
+function showLookup() {
+  document.getElementById('lookup-overlay').classList.remove('hidden');
+  document.getElementById('lookup-input').value = '';
+  document.getElementById('lookup-status').textContent = '';
+  document.getElementById('lookup-result-wrap').style.display = 'none';
+  _lookupResult = null;
+  const sel = document.getElementById('lookup-unite-select');
+  const unites = Object.keys(db);
+  sel.innerHTML = unites.length
+    ? unites.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('')
+    : '<option value="Unité 1">Unité 1</option>';
+  setTimeout(() => document.getElementById('lookup-input').focus(), 150);
+}
+
+function closeLookup() {
+  document.getElementById('lookup-overlay').classList.add('hidden');
+}
+
+async function doLookup() {
+  const word = document.getElementById('lookup-input').value.trim();
+  if (!word) return;
+  if (!apiKey) { document.getElementById('lookup-status').textContent = '⚠️ Kein API-Key. Bitte unter ❓ Hilfe einrichten.'; return; }
+  const btn = document.getElementById('lookup-btn');
+  btn.disabled = true;
+  document.getElementById('lookup-status').innerHTML = '<span class="spinner"></span>Nachschlagen …';
+  document.getElementById('lookup-result-wrap').style.display = 'none';
+  try {
+    const prompt = `Übersetze das folgende Wort / den Ausdruck für den Französischunterricht (Bayerische Realschule, Lehrwerk À toi! Bayern).
+Wort: "${word}"
+Antworte NUR mit JSON, kein Markdown, keine Backticks:
+{"de":"Übersetzung auf Deutsch","fr":"Wort auf Französisch (mit Artikel wenn Nomen)","info":"z.B. m., f., unr. Verb, Redewendung","beispiel_fr":"kurzer Beispielsatz auf Französisch","beispiel_de":"Übersetzung des Beispielsatzes"}`;
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model: MODEL, max_tokens: 300, messages: [{ role:'user', content: prompt }] })
+    });
+    if (!res.ok) throw new Error('API Fehler ' + res.status);
+    const data = await res.json();
+    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    txt = txt.replace(/```json|```/g,'').trim();
+    const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
+    _lookupResult = JSON.parse(txt.slice(s, e+1));
+    document.getElementById('lr-fr').textContent = _lookupResult.fr || '';
+    document.getElementById('lr-de').textContent = _lookupResult.de || '';
+    document.getElementById('lr-info').textContent = _lookupResult.info || '';
+    const exFr = _lookupResult.beispiel_fr || '';
+    const exDe = _lookupResult.beispiel_de || '';
+    document.getElementById('lr-ex').innerHTML = exFr
+      ? `${esc(exFr)}<br><span style="opacity:0.7">${esc(exDe)}</span>` : '';
+    document.getElementById('lookup-status').textContent = '';
+    document.getElementById('lookup-result-wrap').style.display = 'block';
+  } catch(err) {
+    document.getElementById('lookup-status').textContent = '⚠️ ' + err.message;
+  }
+  btn.disabled = false;
+}
+
+function addLookupVocab() {
+  if (!_lookupResult) return;
+  const unite = document.getElementById('lookup-unite-select').value || 'Unité ?';
+  const v = { de: (_lookupResult.de || '').trim(), fr: (_lookupResult.fr || '').trim() };
+  if (!v.de || !v.fr) { showToast('⚠️ Unvollständige Übersetzung'); return; }
+  if (!db[unite]) db[unite] = [];
+  if (existingSet(unite).has(vocabKey(v))) { showToast('⚠️ Wort bereits in ' + unite); return; }
+  db[unite].push(v);
+  saveDb();
+  autoSyncToDropbox();
+  showToast('✓ „' + v.fr + '" zu ' + unite + ' hinzugefügt');
+  closeLookup();
+}
+
 // ─── UTILS ───────────────────────────────────────────────────────────
 function shuffle(arr) { return [...arr].sort(()=>Math.random()-0.5); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -2504,6 +2891,7 @@ function applyUrlParams() {
 // Init
 applyUrlParams();
 renderLearnSetup();
+renderGrammSetup();
 initApiKeyUI();
 initDbxUI();
 handleDropboxCallback();

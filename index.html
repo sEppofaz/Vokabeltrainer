@@ -442,6 +442,7 @@
     .result-sub { font-size: 15px; color: var(--text2); text-align: center; margin-bottom: 12px; }
 
     /* ── BONUS ── */
+    .gc { display:inline-block; filter: sepia(1) saturate(6) hue-rotate(10deg) brightness(1.05); }
     #bonus-bar { font-size: 11px; color: var(--text2); margin-top: 2px; }
     .xp-result-block {
       margin: 10px 0 12px;
@@ -467,6 +468,44 @@
       font-size: 14px; font-weight: 600; z-index: 9999;
       pointer-events: none; transition: opacity 0.4s; opacity: 0;
     }
+
+    /* ── HEATMAP ── */
+    .hm-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(7, 1fr);
+      grid-auto-flow: column;
+      gap: 2px;
+    }
+    .hm-cell { aspect-ratio:1; border-radius:2px; background:var(--bg3); min-width:0; }
+    .hm-1 { background: #fde68a; }
+    .hm-2 { background: #fbbf24; }
+    .hm-3 { background: #f59e0b; }
+    .hm-4 { background: #d97706; }
+    @media (prefers-color-scheme: dark) {
+      .hm-1 { background: #78580a; }
+      .hm-2 { background: #a16207; }
+      .hm-3 { background: #ca8a04; }
+      .hm-4 { background: #eab308; }
+    }
+
+    /* ── LEVEL OVERVIEW ── */
+    .level-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .level-row:last-child { border-bottom: none; }
+    .level-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--bg3); flex-shrink: 0;
+    }
+    .level-dot.reached { background: #f59e0b; }
+    .level-dot.current { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.3); }
+
+    /* ── STATS PROGRESS BAR ── */
+    .lv-bar-wrap { background: var(--bg3); border-radius: 5px; height: 10px; overflow: hidden; margin-bottom: 6px; }
+    .lv-bar-fill { height: 10px; border-radius: 5px; background: #f59e0b; transition: width 0.6s ease; }
 
     /* ── EMPTY ── */
     .empty { text-align: center; padding: 32px 16px; color: var(--text2); font-size: 14px; line-height: 1.6; }
@@ -612,6 +651,7 @@
     <button id="nav-vocab" onclick="showMain('vocab')">📋 Vokabeln</button>
     <button id="nav-upload" onclick="showMain('upload')">➕ Hinzufügen</button>
     <button id="nav-hilfe" onclick="showMain('hilfe')">❓ Hilfe</button>
+    <button id="nav-stats" onclick="showMain('stats')">🏆 Fortschritt</button>
   </div>
 
   <!-- Content -->
@@ -715,9 +755,10 @@
           <div class="result-score" id="r-score">–</div>
           <div class="result-sub" id="r-sub">–</div>
           <div id="r-xp-block" class="xp-result-block" style="display:none;">
-            <div class="xp-earned" id="r-xp-earned">+0 🪙</div>
+            <div class="xp-earned" id="r-xp-earned">+0 <span class="gc">🪙</span></div>
             <div class="xp-sub" id="r-streak-info"></div>
             <div class="xp-sub" id="r-level-info"></div>
+            <div class="xp-sub" id="r-next-level" style="margin-top:6px;font-size:12px;opacity:0.7;"></div>
           </div>
           <div id="r-freeze-banner" class="freeze-banner" style="display:none;">
             <p>😔 Dein Streak wurde unterbrochen. Joker einsetzen?</p>
@@ -1094,6 +1135,91 @@
       </div><!-- end two-col -->
     </div><!-- end main-hilfe -->
 
+    <!-- ═══ STATS ═══ -->
+    <div id="main-stats" class="screen">
+
+      <!-- Level-Karte -->
+      <div class="card" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+          <div id="stats-lv-emoji" style="font-size:44px;line-height:1;">🐣</div>
+          <div style="flex:1;">
+            <div id="stats-lv-name" style="font-size:22px;font-weight:700;color:var(--text);">Curieux</div>
+            <div id="stats-lv-num" style="font-size:13px;color:var(--text2);">Level 1 von 10</div>
+          </div>
+        </div>
+        <div class="lv-bar-wrap"><div id="stats-lv-bar" class="lv-bar-fill" style="width:0%;"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);">
+          <span id="stats-lv-cur"></span><span id="stats-lv-next"></span>
+        </div>
+      </div>
+
+      <!-- XP + Streak -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="card" style="text-align:center;padding:14px 10px;">
+          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;margin-bottom:6px;">PUNKTE GESAMT</div>
+          <div id="stats-xp-total" style="font-size:24px;font-weight:700;color:var(--text);"></div>
+          <div id="stats-xp-today" style="font-size:12px;color:var(--text2);margin-top:4px;"></div>
+        </div>
+        <div class="card" style="text-align:center;padding:14px 10px;">
+          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;margin-bottom:6px;">STREAK</div>
+          <div id="stats-streak-val" style="font-size:24px;font-weight:700;color:var(--text);"></div>
+          <div id="stats-streak-best" style="font-size:12px;color:var(--text2);margin-top:4px;"></div>
+          <div id="stats-freeze-st" style="font-size:11px;color:var(--blue-text);margin-top:3px;"></div>
+        </div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="card" style="margin-bottom:12px;">
+        <h2>Lernaktivität (letzte 12 Wochen)</h2>
+        <div id="stats-heatmap" class="hm-grid" style="margin-bottom:10px;"></div>
+        <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);">
+          <span>weniger</span>
+          <div class="hm-cell" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
+          <div class="hm-cell hm-1" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
+          <div class="hm-cell hm-2" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
+          <div class="hm-cell hm-3" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
+          <div class="hm-cell hm-4" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
+          <span>mehr</span>
+        </div>
+      </div>
+
+      <!-- Regeln -->
+      <div class="card" style="margin-bottom:12px;">
+        <h2>Wie funktioniert das Punktesystem?</h2>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;">
+          <div style="margin-bottom:10px;">
+            <strong style="color:var(--text);">🪙 Punkte verdienen</strong><br>
+            +3 <span class="gc">🪙</span> pro richtige Antwort<br>
+            +5 <span class="gc">🪙</span> bei schwierigen Wörtern (≥ 2× falsch beantwortet)<br>
+            +5 <span class="gc">🪙</span> Tagesbonus – einmal pro Tag beim ersten Quiz
+          </div>
+          <div style="margin-bottom:10px;">
+            <strong style="color:var(--text);">🔥 Streak-Multiplikator</strong><br>
+            3–6 Tage in Folge → alle Punkte ×1,5<br>
+            7+ Tage in Folge → alle Punkte ×2,0<br>
+            Wer täglich lernt, verdient doppelt so schnell!
+          </div>
+          <div style="margin-bottom:10px;">
+            <strong style="color:var(--text);">🧊 Streak-Joker</strong><br>
+            Einmal pro Monat kannst du einen verpassten Tag ausgleichen.<br>
+            Der Joker wird automatisch angeboten, wenn du deinen Streak gefährdet hast.
+          </div>
+          <div>
+            <strong style="color:var(--text);">🏆 Level aufsteigen</strong><br>
+            Mit genug Punkten steigst du automatisch auf – von 🐣 Curieux bis 👑 Maître.<br>
+            Bei jedem Level-Aufstieg gibt es Konfetti!
+          </div>
+        </div>
+      </div>
+
+      <!-- Level-Übersicht -->
+      <div class="card">
+        <h2>Alle Levels</h2>
+        <div id="stats-levels"></div>
+      </div>
+
+    </div><!-- end main-stats -->
+
   </div><!-- end .content -->
 </div><!-- end .app -->
 <div id="vt-toast"></div>
@@ -1144,16 +1270,19 @@ let xp = 0, streak = 0, streakBest = 0, xpToday = 0;
 let quizDate = '', freezeKey = '';
 let xpThisSession = 0, bonusGranted = false;
 let _prevStreak = 0, _streakBroke = false;
+let vt_daily = {};
 
 try { xp         = parseInt(localStorage.getItem('vt_xp')         || '0') || 0; } catch(e) {}
 try { streak      = parseInt(localStorage.getItem('vt_streak')      || '0') || 0; } catch(e) {}
 try { streakBest  = parseInt(localStorage.getItem('vt_streak_best') || '0') || 0; } catch(e) {}
 try { quizDate    = localStorage.getItem('vt_quiz_date') || ''; } catch(e) {}
 try { freezeKey   = localStorage.getItem('vt_freeze_key') || ''; } catch(e) {}
+try { vt_daily    = JSON.parse(localStorage.getItem('vt_daily') || '{}'); } catch(e) {}
 try {
   const _todayKey = new Date().toISOString().slice(0,10);
   xpToday = localStorage.getItem('vt_today_key') === _todayKey
     ? (parseInt(localStorage.getItem('vt_xp_today') || '0') || 0) : 0;
+  if (!xpToday && vt_daily[_todayKey]) xpToday = vt_daily[_todayKey];
 } catch(e) {}
 
 function todayStr() { return new Date().toISOString().slice(0,10); }
@@ -1173,6 +1302,9 @@ function streakMult() {
 function saveBonus() {
   try {
     const today = todayStr();
+    vt_daily[today] = xpToday;
+    const cutoff = new Date(Date.now() - 365*86400000).toISOString().slice(0,10);
+    Object.keys(vt_daily).forEach(k => { if (k < cutoff) delete vt_daily[k]; });
     localStorage.setItem('vt_xp',         String(xp));
     localStorage.setItem('vt_streak',      String(streak));
     localStorage.setItem('vt_streak_best', String(streakBest));
@@ -1180,6 +1312,7 @@ function saveBonus() {
     localStorage.setItem('vt_freeze_key',  freezeKey);
     localStorage.setItem('vt_xp_today',    String(xpToday));
     localStorage.setItem('vt_today_key',   today);
+    localStorage.setItem('vt_daily',       JSON.stringify(vt_daily));
   } catch(e) { console.warn('[save:bonus]', e); }
   renderBonusBar();
 }
@@ -1187,8 +1320,9 @@ function saveBonus() {
 function renderBonusBar() {
   const lv = getLevel(xp);
   const dayStr = streak === 1 ? '1 Tag' : streak + ' Tage';
-  document.getElementById('bonus-bar').textContent =
-    lv.emoji + ' ' + lv.name + ' · 🪙 ' + xp.toLocaleString('de') + ' · +' + xpToday + ' heute · 🔥 ' + dayStr;
+  const gc = '<span class="gc">🪙</span>';
+  document.getElementById('bonus-bar').innerHTML =
+    lv.emoji + ' ' + lv.name + ' · ' + gc + ' ' + xp.toLocaleString('de') + ' · +' + xpToday + ' heute · 🔥 ' + dayStr;
 }
 
 function showToast(msg) {
@@ -1218,23 +1352,34 @@ function computeAndApplyBonus() {
     quizDate = today;
   }
 
+  const levelBefore = getLevel(xp);
   const mult = streakMult();
   const xpFinal = Math.round(xpThisSession * mult);
   xp += xpFinal;
   xpToday += xpFinal;
+  const levelAfter = getLevel(xp);
+  const leveledUp = levelAfter.min > levelBefore.min;
   if (streak > streakBest) streakBest = streak;
   saveBonus();
-  return { xpFinal, mult };
+  return { xpFinal, mult, leveledUp, newLevel: levelAfter };
 }
 
 function renderStreakInfo() {
+  const gc = '<span class="gc">🪙</span>';
   const dayStr = streak === 1 ? '1 Tag' : streak + ' Tage';
   const mult = streakMult();
   const multStr = mult > 1.0 ? ' · ×' + mult.toFixed(1) + ' Streak-Bonus' : '';
   document.getElementById('r-streak-info').textContent = '🔥 ' + dayStr + multStr;
   const lv = getLevel(xp);
-  document.getElementById('r-level-info').textContent =
-    lv.emoji + ' ' + lv.name + ' · 🪙 ' + xp.toLocaleString('de') + ' gesamt';
+  document.getElementById('r-level-info').innerHTML = lv.emoji + ' ' + lv.name + ' · ' + gc + ' ' + xp.toLocaleString('de') + ' gesamt';
+  const lvIdx = LEVELS.indexOf(lv);
+  const nextLv = LEVELS[lvIdx + 1];
+  const nlEl = document.getElementById('r-next-level');
+  if (nextLv) {
+    nlEl.innerHTML = 'Noch ' + (nextLv.min - xp).toLocaleString('de') + ' ' + gc + ' bis ' + nextLv.emoji + ' ' + nextLv.name;
+  } else {
+    nlEl.textContent = '👑 Maximales Level erreicht!';
+  }
 }
 
 function useFreeze() {
@@ -1533,13 +1678,132 @@ let _editingKey = null;
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────
 function showMain(tab) {
-  ['learn','vocab','upload','hilfe'].forEach(t => {
+  ['learn','vocab','upload','hilfe','stats'].forEach(t => {
     document.getElementById('main-'+t).classList.toggle('active', t===tab);
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='learn') renderLearnSetup();
   if (tab==='vocab') renderVocabScreen();
   if (tab==='upload') renderInstallHint();
+  if (tab==='stats') renderStats();
+}
+
+// ─── CONFETTI ────────────────────────────────────────────────────────
+function triggerConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;pointer-events:none;';
+  document.body.appendChild(canvas);
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#f59e0b','#fbbf24','#fde68a','#10b981','#3b82f6','#ef4444','#8b5cf6','#ec4899','#ffffff'];
+  const pieces = Array.from({length: 110}, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 120,
+    w: 6 + Math.random() * 9,
+    h: 5 + Math.random() * 7,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: (Math.random() - 0.5) * 5,
+    vy: 2.5 + Math.random() * 3.5,
+    rot: Math.random() * 360,
+    vr: (Math.random() - 0.5) * 12,
+    opacity: 1,
+  }));
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.vy += 0.07;
+      if (frame > 90) p.opacity = Math.max(0, p.opacity - 0.018);
+      if (p.y < canvas.height + 30 && p.opacity > 0) alive = true;
+      ctx.save();
+      ctx.globalAlpha = p.opacity;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (frame < 160 && alive) requestAnimationFrame(animate);
+    else canvas.remove();
+  }
+  requestAnimationFrame(animate);
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────
+function renderStats() {
+  const gc = '<span class="gc">🪙</span>';
+  const lv = getLevel(xp);
+  const lvIdx = LEVELS.indexOf(lv);
+  const nextLv = LEVELS[lvIdx + 1] || null;
+
+  // Level card
+  document.getElementById('stats-lv-emoji').textContent = lv.emoji;
+  document.getElementById('stats-lv-name').textContent = lv.name;
+  document.getElementById('stats-lv-num').textContent = 'Level ' + (lvIdx + 1) + ' von ' + LEVELS.length;
+  const pct = nextLv ? Math.min(100, Math.round((xp - lv.min) / (nextLv.min - lv.min) * 100)) : 100;
+  document.getElementById('stats-lv-bar').style.width = pct + '%';
+  document.getElementById('stats-lv-cur').innerHTML = gc + ' ' + xp.toLocaleString('de');
+  document.getElementById('stats-lv-next').innerHTML = nextLv
+    ? 'Ziel: ' + nextLv.min.toLocaleString('de') + ' ' + gc : '👑 Maître erreicht!';
+
+  // XP card
+  document.getElementById('stats-xp-total').innerHTML = xp.toLocaleString('de') + ' ' + gc;
+  document.getElementById('stats-xp-today').innerHTML = '+' + xpToday + ' ' + gc + ' heute';
+
+  // Streak card
+  document.getElementById('stats-streak-val').textContent = streak + ' 🔥';
+  document.getElementById('stats-streak-best').textContent = 'Rekord: ' + streakBest + (streakBest === 1 ? ' Tag' : ' Tage');
+  const thisMonth = todayStr().slice(0, 7);
+  document.getElementById('stats-freeze-st').textContent = freezeKey === thisMonth ? '🧊 Joker diesen Monat verbraucht' : '🧊 Joker verfügbar';
+
+  renderHeatmap();
+  renderLevelOverview();
+}
+
+function renderHeatmap() {
+  const grid = document.getElementById('stats-heatmap');
+  const today = new Date();
+  const cells = [];
+  for (let i = 83; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const dayXp = vt_daily[key] || 0;
+    let cls = 'hm-cell';
+    if      (dayXp >= 100) cls += ' hm-4';
+    else if (dayXp >= 50)  cls += ' hm-3';
+    else if (dayXp >= 20)  cls += ' hm-2';
+    else if (dayXp >= 1)   cls += ' hm-1';
+    const label = key + ': ' + dayXp + ' XP';
+    cells.push('<div class="' + cls + '" title="' + label + '"></div>');
+  }
+  grid.innerHTML = cells.join('');
+}
+
+function renderLevelOverview() {
+  const lv = getLevel(xp);
+  const curIdx = LEVELS.indexOf(lv);
+  const gc = '<span class="gc">🪙</span>';
+  document.getElementById('stats-levels').innerHTML = LEVELS.map((l, i) => {
+    const reached = xp >= l.min;
+    const isCurrent = i === curIdx;
+    const dotCls = 'level-dot' + (isCurrent ? ' current' : reached ? ' reached' : '');
+    const nameStyle = isCurrent ? 'font-weight:700;color:var(--text)' : reached ? 'color:var(--text)' : 'color:var(--text3)';
+    const badge = isCurrent ? '<span style="font-size:11px;color:var(--text2);">← du bist hier</span>'
+      : reached ? '<span style="color:#f59e0b;font-size:15px;">✓</span>' : '';
+    return '<div class="level-row">'
+      + '<div class="' + dotCls + '"></div>'
+      + '<div style="font-size:20px;">' + l.emoji + '</div>'
+      + '<div style="flex:1;">'
+      +   '<div style="font-size:14px;' + nameStyle + ';">' + l.name + '</div>'
+      +   '<div style="font-size:11px;color:var(--text3);">ab ' + l.min.toLocaleString('de') + ' ' + gc + '</div>'
+      + '</div>'
+      + badge
+      + '</div>';
+  }).join('');
 }
 
 // ─── OCR TYPE ────────────────────────────────────────────────────────
@@ -2168,14 +2432,21 @@ function showResults() {
 
   if (!bonusGranted) {
     bonusGranted = true;
-    const { xpFinal } = computeAndApplyBonus();
+    const { xpFinal, leveledUp, newLevel } = computeAndApplyBonus();
     document.getElementById('r-xp-block').style.display = 'block';
-    document.getElementById('r-xp-earned').textContent = '+' + xpFinal + ' 🪙';
+    document.getElementById('r-xp-earned').innerHTML = '+' + xpFinal + ' <span class="gc">🪙</span>';
     renderStreakInfo();
     const thisMonth = todayStr().slice(0,7);
     document.getElementById('r-freeze-banner').style.display =
       (_streakBroke && freezeKey !== thisMonth) ? 'block' : 'none';
-    if (xpFinal > 0) showToast('+' + xpFinal + ' 🪙 · 🔥 ' + (streak === 1 ? '1 Tag' : streak + ' Tage'));
+    if (leveledUp) {
+      setTimeout(() => {
+        triggerConfetti();
+        showToast('🎉 Level Up! ' + newLevel.emoji + ' ' + newLevel.name + '!');
+      }, 350);
+    } else if (xpFinal > 0) {
+      showToast('+' + xpFinal + ' 🪙 · 🔥 ' + (streak === 1 ? '1 Tag' : streak + ' Tage'));
+    }
   }
 }
 

@@ -439,7 +439,34 @@
 
     /* ── RESULTS ── */
     .result-score { font-size: 56px; font-weight: 700; text-align: center; color: var(--text); margin: 16px 0 4px; }
-    .result-sub { font-size: 15px; color: var(--text2); text-align: center; margin-bottom: 20px; }
+    .result-sub { font-size: 15px; color: var(--text2); text-align: center; margin-bottom: 12px; }
+
+    /* ── BONUS ── */
+    #bonus-bar { font-size: 11px; color: var(--text2); margin-top: 2px; }
+    .xp-result-block {
+      margin: 10px 0 12px;
+      padding: 12px;
+      background: var(--bg2);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+    .xp-earned { font-size: 24px; font-weight: 700; color: var(--text); }
+    .xp-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
+    .freeze-banner {
+      margin: 0 0 10px;
+      padding: 10px 12px;
+      background: var(--blue-bg);
+      border: 0.5px solid var(--blue-border);
+      border-radius: var(--radius-sm);
+    }
+    .freeze-banner p { font-size: 13px; color: var(--blue-text); margin-bottom: 8px; }
+    #vt-toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: var(--bg);
+      padding: 10px 18px; border-radius: 20px;
+      font-size: 14px; font-weight: 600; z-index: 9999;
+      pointer-events: none; transition: opacity 0.4s; opacity: 0;
+    }
 
     /* ── EMPTY ── */
     .empty { text-align: center; padding: 32px 16px; color: var(--text2); font-size: 14px; line-height: 1.6; }
@@ -574,8 +601,8 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v46)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
-      <p style="margin-top:1px;">by sEpp</p>
+      <p>Jule Édition <span style="opacity:0.5;">(v47)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
 
@@ -687,6 +714,15 @@
           <h2>Ergebnis</h2>
           <div class="result-score" id="r-score">–</div>
           <div class="result-sub" id="r-sub">–</div>
+          <div id="r-xp-block" class="xp-result-block" style="display:none;">
+            <div class="xp-earned" id="r-xp-earned">+0 🪙</div>
+            <div class="xp-sub" id="r-streak-info"></div>
+            <div class="xp-sub" id="r-level-info"></div>
+          </div>
+          <div id="r-freeze-banner" class="freeze-banner" style="display:none;">
+            <p>😔 Dein Streak wurde unterbrochen. Joker einsetzen?</p>
+            <button class="btn btn-secondary" style="margin:0;font-size:13px;" onclick="useFreeze()">🧊 Joker einsetzen (1× pro Monat)</button>
+          </div>
           <div id="r-missed-sec" style="display:none;">
             <label style="margin-bottom:8px;">Noch üben:</label>
             <div class="vocab-scroll-limited">
@@ -1060,6 +1096,7 @@
 
   </div><!-- end .content -->
 </div><!-- end .app -->
+<div id="vt-toast"></div>
 
 <script>
 // ─── CONSTANTS ──────────────────────────────────────────────────────── P7
@@ -1088,6 +1125,130 @@ try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); }
 try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){ console.warn('[load:dbxexpiry]', e); }
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
+
+// ─── BONUS SYSTEM ────────────────────────────────────────────────────
+const LEVELS = [
+  { min:     0, name: 'Curieux',     emoji: '🐣' },
+  { min:   100, name: 'Débutant',    emoji: '🌱' },
+  { min:   300, name: 'Explorateur', emoji: '🗺️' },
+  { min:   700, name: 'Voyageur',    emoji: '✈️' },
+  { min:  1300, name: 'Apprenti',    emoji: '📚' },
+  { min:  2200, name: 'Étudiant',    emoji: '🎓' },
+  { min:  3500, name: 'Bavard',      emoji: '💬' },
+  { min:  5500, name: 'Savant',      emoji: '🔭' },
+  { min:  8500, name: 'Expert',      emoji: '🏆' },
+  { min: 13000, name: 'Maître',      emoji: '👑' },
+];
+
+let xp = 0, streak = 0, streakBest = 0, xpToday = 0;
+let quizDate = '', freezeKey = '';
+let xpThisSession = 0, bonusGranted = false;
+let _prevStreak = 0, _streakBroke = false;
+
+try { xp         = parseInt(localStorage.getItem('vt_xp')         || '0') || 0; } catch(e) {}
+try { streak      = parseInt(localStorage.getItem('vt_streak')      || '0') || 0; } catch(e) {}
+try { streakBest  = parseInt(localStorage.getItem('vt_streak_best') || '0') || 0; } catch(e) {}
+try { quizDate    = localStorage.getItem('vt_quiz_date') || ''; } catch(e) {}
+try { freezeKey   = localStorage.getItem('vt_freeze_key') || ''; } catch(e) {}
+try {
+  const _todayKey = new Date().toISOString().slice(0,10);
+  xpToday = localStorage.getItem('vt_today_key') === _todayKey
+    ? (parseInt(localStorage.getItem('vt_xp_today') || '0') || 0) : 0;
+} catch(e) {}
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
+function getLevel(x) {
+  let lv = LEVELS[0];
+  for (const l of LEVELS) { if (x >= l.min) lv = l; else break; }
+  return lv;
+}
+
+function streakMult() {
+  if (streak >= 7) return 2.0;
+  if (streak >= 3) return 1.5;
+  return 1.0;
+}
+
+function saveBonus() {
+  try {
+    const today = todayStr();
+    localStorage.setItem('vt_xp',         String(xp));
+    localStorage.setItem('vt_streak',      String(streak));
+    localStorage.setItem('vt_streak_best', String(streakBest));
+    localStorage.setItem('vt_quiz_date',   quizDate);
+    localStorage.setItem('vt_freeze_key',  freezeKey);
+    localStorage.setItem('vt_xp_today',    String(xpToday));
+    localStorage.setItem('vt_today_key',   today);
+  } catch(e) { console.warn('[save:bonus]', e); }
+  renderBonusBar();
+}
+
+function renderBonusBar() {
+  const lv = getLevel(xp);
+  const dayStr = streak === 1 ? '1 Tag' : streak + ' Tage';
+  document.getElementById('bonus-bar').textContent =
+    lv.emoji + ' ' + lv.name + ' · 🪙 ' + xp.toLocaleString('de') + ' · +' + xpToday + ' heute · 🔥 ' + dayStr;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('vt-toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+function computeAndApplyBonus() {
+  const today = todayStr();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  _prevStreak = streak;
+  _streakBroke = false;
+
+  if (quizDate !== today) {
+    xpThisSession += 5; // Tagesbonus
+    if (quizDate === '') {
+      streak = 1;
+    } else if (quizDate === yesterday) {
+      streak++;
+    } else {
+      _streakBroke = true;
+      streak = 1;
+    }
+    quizDate = today;
+  }
+
+  const mult = streakMult();
+  const xpFinal = Math.round(xpThisSession * mult);
+  xp += xpFinal;
+  xpToday += xpFinal;
+  if (streak > streakBest) streakBest = streak;
+  saveBonus();
+  return { xpFinal, mult };
+}
+
+function renderStreakInfo() {
+  const dayStr = streak === 1 ? '1 Tag' : streak + ' Tage';
+  const mult = streakMult();
+  const multStr = mult > 1.0 ? ' · ×' + mult.toFixed(1) + ' Streak-Bonus' : '';
+  document.getElementById('r-streak-info').textContent = '🔥 ' + dayStr + multStr;
+  const lv = getLevel(xp);
+  document.getElementById('r-level-info').textContent =
+    lv.emoji + ' ' + lv.name + ' · 🪙 ' + xp.toLocaleString('de') + ' gesamt';
+}
+
+function useFreeze() {
+  const thisMonth = todayStr().slice(0,7);
+  if (freezeKey === thisMonth) return;
+  freezeKey = thisMonth;
+  streak = _prevStreak + 1;
+  if (streak > streakBest) streakBest = streak;
+  _streakBroke = false;
+  saveBonus();
+  document.getElementById('r-freeze-banner').style.display = 'none';
+  renderStreakInfo();
+  showToast('🧊 Streak gerettet! 🔥 ' + streak + ' Tage');
+}
 
 // ─── VOCAB KEY (content-based) ───────────────────────────────────── P1
 function vocabKey(v) { return v.de.trim().toLowerCase() + '|' + v.fr.trim().toLowerCase(); }
@@ -1879,6 +2040,8 @@ function setOrder(o) {
 
 // ─── QUIZ ────────────────────────────────────────────────────────────
 function startQuiz() {
+  bonusGranted = false;
+  xpThisSession = 0;
   let all = [];
   if (selectedUnites.has('__schwierig__')) {
     all.push(...getSchwierig());
@@ -1963,6 +2126,7 @@ function checkAnswer() {
   document.getElementById('q-nav-after').style.display='flex';
   if (ok) {
     quiz.score++;
+    if (card.key) xpThisSession += (errors[card.key] || 0) >= 2 ? 5 : 3;
   } else {
     quiz.missed.push(card);
     if (card.key) { errors[card.key] = (errors[card.key]||0)+1; saveStars(); }
@@ -1971,8 +2135,13 @@ function checkAnswer() {
 
 function nextCard(correct) {
   if (quiz.mode==='cover') {
-    if(correct) quiz.score++;
-    else {
+    if (correct) {
+      quiz.score++;
+      if (quiz.current) {
+        const k = quiz.current.key || vocabKey(quiz.current);
+        xpThisSession += (errors[k] || 0) >= 2 ? 5 : 3;
+      }
+    } else {
       const card = quiz.cards[quiz.idx];
       quiz.missed.push(card);
       if (card.key) { errors[card.key] = (errors[card.key]||0)+1; saveStars(); }
@@ -1996,6 +2165,18 @@ function showResults() {
       `<li class="vocab-row"><span class="de">${esc(v.de)}</span><span class="fr">${esc(v.fr)}</span></li>`
     ).join('');
   } else { ms.style.display='none'; rb.style.display='none'; }
+
+  if (!bonusGranted) {
+    bonusGranted = true;
+    const { xpFinal } = computeAndApplyBonus();
+    document.getElementById('r-xp-block').style.display = 'block';
+    document.getElementById('r-xp-earned').textContent = '+' + xpFinal + ' 🪙';
+    renderStreakInfo();
+    const thisMonth = todayStr().slice(0,7);
+    document.getElementById('r-freeze-banner').style.display =
+      (_streakBroke && freezeKey !== thisMonth) ? 'block' : 'none';
+    if (xpFinal > 0) showToast('+' + xpFinal + ' 🪙 · 🔥 ' + (streak === 1 ? '1 Tag' : streak + ' Tage'));
+  }
 }
 
 function restartMissed() {
@@ -2055,6 +2236,7 @@ renderLearnSetup();
 initApiKeyUI();
 initDbxUI();
 handleDropboxCallback();
+renderBonusBar();
 </script>
 </body>
 </html>

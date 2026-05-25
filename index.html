@@ -97,6 +97,15 @@
       margin-top: 1px;
     }
 
+    /* ─── Hilfe-Overlay ─── */
+  #hilfe-overlay { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.4); }
+  #hilfe-overlay.show { display: flex; align-items: flex-end; }
+  #hilfe-sheet { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 -4px 20px rgba(0,0,0,.15); }
+  #hilfe-sheet-hd { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+  #hilfe-sheet-hd strong { font-size: 15px; color: var(--text); }
+  #btn-hilfe-close { background: var(--chip); border: none; border-radius: 16px; padding: 5px 14px; font-size: 13px; font-family: inherit; cursor: pointer; color: var(--text); }
+  #hilfe-sheet-body { overflow-y: auto; padding: 12px 16px calc(20px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+
     /* ── TAB BAR ── */
     .tab-bar {
       display: flex;
@@ -656,7 +665,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v49)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v49)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button> <button onclick="document.getElementById('hilfe-overlay').classList.add('show')" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--text2);cursor:pointer;padding:2px 6px;margin-left:2px;">ℹ️</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -667,7 +676,7 @@
     <button id="nav-vocab" onclick="showMain('vocab')">📋 Vokabeln</button>
     <button id="nav-upload" onclick="showMain('upload')">➕ Hinzufügen</button>
     <button id="nav-gramm" onclick="showMain('gramm')">📝 Grammatik</button>
-    <button id="nav-hilfe" onclick="showMain('hilfe')">❓ Hilfe</button>
+
     <button id="nav-stats" onclick="showMain('stats')">🏆 Fortschritt</button>
   </div>
 
@@ -831,9 +840,9 @@
         <h3 style="color:var(--red-text);">⚠️ API-Key fehlt</h3>
         <p style="font-size:13px;color:var(--red-text);line-height:1.6;margin-bottom:10px;">
           Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>
-          Einmalig eingeben unter <strong>❓ Hilfe → API-Key</strong>.
+          Einmalig eingeben unter <strong>ℹ️ Info → API-Key</strong>.
         </p>
-        <button class="btn btn-secondary" onclick="showMain('hilfe');document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'})">→ Jetzt einrichten</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('hilfe-overlay').classList.add('show');setTimeout(()=>document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'}),50)">→ Jetzt einrichten</button>
       </div>
 
       <div class="card">
@@ -981,7 +990,13 @@
     </div><!-- end main-gramm -->
 
     <!-- ═══ HILFE ═══ -->
-    <div id="main-hilfe" class="screen">
+    <div id="hilfe-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+      <div id="hilfe-sheet">
+        <div id="hilfe-sheet-hd">
+          <strong>❓ Hilfe</strong>
+          <button id="btn-hilfe-close" onclick="document.getElementById('hilfe-overlay').classList.remove('show')">Schließen</button>
+        </div>
+        <div id="hilfe-sheet-body">
       <div class="two-col">
 
       <div class="card two-col-full">
@@ -1222,7 +1237,9 @@
       </div>
 
       </div><!-- end two-col -->
-    </div><!-- end main-hilfe -->
+        </div><!-- end hilfe-sheet-body -->
+      </div><!-- end hilfe-sheet -->
+    </div><!-- end hilfe-overlay -->
 
     <!-- ═══ STATS ═══ -->
     <div id="main-stats" class="screen">
@@ -1753,7 +1770,7 @@ function initDbxUI() {
 
 async function syncToDropbox() {
   const token = await getValidAccessToken();
-  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Hilfe-Tab (❓) → Dropbox-Sync einrichten.'); return; }
+  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im ℹ️ Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-up-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
@@ -1769,7 +1786,7 @@ async function syncToDropbox() {
 
 async function syncFromDropbox() {
   const token = await getValidAccessToken();
-  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Hilfe-Tab (❓) → Dropbox-Sync einrichten.'); return; }
+  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im ℹ️ Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-dn-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
@@ -1826,7 +1843,7 @@ let _editingKey = null;
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────
 function showMain(tab) {
-  ['learn','vocab','upload','gramm','hilfe','stats'].forEach(t => {
+  ['learn','vocab','upload','gramm','stats'].forEach(t => {
     document.getElementById('main-'+t).classList.toggle('active', t===tab);
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
@@ -2064,7 +2081,7 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
     setStatus('<span class="spinner"></span>Verbinde mit KI…', 'loading');
 
     if (!apiKey) {
-      setStatus('⚠️ Kein API-Key. Bitte unter <strong>❓ Hilfe → API-Key einrichten</strong>.', 'error');
+      setStatus('⚠️ Kein API-Key. Bitte unter <strong>ℹ️ Info → API-Key einrichten</strong>.', 'error');
       return;
     }
 
@@ -2647,7 +2664,7 @@ async function startGrammSession() {
     beginGrammQuiz();
     return;
   }
-  if (!apiKey) { showToast('⚠️ Kein API-Key – bitte unter ❓ Hilfe einrichten'); return; }
+  if (!apiKey) { showToast('⚠️ Kein API-Key – bitte unter ℹ️ Info einrichten'); return; }
   document.getElementById('gramm-setup').style.display = 'none';
   document.getElementById('gramm-loading').style.display = 'block';
   try {
@@ -2798,7 +2815,7 @@ function closeLookup() {
 async function doLookup() {
   const word = document.getElementById('lookup-input').value.trim();
   if (!word) return;
-  if (!apiKey) { document.getElementById('lookup-status').textContent = '⚠️ Kein API-Key. Bitte unter ❓ Hilfe einrichten.'; return; }
+  if (!apiKey) { document.getElementById('lookup-status').textContent = '⚠️ Kein API-Key. Bitte unter ℹ️ Info einrichten.'; return; }
   const btn = document.getElementById('lookup-btn');
   btn.disabled = true;
   document.getElementById('lookup-status').innerHTML = '<span class="spinner"></span>Nachschlagen …';

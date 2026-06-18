@@ -1356,11 +1356,41 @@
 
 <script>
 // ─── CONSTANTS ──────────────────────────────────────────────────────── P7
-const MODEL          = 'claude-sonnet-4-6';
+const MODELS         = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
+let activeModel      = localStorage.getItem('vt_active_model') || MODELS[0];
 const API_URL        = 'https://api.anthropic.com/v1/messages';
 const DBX_UPLOAD_URL   = 'https://content.dropboxapi.com/2/files/upload';
 const DBX_DOWNLOAD_URL = 'https://content.dropboxapi.com/2/files/download';
 const DBX_FILE_PATH    = '/vokabeln.json';
+
+async function callAPI(body) {
+  let startIdx = MODELS.indexOf(activeModel);
+  if (startIdx === -1) startIdx = 0;
+  for (let i = startIdx; i < MODELS.length; i++) {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ ...body, model: MODELS[i] })
+    });
+    if (res.ok) {
+      if (MODELS[i] !== activeModel) {
+        activeModel = MODELS[i];
+        localStorage.setItem('vt_active_model', activeModel);
+      }
+      return res;
+    }
+    if (res.status !== 404 || i === MODELS.length - 1) {
+      let errMsg = 'API Fehler ' + res.status;
+      try { const e = await res.json(); if (e.error?.message) errMsg += ': ' + e.error.message; } catch(_) {}
+      throw new Error(errMsg);
+    }
+  }
+}
 
 // ─── DB ──────────────────────────────────────────────────────────────
 let db = {};
@@ -2087,32 +2117,13 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
 
     let res;
     try {
-      res = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 2000,
-          messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }]
-        })
-      });
-    } catch(netErr) {
-      setStatus('⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>', 'error');
-      return;
-    }
-
-    if (!res.ok) {
-      let errMsg = 'API Fehler ' + res.status;
-      try {
-        const errData = await res.json();
-        if (errData.error && errData.error.message) errMsg += ': ' + errData.error.message;
-      } catch(e) {}
-      setStatus('⚠️ ' + errMsg, 'error');
+      res = await callAPI({ max_tokens: 2000, messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }] });
+    } catch(apiErr) {
+      if (apiErr.message.startsWith('API Fehler')) {
+        setStatus('⚠️ ' + apiErr.message, 'error');
+      } else {
+        setStatus('⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>', 'error');
+      }
       return;
     }
 
@@ -2677,12 +2688,7 @@ Regeln:
 - Variiere Subjekte und Kontexte
 Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
 [{"q":"J'___ mangé une pomme.","a":"ai","hint":"avoir (je)"},...]`;
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
-    });
-    if (!res.ok) throw new Error('API Fehler ' + res.status);
+    const res = await callAPI({ max_tokens: 1500, messages: [{ role:'user', content: prompt }] });
     const data = await res.json();
     let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
     txt = txt.replace(/```json|```/g,'').trim();
@@ -2825,12 +2831,7 @@ async function doLookup() {
 Wort: "${word}"
 Antworte NUR mit JSON, kein Markdown, keine Backticks:
 {"de":"Übersetzung auf Deutsch","fr":"Wort auf Französisch (mit Artikel wenn Nomen)","info":"z.B. m., f., unr. Verb, Redewendung","beispiel_fr":"kurzer Beispielsatz auf Französisch","beispiel_de":"Übersetzung des Beispielsatzes"}`;
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 300, messages: [{ role:'user', content: prompt }] })
-    });
-    if (!res.ok) throw new Error('API Fehler ' + res.status);
+    const res = await callAPI({ max_tokens: 300, messages: [{ role:'user', content: prompt }] });
     const data = await res.json();
     let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
     txt = txt.replace(/```json|```/g,'').trim();

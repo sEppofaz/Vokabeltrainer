@@ -840,7 +840,7 @@
         <h3 style="color:var(--red-text);">⚠️ API-Key fehlt</h3>
         <p style="font-size:13px;color:var(--red-text);line-height:1.6;margin-bottom:10px;">
           Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>
-          Einmalig eingeben unter <strong>ℹ️ Info → API-Key</strong>.
+          Einmalig eingeben unter <strong>Info → API-Key</strong>.
         </p>
         <button class="btn btn-secondary" onclick="document.getElementById('hilfe-overlay').classList.add('show');setTimeout(()=>document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'}),50)">→ Jetzt einrichten</button>
       </div>
@@ -1356,41 +1356,11 @@
 
 <script>
 // ─── CONSTANTS ──────────────────────────────────────────────────────── P7
-const MODELS         = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
-let activeModel      = localStorage.getItem('vt_active_model') || MODELS[0];
+const MODEL          = 'claude-sonnet-4-6';
 const API_URL        = 'https://api.anthropic.com/v1/messages';
 const DBX_UPLOAD_URL   = 'https://content.dropboxapi.com/2/files/upload';
 const DBX_DOWNLOAD_URL = 'https://content.dropboxapi.com/2/files/download';
 const DBX_FILE_PATH    = '/vokabeln.json';
-
-async function callAPI(body) {
-  let startIdx = MODELS.indexOf(activeModel);
-  if (startIdx === -1) startIdx = 0;
-  for (let i = startIdx; i < MODELS.length; i++) {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({ ...body, model: MODELS[i] })
-    });
-    if (res.ok) {
-      if (MODELS[i] !== activeModel) {
-        activeModel = MODELS[i];
-        localStorage.setItem('vt_active_model', activeModel);
-      }
-      return res;
-    }
-    if (res.status !== 404 || i === MODELS.length - 1) {
-      let errMsg = 'API Fehler ' + res.status;
-      try { const e = await res.json(); if (e.error?.message) errMsg += ': ' + e.error.message; } catch(_) {}
-      throw new Error(errMsg);
-    }
-  }
-}
 
 // ─── DB ──────────────────────────────────────────────────────────────
 let db = {};
@@ -1800,7 +1770,7 @@ function initDbxUI() {
 
 async function syncToDropbox() {
   const token = await getValidAccessToken();
-  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im ℹ️ Info → Dropbox-Sync einrichten.'); return; }
+  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-up-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
@@ -1816,7 +1786,7 @@ async function syncToDropbox() {
 
 async function syncFromDropbox() {
   const token = await getValidAccessToken();
-  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im ℹ️ Info → Dropbox-Sync einrichten.'); return; }
+  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-dn-btn');
   btn.textContent = '⏳'; btn.disabled = true;
   try {
@@ -2111,19 +2081,38 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
     setStatus('<span class="spinner"></span>Verbinde mit KI…', 'loading');
 
     if (!apiKey) {
-      setStatus('⚠️ Kein API-Key. Bitte unter <strong>ℹ️ Info → API-Key einrichten</strong>.', 'error');
+      setStatus('⚠️ Kein API-Key. Bitte unter <strong>Info → API-Key einrichten</strong>.', 'error');
       return;
     }
 
     let res;
     try {
-      res = await callAPI({ max_tokens: 2000, messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }] });
-    } catch(apiErr) {
-      if (apiErr.message.startsWith('API Fehler')) {
-        setStatus('⚠️ ' + apiErr.message, 'error');
-      } else {
-        setStatus('⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>', 'error');
-      }
+      res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }]
+        })
+      });
+    } catch(netErr) {
+      setStatus('⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>', 'error');
+      return;
+    }
+
+    if (!res.ok) {
+      let errMsg = 'API Fehler ' + res.status;
+      try {
+        const errData = await res.json();
+        if (errData.error && errData.error.message) errMsg += ': ' + errData.error.message;
+      } catch(e) {}
+      setStatus('⚠️ ' + errMsg, 'error');
       return;
     }
 
@@ -2675,7 +2664,7 @@ async function startGrammSession() {
     beginGrammQuiz();
     return;
   }
-  if (!apiKey) { showToast('⚠️ Kein API-Key – bitte unter ℹ️ Info einrichten'); return; }
+  if (!apiKey) { showToast('⚠️ Kein API-Key – bitte unter Info einrichten'); return; }
   document.getElementById('gramm-setup').style.display = 'none';
   document.getElementById('gramm-loading').style.display = 'block';
   try {
@@ -2688,7 +2677,12 @@ Regeln:
 - Variiere Subjekte und Kontexte
 Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
 [{"q":"J'___ mangé une pomme.","a":"ai","hint":"avoir (je)"},...]`;
-    const res = await callAPI({ max_tokens: 1500, messages: [{ role:'user', content: prompt }] });
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model: MODEL, max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
+    });
+    if (!res.ok) throw new Error('API Fehler ' + res.status);
     const data = await res.json();
     let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
     txt = txt.replace(/```json|```/g,'').trim();
@@ -2821,7 +2815,7 @@ function closeLookup() {
 async function doLookup() {
   const word = document.getElementById('lookup-input').value.trim();
   if (!word) return;
-  if (!apiKey) { document.getElementById('lookup-status').textContent = '⚠️ Kein API-Key. Bitte unter ℹ️ Info einrichten.'; return; }
+  if (!apiKey) { document.getElementById('lookup-status').textContent = '⚠️ Kein API-Key. Bitte unter Info einrichten.'; return; }
   const btn = document.getElementById('lookup-btn');
   btn.disabled = true;
   document.getElementById('lookup-status').innerHTML = '<span class="spinner"></span>Nachschlagen …';
@@ -2831,7 +2825,12 @@ async function doLookup() {
 Wort: "${word}"
 Antworte NUR mit JSON, kein Markdown, keine Backticks:
 {"de":"Übersetzung auf Deutsch","fr":"Wort auf Französisch (mit Artikel wenn Nomen)","info":"z.B. m., f., unr. Verb, Redewendung","beispiel_fr":"kurzer Beispielsatz auf Französisch","beispiel_de":"Übersetzung des Beispielsatzes"}`;
-    const res = await callAPI({ max_tokens: 300, messages: [{ role:'user', content: prompt }] });
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model: MODEL, max_tokens: 300, messages: [{ role:'user', content: prompt }] })
+    });
+    if (!res.ok) throw new Error('API Fehler ' + res.status);
     const data = await res.json();
     let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
     txt = txt.replace(/```json|```/g,'').trim();

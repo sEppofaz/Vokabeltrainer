@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Vokabeltrainer" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#ffffff" id="theme-color-meta" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <title>Vokabeltrainer Français</title>
@@ -34,6 +34,8 @@
       --red-border: #f4a9a4;
       --radius: 12px;
       --radius-sm: 8px;
+      --speak-card-hell: #4d84e8;
+      --speak-card-dunkel: #0d3a9e;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -135,8 +137,8 @@
     }
     .tab-bar button {
       flex: 1;
-      padding: 10px 4px;
-      font-size: 12px;
+      padding: 8px 4px 10px;
+      font-size: 11px;
       font-weight: 500;
       background: none;
       border: none;
@@ -144,7 +146,13 @@
       cursor: pointer;
       border-top: 2px solid transparent;
       transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
     }
+    .tab-bar button svg { display: block; }
     .tab-bar button.active {
       color: var(--blue-text);
       border-top-color: var(--blue-text);
@@ -343,9 +351,9 @@
     .vocab-row:last-child { border-bottom: none; }
     .vocab-row .de { color: var(--text2); flex: 1; }
     .vocab-row .fr { color: var(--text); font-weight: 500; flex: 1; }
-    .vocab-row .del-btn  { background: none; border: none; color: var(--red-text);   font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
-    .vocab-row .edit-btn { background: none; border: none; color: var(--text2);      font-size: 13px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; }
-    .vocab-row .save-btn { background: none; border: none; color: var(--green-text); font-size: 16px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; font-weight: 600; }
+    .vocab-row .del-btn  { background: none; border: none; color: var(--red-text);   font-size: 14px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; display: inline-flex; align-items: center; }
+    .vocab-row .edit-btn { background: none; border: none; color: var(--text2);      font-size: 13px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; display: inline-flex; align-items: center; }
+    .vocab-row .save-btn { background: none; border: none; color: var(--green-text); font-size: 16px; cursor: pointer; padding: 2px 4px; flex-shrink: 0; font-weight: 600; display: inline-flex; align-items: center; }
     .vocab-row--edit .edit-cell { flex: 1; min-width: 0; }
 
     /* Editable extracted rows */
@@ -563,8 +571,10 @@
       background: var(--bg2); color: var(--text2); cursor: pointer;
       font-family: inherit; transition: all 0.15s;
       -webkit-user-select: none; user-select: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 3px;
     }
     .hide-col-btn.active { background: var(--accent); color: var(--bg); border-color: transparent; }
+    .hide-col-btn svg { display: block; }
     .btn-group { position: relative; display: inline-block; }
     .btn-dropdown {
       display: none; position: absolute; right: 0; top: calc(100% + 5px);
@@ -637,8 +647,9 @@
       background: none; border: none; font-size: 18px; cursor: pointer;
       padding: 2px 4px; flex-shrink: 0; line-height: 1; opacity: 0.3;
       transition: opacity 0.15s, transform 0.1s;
+      display: inline-flex; align-items: center;
     }
-    .star-btn.starred { opacity: 1; }
+    .star-btn.starred { opacity: 1; color: #f0b400; }
     .star-btn:active { transform: scale(1.3); }
 
     .schwierig-card {
@@ -670,8 +681,8 @@
     .schwierig-card.selected .sc-check { opacity: 1; }
 
     /* ── LOOKUP MODAL ── */
-    .lookup-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;display:flex;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom); }
-    .lookup-overlay.hidden { display:none; }
+    .lookup-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1000;align-items:flex-end;padding-bottom:env(safe-area-inset-bottom); }
+    .lookup-overlay.show { display:flex; }
     .lookup-sheet { background:var(--bg);border-radius:var(--radius) var(--radius) 0 0;padding:20px 16px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 -2px 20px rgba(0,0,0,0.15); }
     .lookup-result { background:var(--bg2);border-radius:var(--radius-sm);padding:14px;margin:12px 0; }
     .lookup-fr { font-size:22px;font-weight:700;color:var(--text); }
@@ -679,11 +690,40 @@
     .lookup-info { font-size:12px;color:var(--text3);margin-top:2px; }
     .lookup-ex { font-size:13px;color:var(--text2);margin-top:8px;font-style:italic;border-top:0.5px solid var(--border);padding-top:8px; }
 
-    /* ── GRAMMAR ── */
-    .gramm-sentence { font-size:20px;font-weight:500;color:var(--text);text-align:center;padding:24px 16px;line-height:1.8; }
-    .gramm-blank { display:inline-block;min-width:60px;border-bottom:2px solid var(--blue-text);vertical-align:bottom;color:var(--blue-text);font-weight:700; }
-    .gramm-hint { font-size:12px;color:var(--text3);text-align:center;margin-top:4px; }
-    .gramm-loading { text-align:center;padding:40px;color:var(--text2);font-size:14px; }
+    /* ── UMSCHREIBEN (Sprech-Spiel) ── */
+    .speak-card {
+      width: 100%; max-width: 260px; aspect-ratio: 3/4; margin: 24px auto;
+      border-radius: 20px; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--speak-card-hell) 0%, var(--speak-card-dunkel) 100%);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      color: #fff;
+    }
+    .speak-card::before {
+      content: ''; position: absolute; top: -20%; left: -10%; width: 140%; height: 60%;
+      background: rgba(255,255,255,.22); border-radius: 50%; transform: rotate(-8deg);
+    }
+    .speak-card-lang { position: absolute; top: 16px; left: 16px; font-size: 12px; font-weight: 600; opacity: .85; z-index: 1; }
+    .speak-card-word { position: relative; z-index: 1; font-size: 28px; font-weight: 800; text-align: center; padding: 0 16px; }
+    .speak-feedback { background:var(--bg2);border-radius:var(--radius-sm);padding:14px;margin:12px 0;font-size:14px;color:var(--text);line-height:1.6; }
+    .speak-feedback.speak-ok { border-left: 3px solid var(--green-border); }
+    .speak-feedback.speak-nok { border-left: 3px solid var(--red-border); }
+    .speak-transcript-wrap { margin-top: 8px; }
+    .speak-hint-card { text-align:center;padding:24px 16px;color:var(--text2);font-size:14px;line-height:1.6; }
+
+    /* ── RUNDER AUFNAHME-BUTTON ── */
+    .record-btn {
+      width: 76px; height: 76px; border-radius: 50%; background: #ff3b30; border: none;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(255,59,48,.4); margin: 20px auto; cursor: pointer;
+      transition: transform .15s;
+    }
+    .record-btn svg { width: 32px; height: 32px; color: #fff; }
+    .record-btn:active { transform: scale(.94); }
+    .record-btn.recording { animation: recPulse 1.4s ease-in-out infinite; }
+    @keyframes recPulse { 0%,100%{box-shadow:0 4px 14px rgba(255,59,48,.4);} 50%{box-shadow:0 4px 26px rgba(255,59,48,.75);} }
+    #record-hint { text-align:center; font-size:13px; color:var(--text2); margin-top:10px; }
+
     .theme-switch-row { display: flex; align-items: center; justify-content: space-between; font-size: .92rem; font-weight: 500; color: var(--text); }
     .theme-switch { width: 46px; height: 26px; border-radius: 13px; background: var(--border2); border: none; position: relative; padding: 0; cursor: pointer; transition: background .2s ease; flex-shrink: 0; -webkit-appearance: none; }
     .theme-switch[aria-checked="true"] { background: var(--blue-text); }
@@ -694,7 +734,11 @@
   (function () {
     try {
       var t = localStorage.getItem('vokab_theme');
-      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      if (t === 'light' || t === 'dark') {
+        document.documentElement.setAttribute('data-theme', t);
+        var m = document.getElementById('theme-color-meta');
+        if (m) m.setAttribute('content', t === 'dark' ? '#1c1c1e' : '#ffffff');
+      }
     } catch (e) {}
   })();
   </script>
@@ -705,7 +749,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v51)</span> <button onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;font-size:11px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;">↺</button> <button onclick="document.getElementById('hilfe-overlay').classList.add('show')" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v52)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="oeffneOverlay('hilfe')" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -742,8 +786,8 @@
             </div>
             <label>Reihenfolge</label>
             <div class="toggle-group">
-              <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')">🔀 Zufällig</button>
-              <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')">↕ Nacheinander</button>
+              <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="shuffle" data-icon-size="14"></span>Zufällig</button>
+              <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="arrow-up-down" data-icon-size="14"></span>Nacheinander</button>
             </div>
             <label>Filter</label>
             <div class="toggle-group">
@@ -769,7 +813,7 @@
           <div class="q-lang" id="q-ask-lang">Deutsch</div>
           <div style="display:flex;align-items:center;justify-content:center;gap:10px;">
             <div class="q-word" id="q-ask-word">–</div>
-            <button onclick="speak('ask')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.4;padding:4px;">🔊</button>
+            <button onclick="speak('ask')" data-icon="volume-2" data-icon-size="20" style="background:none;border:none;cursor:pointer;opacity:0.4;padding:4px;display:inline-flex;align-items:center;"></button>
           </div>
         </div>
 
@@ -779,7 +823,7 @@
             <div class="q-lang" id="q-ans-lang">Französisch</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:20px 16px;">
               <div class="q-word" id="q-ans-word"></div>
-              <button onclick="speak('ans')" style="background:none;border:none;font-size:22px;cursor:pointer;opacity:0.4;padding:4px;">🔊</button>
+              <button onclick="speak('ans')" data-icon="volume-2" data-icon-size="20" style="background:none;border:none;cursor:pointer;opacity:0.4;padding:4px;display:inline-flex;align-items:center;"></button>
             </div>
           </div>
         </div>
@@ -790,8 +834,8 @@
         </div>
 
         <div class="nav-btns" id="q-nav-cover" style="display:none;">
-          <button class="nav-btn nav-nok" onclick="nextCard(false)">✗ Falsch</button>
-          <button class="nav-btn nav-ok" onclick="nextCard(true)">✓ Richtig</button>
+          <button class="nav-btn nav-nok" onclick="nextCard(false)" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="x" data-icon-size="16"></span>Falsch</button>
+          <button class="nav-btn nav-ok" onclick="nextCard(true)" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="check" data-icon-size="16"></span>Richtig</button>
         </div>
 
         <div id="q-check-wrap" style="display:none;">
@@ -838,24 +882,27 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h2 style="margin-bottom:0;">Gespeicherte Vokabeln</h2>
           <div style="display:flex;gap:6px;align-items:center;">
-            <button class="hide-col-btn" onclick="showLookup()" title="Wort nachschlagen">🔍</button>
+            <button class="hide-col-btn" onclick="showLookup()" title="Wort nachschlagen" data-icon="search" data-icon-size="15"></button>
             <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')">DE</button>
             <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')">FR</button>
             <div class="btn-group">
-              <button class="hide-col-btn" onclick="toggleMenu('menu-file')">📁 ▾</button>
+              <button class="hide-col-btn" onclick="toggleMenu('menu-file')"><span data-icon="folder" data-icon-size="15"></span>▾</button>
               <div id="menu-file" class="btn-dropdown">
-                <button onclick="exportData();closeMenus()">⬆️ Exportieren</button>
-                <label>⬇️ Importieren<input type="file" accept=".json" onchange="importData(event);closeMenus()" style="display:none;"></label>
+                <button onclick="exportData();closeMenus()"><span data-icon="upload" data-icon-size="16"></span>Exportieren</button>
+                <label><span data-icon="download" data-icon-size="16"></span>Importieren<input type="file" accept=".json" onchange="importData(event);closeMenus()" style="display:none;"></label>
               </div>
             </div>
             <div class="btn-group" id="dbx-group" style="display:none;">
-              <button class="hide-col-btn" onclick="toggleMenu('menu-dbx')">☁️ ▾</button>
+              <button class="hide-col-btn" onclick="toggleMenu('menu-dbx')"><span data-icon="cloud" data-icon-size="15"></span>▾</button>
               <div id="menu-dbx" class="btn-dropdown">
-                <button id="dbx-up-btn" onclick="syncToDropbox();closeMenus()">☁️↑ Hochladen</button>
-                <button id="dbx-dn-btn" onclick="syncFromDropbox();closeMenus()">☁️↓ Laden</button>
+                <button id="dbx-up-btn" onclick="syncToDropbox();closeMenus()"><span data-icon="cloud-upload" data-icon-size="16"></span>Hochladen</button>
+                <button id="dbx-dn-btn" onclick="syncFromDropbox();closeMenus()"><span data-icon="cloud-download" data-icon-size="16"></span>Laden</button>
               </div>
             </div>
           </div>
+        </div>
+        <div style="margin-bottom:12px;">
+          <select id="klasse-filter-select" onchange="setKlasseFilter(this.value)"></select>
         </div>
         <div id="vocab-content"></div>
       </div>
@@ -872,38 +919,41 @@
           Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>
           Einmalig eingeben unter <strong>Info → API-Key</strong>.
         </p>
-        <button class="btn btn-secondary" onclick="document.getElementById('hilfe-overlay').classList.add('show');setTimeout(()=>document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'}),50)">→ Jetzt einrichten</button>
+        <button class="btn btn-secondary" onclick="oeffneOverlay('hilfe');setTimeout(()=>document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'}),50)">→ Jetzt einrichten</button>
       </div>
 
       <div class="card">
         <h2>Vokabeln hinzufügen</h2>
 
         <div class="toggle-group" style="margin-bottom:16px;">
-          <button class="toggle-btn active-blue" id="tab-photo" onclick="setUploadTab('photo')">📷 Foto / Screenshot</button>
-          <button class="toggle-btn" id="tab-manual" onclick="setUploadTab('manual')">✏️ Manuell</button>
+          <button class="toggle-btn active-blue" id="tab-photo" onclick="setUploadTab('photo')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="camera" data-icon-size="14"></span>Foto / Screenshot</button>
+          <button class="toggle-btn" id="tab-manual" onclick="setUploadTab('manual')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="pencil" data-icon-size="14"></span>Manuell</button>
         </div>
 
         <!-- Photo -->
         <div id="upload-photo">
           <label>Unité / Kapitel</label>
-          <input type="text" id="up-unite-name" placeholder="z.B. Unité 3" oninput="renderExtracted()" />
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="up-unite-name" placeholder="z.B. Unité 3" oninput="renderExtracted()" style="flex:1;" />
+            <select id="up-unite-klasse" style="width:auto;flex:0 0 90px;"></select>
+          </div>
 
           <label>Art der Vorlage</label>
           <div class="ocr-type-row">
-            <button class="toggle-btn active-blue" id="ocr-print" onclick="setOcrType('print')">📖 Schulbuch / Druck</button>
-            <button class="toggle-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')">✏️ Handschrift / Heft</button>
+            <button class="toggle-btn active-blue" id="ocr-print" onclick="setOcrType('print')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="book" data-icon-size="14"></span>Schulbuch / Druck</button>
+            <button class="toggle-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="pencil" data-icon-size="14"></span>Handschrift / Heft</button>
           </div>
 
           <div class="upload-zone-wrap">
             <label for="file-input" class="upload-zone">
               <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" />
-              <div class="uz-icon" id="up-icon">📷</div>
+              <div class="uz-icon" id="up-icon" data-icon="camera" data-icon-size="34" style="display:flex;justify-content:center;"></div>
               <p id="up-zone-text">Foto oder Screenshot auswählen</p>
               <small>Galerie · Kamera · Screenshots</small>
             </label>
-            <label for="file-input-camera" class="upload-zone-camera">
+            <label for="file-input-camera" class="upload-zone-camera" style="display:flex;align-items:center;justify-content:center;gap:6px;">
               <input type="file" id="file-input-camera" accept="image/*" capture="environment" onchange="handleFiles(event)" />
-              📸 Direkt fotografieren
+              <span data-icon="camera" data-icon-size="15"></span>Direkt fotografieren
             </label>
           </div>
 
@@ -929,7 +979,10 @@
         <!-- Manual -->
         <div id="upload-manual" style="display:none;">
           <label>Unité / Kapitel</label>
-          <input type="text" id="man-unite-name" placeholder="z.B. Unité 2" />
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="man-unite-name" placeholder="z.B. Unité 2" style="flex:1;" />
+            <select id="man-unite-klasse" style="width:auto;flex:0 0 90px;"></select>
+          </div>
           <label>Vokabeln (eine pro Zeile: deutsch;französisch)</label>
           <textarea id="man-text" rows="10" placeholder="der Hund;le chien&#10;die Katze;le chat&#10;schön;beau / belle"></textarea>
           <button class="btn btn-dark" onclick="saveManual()">Speichern</button>
@@ -948,83 +1001,70 @@
       </div><!-- end two-col -->
     </div>
 
-    <!-- ═══ GRAMMATIK ═══ -->
-    <div id="main-gramm" class="screen">
+    <!-- ═══ UMSCHREIBEN ═══ -->
+    <div id="main-speak" class="screen">
+
+      <!-- Kein Diktieren unterstützt -->
+      <div id="speak-nosupport" style="display:none;">
+        <div class="card">
+          <h2><span data-icon="mic" data-icon-size="18" style="display:inline-flex;vertical-align:-3px;margin-right:6px;"></span>Umschreiben</h2>
+          <div class="speak-hint-card">Diktieren wird von diesem Browser nicht unterstützt.<br>Bitte einen aktuellen Chrome oder Safari verwenden.</div>
+        </div>
+      </div>
 
       <!-- Setup -->
-      <div id="gramm-setup">
-        <div class="card">
-          <h2>Grammatik üben</h2>
-          <label>Jahrgangsstufe</label>
-          <div class="toggle-group" id="gramm-class-group">
-            <button class="toggle-btn active-blue" onclick="setGrammClass(6)">Klasse 6</button>
-            <button class="toggle-btn" onclick="setGrammClass(7)">Klasse 7</button>
-            <button class="toggle-btn" onclick="setGrammClass(8)">Klasse 8</button>
-            <button class="toggle-btn" onclick="setGrammClass(9)">Klasse 9</button>
-          </div>
-          <label>Thema</label>
-          <select id="gramm-topic-select" onchange="grammTopicChanged(this.value)"></select>
-          <div id="gramm-cache-info" style="font-size:12px;color:var(--green-text);margin-bottom:12px;display:none;">✓ Gespeicherte Fragen vorhanden – werden ohne API-Aufruf geladen</div>
-          <button class="btn btn-dark" onclick="startGrammSession()">Üben starten</button>
-        </div>
-      </div>
-
-      <!-- Loading -->
-      <div id="gramm-loading" style="display:none;">
-        <div class="card"><div class="gramm-loading"><span class="spinner"></span>KI generiert Fragen …</div></div>
-      </div>
-
-      <!-- Quiz -->
-      <div id="gramm-quiz" style="display:none;">
-        <div class="progress-wrap">
-          <div class="progress-top">
-            <span id="gq-progress">1 / 8</span>
-            <span id="gq-score-live">0 richtig</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill" id="gq-fill" style="width:0%"></div></div>
-        </div>
-        <div class="q-card">
-          <div class="gramm-sentence" id="gq-sentence">–</div>
-          <div class="gramm-hint" id="gq-hint"></div>
-        </div>
-        <div style="margin-top:12px;">
-          <input class="answer-input" id="gq-input" placeholder="Fehlende Form eingeben …" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkGrammAnswer()" />
-          <div id="gq-feedback"></div>
-        </div>
-        <div id="gq-check-wrap">
-          <button class="btn btn-dark" onclick="checkGrammAnswer()" id="gq-check-btn">Überprüfen</button>
-        </div>
-        <div class="nav-btns" id="gq-nav-after" style="display:none;">
-          <button class="nav-btn nav-next" onclick="nextGrammQ()">Weiter →</button>
-        </div>
-        <button class="btn btn-secondary" onclick="abortGrammQuiz()" style="margin-top:4px;">Abbrechen</button>
-      </div>
-
-      <!-- Results -->
-      <div id="gramm-results" style="display:none;">
-        <div class="card">
-          <h2>Ergebnis</h2>
-          <div class="result-score" id="gr-score">–</div>
-          <div class="result-sub" id="gr-sub">–</div>
-          <div id="gr-missed-sec" style="display:none;">
-            <label style="margin-bottom:8px;">Noch üben:</label>
-            <div class="vocab-scroll-limited">
-              <ul id="gr-missed" style="list-style:none;"></ul>
+      <div id="speak-setup">
+        <div class="two-col">
+          <div class="card">
+            <h2>Umschreiben üben</h2>
+            <div id="speak-unite-select-list"></div>
+            <div id="speak-empty" class="empty" style="display:none;">
+              <span class="emoji">📖</span>
+              Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.
             </div>
           </div>
-          <button class="btn btn-dark" id="gr-retry-btn" onclick="retryGrammMissed()">Nur Falsche wiederholen</button>
-          <button class="btn btn-secondary" onclick="backToGrammSetup()">Neue Auswahl</button>
+          <div id="speak-options" style="display:none;" class="card">
+            <h3>Einstellungen</h3>
+            <label>Sprache (wird gesprochen)</label>
+            <div class="toggle-group">
+              <button class="toggle-btn" id="speak-lang-de" onclick="setSpeakLang('de')">Deutsch</button>
+              <button class="toggle-btn active-blue" id="speak-lang-fr" onclick="setSpeakLang('fr')">Französisch</button>
+            </div>
+            <button class="btn btn-dark" id="speak-start-btn" onclick="startSpeakSession()">Umschreiben starten</button>
+          </div>
         </div>
       </div>
 
-    </div><!-- end main-gramm -->
+      <!-- Spiel -->
+      <div id="speak-play" style="display:none;">
+        <div class="speak-card">
+          <div class="speak-card-lang" id="speak-card-lang">Deutsch</div>
+          <div class="speak-card-word" id="speak-card-word">–</div>
+        </div>
+
+        <button class="record-btn" id="record-btn" onclick="toggleRecording()" aria-label="Aufnahme"></button>
+        <div id="record-hint">Zum Sprechen tippen</div>
+
+        <div class="speak-transcript-wrap">
+          <label>Deine Umschreibung (bei Bedarf korrigieren)</label>
+          <textarea id="speak-transcript" rows="3" placeholder="… wird nach der Aufnahme hier angezeigt"></textarea>
+        </div>
+        <button class="btn btn-dark" id="speak-judge-btn" onclick="judgeDescription()">Bewerten lassen</button>
+
+        <div id="speak-feedback-wrap" style="display:none;"></div>
+
+        <button class="btn btn-dark" style="margin-top:12px;" onclick="nextSpeakWord()">Nächstes Wort</button>
+        <button class="btn btn-secondary" onclick="backToSpeakSetup()">Beenden</button>
+      </div>
+
+    </div><!-- end main-speak -->
 
     <!-- ═══ HILFE ═══ -->
-    <div id="hilfe-overlay" onclick="if(event.target===this)this.classList.remove('show')">
+    <div id="hilfe-overlay" onclick="if(event.target===this)schliesseOverlay('hilfe')">
       <div id="hilfe-sheet">
         <div id="hilfe-sheet-hd">
           <strong>❓ Hilfe</strong>
-          <button id="btn-hilfe-close" onclick="document.getElementById('hilfe-overlay').classList.remove('show')">Schließen</button>
+          <button id="btn-hilfe-close" onclick="schliesseOverlay('hilfe')">Schließen</button>
         </div>
         <div id="hilfe-sheet-body">
       <div class="two-col">
@@ -1245,7 +1285,7 @@
           <div id="dbx-appkey-status" style="font-size:13px;margin-bottom:8px;min-height:20px;"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <button class="btn btn-dark" onclick="saveDbxAppKey()">App Key speichern</button>
-            <button class="btn btn-secondary" id="dbx-connect-btn" onclick="startDropboxAuth()" style="display:none;">☁️ Mit Dropbox verbinden</button>
+            <button class="btn btn-secondary" id="dbx-connect-btn" onclick="startDropboxAuth()" style="display:none;align-items:center;justify-content:center;gap:6px;"><span data-icon="cloud" data-icon-size="16"></span>Mit Dropbox verbinden</button>
           </div>
         </div>
 
@@ -1367,19 +1407,19 @@
 
   <!-- Tab Bar -->
   <div class="tab-bar">
-    <button id="nav-learn" class="active" onclick="showMain('learn')">📚 Lernen</button>
-    <button id="nav-vocab" onclick="showMain('vocab')">📋 Vokabeln</button>
-    <button id="nav-upload" onclick="showMain('upload')">➕ Hinzufügen</button>
-    <button id="nav-gramm" onclick="showMain('gramm')">📝 Grammatik</button>
-    <button id="nav-stats" onclick="showMain('stats')">🏆 Fortschritt</button>
+    <button id="nav-learn" class="active" onclick="showMain('learn')"><span data-icon="book-open" data-icon-size="20"></span><span>Lernen</span></button>
+    <button id="nav-vocab" onclick="showMain('vocab')"><span data-icon="list" data-icon-size="20"></span><span>Vokabeln</span></button>
+    <button id="nav-upload" onclick="showMain('upload')"><span data-icon="plus" data-icon-size="20"></span><span>Hinzufügen</span></button>
+    <button id="nav-speak" onclick="showMain('speak')"><span data-icon="mic" data-icon-size="20"></span><span>Umschreiben</span></button>
+    <button id="nav-stats" onclick="showMain('stats')"><span data-icon="trophy" data-icon-size="20"></span><span>Fortschritt</span></button>
   </div>
 </div><!-- end .app -->
 <!-- ── LOOKUP MODAL ── -->
-<div id="lookup-overlay" class="lookup-overlay hidden" onclick="if(event.target===this)closeLookup()">
+<div id="lookup-overlay" class="lookup-overlay" onclick="if(event.target===this)closeLookup()">
   <div class="lookup-sheet">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h2 style="margin-bottom:0;">🔍 Wort nachschlagen</h2>
-      <button onclick="closeLookup()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text2);padding:4px;">✕</button>
+      <h2 style="margin-bottom:0;display:flex;align-items:center;gap:8px;"><span data-icon="search" data-icon-size="18"></span>Wort nachschlagen</h2>
+      <button onclick="closeLookup()" data-icon="x" data-icon-size="20" style="background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:inline-flex;align-items:center;"></button>
     </div>
     <input type="text" id="lookup-input" placeholder="Französisch oder Deutsch eingeben …" onkeydown="if(event.key==='Enter')doLookup()" style="margin-bottom:8px;" autocorrect="off" autocapitalize="off" spellcheck="false" />
     <button class="btn btn-dark" id="lookup-btn" onclick="doLookup()">Nachschlagen</button>
@@ -1393,7 +1433,7 @@
       </div>
       <label>Zu Unité hinzufügen</label>
       <select id="lookup-unite-select" style="margin-bottom:8px;"></select>
-      <button class="btn btn-dark" onclick="addLookupVocab()">➕ Hinzufügen</button>
+      <button class="btn btn-dark" onclick="addLookupVocab()" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="plus" data-icon-size="16"></span>Hinzufügen</button>
     </div>
   </div>
 </div>
@@ -1425,11 +1465,18 @@ try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(
 try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){ console.warn('[load:dbxaccess]', e); }
 try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){ console.warn('[load:dbxrefresh]', e); }
 try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){ console.warn('[load:dbxexpiry]', e); }
-let grammCache = {};
-try { grammCache = JSON.parse(localStorage.getItem('vt_grammar_cache') || '{}'); } catch(e) { console.warn('[load:grammcache]', e); }
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
-function saveGrammCache() { try { localStorage.setItem('vt_grammar_cache', JSON.stringify(grammCache)); } catch(e) { console.warn('[save:grammcache]', e); } }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
+
+// ─── KLASSEN-ZUORDNUNG (Unités) ────────────────────────────────────────
+const KLASSEN = [8, 9, 10];
+const DEFAULT_KLASSE = 8;
+let uniteClasses = {};
+let klasseFilter = 'all';
+try { uniteClasses = JSON.parse(localStorage.getItem('vt_unite_classes') || '{}'); } catch(e){ console.warn('[load:uniteclasses]', e); }
+try { klasseFilter = localStorage.getItem('vt_klasse_filter') || 'all'; } catch(e){ console.warn('[load:klassefilter]', e); }
+function saveUniteClasses() { try { localStorage.setItem('vt_unite_classes', JSON.stringify(uniteClasses)); } catch(e){ console.warn('[save:uniteclasses]', e); } }
+function getUniteKlasse(u) { return uniteClasses[u] || DEFAULT_KLASSE; }
 
 // ─── BONUS SYSTEM ────────────────────────────────────────────────────
 const LEVELS = [
@@ -1445,36 +1492,64 @@ const LEVELS = [
   { min: 13000, name: 'Maître',      emoji: '👑' },
 ];
 
-const GRAMMAR_TOPICS = {
-  6: [
-    { id: 'artikel',    label: 'Bestimmter & unbestimmter Artikel (le, la, un, une)' },
-    { id: 'adjektiv',   label: 'Adjektivangleichung (grand/grande)' },
-    { id: 'present_er', label: 'Présent – regelmäßige -er Verben' },
-    { id: 'negation',   label: 'Verneinung (ne … pas)' },
-    { id: 'pronomen',   label: 'Personalpronomen & Verbformen (je, tu, il …)' },
-  ],
-  7: [
-    { id: 'passe_avoir',  label: 'Passé composé mit avoir' },
-    { id: 'passe_etre',   label: 'Passé composé mit être' },
-    { id: 'reflexif',     label: 'Reflexive Verben (se lever, se coucher …)' },
-    { id: 'futur_proche', label: 'Futur proche (aller + Infinitiv)' },
-    { id: 'imparfait_1',  label: 'Imparfait – Einführung' },
-  ],
-  8: [
-    { id: 'imparfait',    label: 'Imparfait (Beschreibungen in der Vergangenheit)' },
-    { id: 'pc_vs_imp',    label: 'Passé composé vs. Imparfait' },
-    { id: 'relative',     label: 'Relativpronomen (qui, que)' },
-    { id: 'comparatif',   label: 'Komparativ & Superlativ' },
-    { id: 'futur_simple', label: 'Futur simple' },
-  ],
-  9: [
-    { id: 'conditionnel', label: 'Conditionnel présent' },
-    { id: 'subjonctif',   label: 'Subjonctif présent' },
-    { id: 'plusque',      label: 'Plus-que-parfait' },
-    { id: 'pronom_y_en',  label: 'Pronomen y und en' },
-    { id: 'passive',      label: 'Passiv (être + participe passé)' },
-  ]
+// ─── ICONS (Lucide SVG, PWA-Standard) ──────────────────────────────────
+const ICON_PATHS = {
+  'mic': `<path d="M12 19v3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><rect x="9" y="2" width="6" height="13" rx="3" />`,
+  'square': `<rect width="18" height="18" x="3" y="3" rx="2" />`,
+  'book-open': `<path d="M12 5v16" /><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" />`,
+  'list': `<path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" />`,
+  'plus': `<path d="M5 12h14" /><path d="M12 5v14" />`,
+  'trophy': `<path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" /><path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" /><path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" /><path d="M4 22h16" /><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" /><path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" />`,
+  'search': `<path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />`,
+  'folder': `<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />`,
+  'cloud': `<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />`,
+  'upload': `<path d="M12 3v12" /><path d="m17 8-5-5-5 5" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />`,
+  'download': `<path d="M12 15V3" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" />`,
+  'cloud-upload': `<path d="M12 13v8" /><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="m8 17 4-4 4 4" />`,
+  'cloud-download': `<path d="M12 13v8l-4-4" /><path d="m12 21 4-4" /><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284" />`,
+  'pencil': `<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" />`,
+  'x': `<path d="M18 6 6 18" /><path d="m6 6 12 12" />`,
+  'move': `<path d="M12 2v20" /><path d="m15 19-3 3-3-3" /><path d="m19 9 3 3-3 3" /><path d="M2 12h20" /><path d="m5 9-3 3 3 3" /><path d="m9 5 3-3 3 3" />`,
+  'star': `<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />`,
+  'shuffle': `<path d="m18 14 4 4-4 4" /><path d="m18 2 4 4-4 4" /><path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" /><path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" /><path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />`,
+  'arrow-up-down': `<path d="m21 16-4 4-4-4" /><path d="M17 20V4" /><path d="m3 8 4-4 4 4" /><path d="M7 4v16" />`,
+  'volume-2': `<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" /><path d="M16 9a5 5 0 0 1 0 6" /><path d="M19.364 18.364a9 9 0 0 0 0-12.728" />`,
+  'check': `<path d="M20 6 9 17l-5-5" />`,
+  'camera': `<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /><circle cx="12" cy="13" r="3" />`,
+  'book': `<path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" />`,
+  'rotate-ccw': `<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" />`,
+  'inbox': `<polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />`,
 };
+function icon(name, size=18, filled=false) {
+  const p = ICON_PATHS[name] || '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${filled?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
+function initStaticIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => {
+    el.innerHTML = icon(el.dataset.icon, parseInt(el.dataset.iconSize) || 18, el.dataset.iconFilled === 'true');
+  });
+}
+
+// ─── ZURÜCK-NAVIGATION FÜR SHEETS (History-Einträge) ───────────────────
+const _OVERLAYS = { hilfe: 'hilfe-overlay', lookup: 'lookup-overlay' };
+function _navState(ov) { return { ov: ov || null }; }
+function _overlayOffen(n) { return document.getElementById(_OVERLAYS[n]).classList.contains('show'); }
+function _zeigeOverlay(n, an) { document.getElementById(_OVERLAYS[n]).classList.toggle('show', an); }
+function oeffneOverlay(name) {
+  if (Object.keys(_OVERLAYS).some(_overlayOffen)) return;
+  history.pushState(_navState(name), '');
+  _zeigeOverlay(name, true);
+}
+function schliesseOverlay(name) {
+  if (history.state && history.state.ov === name) {
+    history.back();
+    setTimeout(() => { if (_overlayOffen(name)) _zeigeOverlay(name, false); }, 350);
+  } else _zeigeOverlay(name, false);
+}
+window.addEventListener('popstate', e => {
+  const s = e.state || {};
+  for (const n of Object.keys(_OVERLAYS)) if ((s.ov === n) !== _overlayOffen(n)) _zeigeOverlay(n, s.ov === n);
+});
 
 let xp = 0, streak = 0, streakBest = 0, xpToday = 0;
 let quizDate = '', freezeKey = '';
@@ -1769,7 +1844,7 @@ async function autoSyncToDropbox() {
     const res = await _uploadPayload(token);
     if (res.ok) {
       const btn = document.getElementById('dbx-up-btn');
-      if (btn) { const prev = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = prev; }, 1500); }
+      if (btn) { const prev = btn.innerHTML; btn.textContent = '✓'; setTimeout(() => { btn.innerHTML = prev; }, 1500); }
     }
   } catch(e) { console.warn('[dropbox:auto]', e); }
 }
@@ -1801,7 +1876,7 @@ function updateDbxButtons() {
   const sec = document.getElementById('dbx-connected-section');
   if (sec) sec.style.display = connected ? 'block' : 'none';
   const connectBtn = document.getElementById('dbx-connect-btn');
-  if (connectBtn) connectBtn.style.display = (dbxAppKey && !connected) ? 'inline-block' : 'none';
+  if (connectBtn) connectBtn.style.display = (dbxAppKey && !connected) ? 'flex' : 'none';
 }
 
 function initDbxUI() {
@@ -1818,15 +1893,16 @@ async function syncToDropbox() {
   const token = await getValidAccessToken();
   if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-up-btn');
+  const idleHtml = icon('cloud-upload',16) + 'Hochladen';
   btn.textContent = '⏳'; btn.disabled = true;
   try {
     const res = await _uploadPayload(token);
     if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
     btn.textContent = '✓';
-    setTimeout(() => { btn.textContent = '☁️↑'; btn.disabled = false; }, 1500);
+    setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
   } catch(e) {
     alert('Hochladen fehlgeschlagen:\n' + (e.message || String(e)));
-    btn.textContent = '☁️↑'; btn.disabled = false;
+    btn.innerHTML = idleHtml; btn.disabled = false;
   }
 }
 
@@ -1834,6 +1910,7 @@ async function syncFromDropbox() {
   const token = await getValidAccessToken();
   if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-dn-btn');
+  const idleHtml = icon('cloud-download',16) + 'Laden';
   btn.textContent = '⏳'; btn.disabled = true;
   try {
     const res = await fetch(DBX_DOWNLOAD_URL, {
@@ -1843,7 +1920,7 @@ async function syncFromDropbox() {
         'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH })
       }
     });
-    if (res.status === 409) { alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen (☁️↑).'); btn.textContent = '☁️↓'; btn.disabled = false; return; }
+    if (res.status === 409) { alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.'); btn.innerHTML = idleHtml; btn.disabled = false; return; }
     if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
     const data = await res.json();
     if (!data.db) throw new Error('Ungültiges Dateiformat');
@@ -1857,10 +1934,10 @@ async function syncFromDropbox() {
     saveDb(); saveStars();
     renderVocabScreen(); renderLearnSetup();
     btn.textContent = '✓';
-    setTimeout(() => { btn.textContent = '☁️↓'; btn.disabled = false; }, 1500);
+    setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
   } catch(e) {
     alert('Laden fehlgeschlagen:\n' + (e.message || String(e)));
-    btn.textContent = '☁️↓'; btn.disabled = false;
+    btn.innerHTML = idleHtml; btn.disabled = false;
   }
 }
 
@@ -1881,24 +1958,61 @@ const quiz = {
   direction: 'de-fr', mode: 'cover', order: 'random', filter: 'all',
   cards: [], idx: 0, score: 0, missed: [], lastCorrect: false, current: null
 };
-const gramm = { jahrgangsstufe: 6, topicIdx: 0, questions: [], idx: 0, score: 0, missed: [] };
 let selectedUnites = new Set();
+
+// ─── UMSCHREIBEN-SPIEL STATE ────────────────────────────────────────────
+let speakLang = 'fr';
+let speakUnites = new Set();
+let speakSelectionInitialized = false;
+let speakPool = [];
+let speakIdx = 0;
+let speakCurrent = null;
+let speakRecognizing = false;
+let speakRecognition = null;
+let speakStartTimeout = null;
+let speakStats = { tries: 0, hits: 0 };
+const hasSpeechRecognition = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 let pendingVocab = [], pendingImages = [];
 let ocrType = 'print';
 let _editingKey = null;
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────
 function showMain(tab) {
-  ['learn','vocab','upload','gramm','stats'].forEach(t => {
+  ['learn','vocab','upload','speak','stats'].forEach(t => {
     document.getElementById('main-'+t).classList.toggle('active', t===tab);
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
   if (tab==='learn') renderLearnSetup();
   if (tab==='vocab') renderVocabScreen();
   if (tab==='upload') renderInstallHint();
-  if (tab==='gramm') renderGrammSetup();
+  if (tab==='speak') renderSpeakSetup();
   if (tab==='stats') renderStats();
 }
+
+// ─── WISCH-GESTE ZWISCHEN TABS ──────────────────────────────────────────
+(function() {
+  const contentEl = document.querySelector('.content');
+  let swipeStartX = 0, swipeStartY = 0, swipeActive = false;
+  contentEl.addEventListener('touchstart', e => {
+    swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; swipeActive = true;
+  }, { passive: true });
+  contentEl.addEventListener('touchend', e => {
+    if (!swipeActive) return;
+    swipeActive = false;
+    const learnQuizActive = document.getElementById('learn-quiz').style.display !== 'none';
+    if (learnQuizActive || speakRecognizing) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    const dy = e.changedTouches[0].clientY - swipeStartY;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const tabs = ['learn','vocab','upload','speak','stats'];
+    const active = document.querySelector('.tab-bar button.active');
+    const idx = tabs.indexOf(active.id.replace('nav-',''));
+    if (idx === -1) return;
+    const nextIdx = dx < 0 ? idx + 1 : idx - 1;
+    if (nextIdx < 0 || nextIdx >= tabs.length) return;
+    showMain(tabs[nextIdx]);
+  }, { passive: true });
+})();
 
 // ─── CONFETTI ────────────────────────────────────────────────────────
 function triggerConfetti() {
@@ -2023,7 +2137,7 @@ function setOcrType(t) {
   ocrType = t;
   document.getElementById('ocr-print').className = 'toggle-btn' + (t==='print'?' active-blue':'');
   document.getElementById('ocr-handwritten').className = 'toggle-btn' + (t==='handwritten'?' active-blue':'');
-  document.getElementById('up-icon').textContent = t==='handwritten' ? '✏️' : '📷';
+  document.getElementById('up-icon').innerHTML = icon(t==='handwritten' ? 'pencil' : 'camera', 34);
   document.getElementById('up-zone-text').textContent = t==='handwritten'
     ? 'Foto vom Heft oder handgeschriebener Liste' : 'Foto oder Screenshot auswählen';
 }
@@ -2186,7 +2300,7 @@ function renderExtracted() {
       <input class="edit-cell de-cell" value="${esc(v.de)}" placeholder="Deutsch" oninput="updatePending(${i},'de',this.value)" />
       <input class="edit-cell" value="${esc(v.fr)}" placeholder="Französisch" oninput="updatePending(${i},'fr',this.value)" />
       ${isDupe ? '<span class="dupe-badge">Duplikat</span>' : ''}
-      <button class="del-btn" onclick="removePending(${i})" style="font-size:16px;">✕</button>
+      <button class="del-btn" onclick="removePending(${i})" style="display:inline-flex;align-items:center;">${icon('x',16)}</button>
     </div>`;
   }).join('');
   const total = pendingVocab.length;
@@ -2202,7 +2316,9 @@ function saveVocab() {
   const unite = document.getElementById('up-unite-name').value.trim() || 'Unité ?';
   const valid = pendingVocab.filter(v => v.de && v.de.trim() && v.fr && v.fr.trim());
   if (!valid.length) return;
+  const isNewUnite = !db[unite];
   if (!db[unite]) db[unite] = [];
+  if (isNewUnite) { uniteClasses[unite] = parseInt(document.getElementById('up-unite-klasse').value) || DEFAULT_KLASSE; saveUniteClasses(); }
   const existing = existingSet(unite);
   const newOnes = valid.filter(v => !existing.has(vocabKey(v)));
   const dupes = valid.length - newOnes.length;
@@ -2229,7 +2345,9 @@ function saveManual() {
   const lines = document.getElementById('man-text').value.trim().split('\n').filter(Boolean);
   const pairs = lines.map(l => { const p = l.split(';'); return p.length>=2 ? {de:p[0].trim(),fr:p[1].trim()} : null; }).filter(Boolean);
   if (!pairs.length) { alert('Keine gültigen Einträge gefunden.\nFormat: deutsch;französisch'); return; }
+  const isNewUnite = !db[unite];
   if (!db[unite]) db[unite] = [];
+  if (isNewUnite) { uniteClasses[unite] = parseInt(document.getElementById('man-unite-klasse').value) || DEFAULT_KLASSE; saveUniteClasses(); }
   const existing = existingSet(unite);
   const newOnes = pairs.filter(v => !existing.has(vocabKey(v)));
   const dupes = pairs.length - newOnes.length;
@@ -2265,10 +2383,18 @@ function revealWord(el) {
 }
 
 function renderVocabScreen() {
-  const unites = Object.keys(db);
+  const allUnites = Object.keys(db);
+  const unites = allUnites.filter(u => klasseFilter === 'all' || String(getUniteKlasse(u)) === klasseFilter);
   const el = document.getElementById('vocab-content');
+  renderKlasseSelects();
+  if (!allUnites.length) {
+    el.innerHTML = '<div class="empty"><span data-icon="inbox" data-icon-size="40" style="display:flex;justify-content:center;margin-bottom:12px;"></span>Noch keine Vokabeln.<br>Füge Screenshots hinzu.</div>';
+    initStaticIcons();
+    return;
+  }
   if (!unites.length) {
-    el.innerHTML = '<div class="empty"><span class="emoji">📭</span>Noch keine Vokabeln.<br>Füge Screenshots hinzu.</div>';
+    el.innerHTML = '<div class="empty"><span data-icon="inbox" data-icon-size="40" style="display:flex;justify-content:center;margin-bottom:12px;"></span>Keine Unités in dieser Klasse.</div>';
+    initStaticIcons();
     return;
   }
   el.innerHTML = unites.map(u => {
@@ -2282,11 +2408,11 @@ function renderVocabScreen() {
       const moveSelect = otherUnites.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);width:36px;min-width:36px;flex-shrink:0;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;" title="In andere Unité verschieben"><option value="">↗</option>${otherUnites.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select>` : '';
       if (_editingKey === k) {
         return `<div class="vocab-row vocab-row--edit">
-          <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
+          <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">${icon('star',18,isStarred)}</button>
           <input class="edit-cell de-cell" id="edit-de" value="${esc(v.de)}" onkeydown="if(event.key==='Enter')saveItem('${esc(u)}',${i});if(event.key==='Escape')cancelEdit()">
           <input class="edit-cell"         id="edit-fr" value="${esc(v.fr)}" onkeydown="if(event.key==='Enter')saveItem('${esc(u)}',${i});if(event.key==='Escape')cancelEdit()">
-          <button class="save-btn" onclick="saveItem('${esc(u)}',${i})">✓</button>
-          <button class="edit-btn" onclick="cancelEdit()">✕</button>
+          <button class="save-btn" onclick="saveItem('${esc(u)}',${i})">${icon('check',16)}</button>
+          <button class="edit-btn" onclick="cancelEdit()">${icon('x',16)}</button>
         </div>`;
       }
       const deHtml = hideDE
@@ -2296,12 +2422,12 @@ function renderVocabScreen() {
         ? `<span class="vocab-word-hidden" onclick="revealWord(this)">${esc(v.fr)}</span>`
         : esc(v.fr);
       return `<div class="vocab-row">
-        <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">⭐</button>
+        <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">${icon('star',18,isStarred)}</button>
         <span class="de" style="flex:1;">${deHtml}</span>
         <span class="fr" style="flex:1;">${frHtml}</span>
-        <button class="edit-btn" onclick="editItem('${esc(u)}',${i})" title="Bearbeiten">✏️</button>
+        <button class="edit-btn" onclick="editItem('${esc(u)}',${i})" title="Bearbeiten">${icon('pencil',15)}</button>
         ${moveSelect}
-        <button class="del-btn"  onclick="delItem('${esc(u)}',${i})" style="margin-left:4px;">✕</button>
+        <button class="del-btn"  onclick="delItem('${esc(u)}',${i})" style="margin-left:4px;">${icon('x',16)}</button>
       </div>`;
     }).join('');
     const starredCount = pairs.filter(v=>stars[vocabKey(v)]).length;
@@ -2310,16 +2436,43 @@ function renderVocabScreen() {
       starredCount ? `<span style="color:#b07d20;">⭐${starredCount}</span>` : '',
       hardCount ? `<span style="color:var(--red-text);">✗${hardCount}</span>` : ''
     ].filter(Boolean).join(' ');
+    const klasseSelect = `<select onchange="setUniteKlasse('${esc(u)}',this.value)" style="font-size:11px;padding:2px 4px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);width:auto;margin:0;flex-shrink:0;-webkit-appearance:none;" title="Klasse ändern">${KLASSEN.map(k=>`<option value="${k}"${getUniteKlasse(u)===k?' selected':''}>Klasse ${k}</option>`).join('')}</select>`;
     return `<div class="unite-section">
       <div class="unite-header">
-        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;" title="Tippen zum Umbenennen">
-          ${esc(u)} ✏️ <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span>
+        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Tippen zum Umbenennen">
+          ${esc(u)} ${icon('pencil',13)} <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span>
         </span>
-        <button class="del-btn" onclick="delUnite('${esc(u)}')">Löschen</button>
+        <div style="display:flex;gap:6px;align-items:center;">
+          ${klasseSelect}
+          <button class="del-btn" onclick="delUnite('${esc(u)}')">Löschen</button>
+        </div>
       </div>
       <div class="vocab-scroll">${rows}</div>
     </div>`;
   }).join('<div class="sep"></div>');
+}
+
+function setKlasseFilter(val) {
+  klasseFilter = val;
+  try { localStorage.setItem('vt_klasse_filter', val); } catch(e){}
+  renderVocabScreen();
+}
+
+function setUniteKlasse(unite, val) {
+  uniteClasses[unite] = parseInt(val);
+  saveUniteClasses();
+  renderVocabScreen();
+}
+
+function renderKlasseSelects() {
+  const filterOptions = '<option value="all">Alle Klassen</option>' + KLASSEN.map(k => `<option value="${k}"${klasseFilter===String(k)?' selected':''}>Klasse ${k}</option>`).join('');
+  const filterSel = document.getElementById('klasse-filter-select');
+  if (filterSel) { filterSel.innerHTML = filterOptions; filterSel.value = klasseFilter; }
+  const plainOptions = KLASSEN.map(k => `<option value="${k}"${k===DEFAULT_KLASSE?' selected':''}>Klasse ${k}</option>`).join('');
+  const upSel = document.getElementById('up-unite-klasse');
+  if (upSel && !upSel.dataset.filled) { upSel.innerHTML = plainOptions; upSel.dataset.filled = '1'; }
+  const manSel = document.getElementById('man-unite-klasse');
+  if (manSel && !manSel.dataset.filled) { manSel.innerHTML = plainOptions; manSel.dataset.filled = '1'; }
 }
 
 function toggleStar(unite, idx) {
@@ -2353,6 +2506,7 @@ function renameUnite(oldName) {
   const n = newName.trim();
   if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
   db[n] = db[oldName]; delete db[oldName];
+  if (uniteClasses[oldName] !== undefined) { uniteClasses[n] = uniteClasses[oldName]; delete uniteClasses[oldName]; saveUniteClasses(); }
   saveDb(); renderVocabScreen(); renderLearnSetup();
 }
 
@@ -2443,10 +2597,10 @@ function renderLearnSetup() {
     const selSch = selectedUnites.has('__schwierig__');
     schwEl.innerHTML = `<div class="schwierig-card${selSch?' selected':''}" onclick="toggleUnite('__schwierig__')">
       <div class="sc-left">
-        <div class="sc-title">⭐ Schwierige Wörter</div>
+        <div class="sc-title" style="display:flex;align-items:center;gap:6px;">${icon('star',16,true)}Schwierige Wörter</div>
         <div class="sc-sub">${schwList.length} Wörter · ${schwList.filter(v=>stars[v.key]).length} manuell markiert · ${schwList.filter(v=>(errors[v.key]||0)>=2).length} oft falsch</div>
       </div>
-      <span class="sc-check">✓</span>
+      <span class="sc-check">${icon('check',18)}</span>
     </div>`;
   } else {
     schwEl.innerHTML = '';
@@ -2489,7 +2643,7 @@ function renderLearnSetup() {
           <div class="uname">${esc(u)}</div>
           <div class="ucount">${db[u].length} Wörter</div>
         </div>
-        <span class="check">✓</span>
+        <span class="check">${icon('check',16)}</span>
       </div>`;
     }).join('');
 }
@@ -2673,175 +2827,195 @@ function restartMissed() {
 function abortQuiz() { document.getElementById('learn-quiz').style.display='none'; document.getElementById('learn-setup').style.display='block'; }
 function backToSetup() { document.getElementById('learn-results').style.display='none'; document.getElementById('learn-setup').style.display='block'; renderLearnSetup(); }
 
-// ─── GRAMMAR ─────────────────────────────────────────────────────────
-function renderGrammSetup() {
-  const topics = GRAMMAR_TOPICS[gramm.jahrgangsstufe] || [];
-  const sel = document.getElementById('gramm-topic-select');
-  if (!sel) return;
-  sel.innerHTML = topics.map((t,i) => `<option value="${i}">${esc(t.label)}</option>`).join('');
-  gramm.topicIdx = Math.min(gramm.topicIdx, topics.length - 1);
-  sel.value = gramm.topicIdx;
-  const cacheKey = gramm.jahrgangsstufe + '_' + (topics[gramm.topicIdx]?.id || '');
-  document.getElementById('gramm-cache-info').style.display = (grammCache[cacheKey]?.length >= 8) ? 'block' : 'none';
-  const btns = document.getElementById('gramm-class-group').querySelectorAll('button');
-  [6,7,8,9].forEach((n,i) => { btns[i].className = 'toggle-btn' + (n===gramm.jahrgangsstufe?' active-blue':''); });
-}
-
-function grammTopicChanged(val) {
-  gramm.topicIdx = parseInt(val) || 0;
-  const topics = GRAMMAR_TOPICS[gramm.jahrgangsstufe] || [];
-  const cacheKey = gramm.jahrgangsstufe + '_' + (topics[gramm.topicIdx]?.id || '');
-  document.getElementById('gramm-cache-info').style.display = (grammCache[cacheKey]?.length >= 8) ? 'block' : 'none';
-}
-
-function setGrammClass(n) {
-  gramm.jahrgangsstufe = n;
-  gramm.topicIdx = 0;
-  renderGrammSetup();
-}
-
-async function startGrammSession() {
-  const topics = GRAMMAR_TOPICS[gramm.jahrgangsstufe] || [];
-  const topic = topics[gramm.topicIdx];
-  if (!topic) return;
-  const cacheKey = gramm.jahrgangsstufe + '_' + topic.id;
-  if (grammCache[cacheKey]?.length >= 8) {
-    gramm.questions = shuffle(grammCache[cacheKey]);
-    beginGrammQuiz();
+// ─── UMSCHREIBEN (Sprech-Spiel) ─────────────────────────────────────────
+function renderSpeakSetup() {
+  if (!hasSpeechRecognition) {
+    document.getElementById('speak-nosupport').style.display = 'block';
+    document.getElementById('speak-setup').style.display = 'none';
+    document.getElementById('speak-play').style.display = 'none';
     return;
   }
-  if (!apiKey) { showToast('⚠️ Kein API-Key – bitte unter Info einrichten'); return; }
-  document.getElementById('gramm-setup').style.display = 'none';
-  document.getElementById('gramm-loading').style.display = 'block';
+  document.getElementById('speak-nosupport').style.display = 'none';
+  document.getElementById('speak-setup').style.display = 'block';
+
+  const unites = Object.keys(db);
+  const listEl = document.getElementById('speak-unite-select-list');
+  const emptyEl = document.getElementById('speak-empty');
+  const optEl = document.getElementById('speak-options');
+
+  if (!unites.length) {
+    listEl.innerHTML = ''; emptyEl.style.display = 'block'; optEl.style.display = 'none';
+    speakSelectionInitialized = false;
+    return;
+  }
+  emptyEl.style.display = 'none';
+  optEl.style.display = 'block';
+
+  if (!speakSelectionInitialized) {
+    unites.forEach(u => speakUnites.add(u));
+    speakSelectionInitialized = true;
+  }
+  [...speakUnites].forEach(u => { if (!db[u]) speakUnites.delete(u); });
+
+  const selCount = [...speakUnites].filter(u => db[u]).length;
+  const selWordCount = [...speakUnites].filter(u => db[u]).reduce((s,u) => s + db[u].length, 0);
+
+  listEl.innerHTML = `
+    <div class="unite-select-header">
+      <span>${selCount} von ${unites.length} · ${selWordCount} Wörter</span>
+      <div>
+        <button class="link-btn" onclick="selectAllSpeak()">Alle</button>
+        <button class="link-btn" onclick="selectNoneSpeak()">Keine</button>
+      </div>
+    </div>` +
+    unites.map(u => {
+      const sel = speakUnites.has(u);
+      return `<div class="unite-item${sel?' selected':''}" onclick="toggleSpeakUnite('${esc(u)}')">
+        <div>
+          <div class="uname">${esc(u)} <span style="font-weight:400;font-size:11px;color:var(--text3);">· Klasse ${getUniteKlasse(u)}</span></div>
+          <div class="ucount">${db[u].length} Wörter</div>
+        </div>
+        <span class="check">${icon('check',16)}</span>
+      </div>`;
+    }).join('');
+}
+
+function selectAllSpeak() { Object.keys(db).forEach(u => speakUnites.add(u)); renderSpeakSetup(); }
+function selectNoneSpeak() { speakUnites.clear(); renderSpeakSetup(); }
+function toggleSpeakUnite(u) { speakUnites.has(u) ? speakUnites.delete(u) : speakUnites.add(u); renderSpeakSetup(); }
+
+function setSpeakLang(l) {
+  speakLang = l;
+  document.getElementById('speak-lang-de').className = 'toggle-btn' + (l==='de'?' active-blue':'');
+  document.getElementById('speak-lang-fr').className = 'toggle-btn' + (l==='fr'?' active-blue':'');
+}
+
+function startSpeakSession() {
+  let all = [];
+  speakUnites.forEach(u => { if (db[u]) db[u].forEach(v => all.push({...v, unite:u})); });
+  const seen = new Set();
+  all = all.filter(v => { const k = vocabKey(v); if (seen.has(k)) return false; seen.add(k); return true; });
+  if (!all.length) { alert('Bitte mindestens eine Unité auswählen.'); return; }
+  speakPool = shuffle(all);
+  speakIdx = 0;
+  speakStats = { tries: 0, hits: 0 };
+  document.getElementById('speak-setup').style.display = 'none';
+  document.getElementById('speak-play').style.display = 'block';
+  updateRecordButton();
+  showSpeakCard();
+}
+
+function showSpeakCard() {
+  if (speakIdx >= speakPool.length) { speakPool = shuffle(speakPool); speakIdx = 0; }
+  speakCurrent = speakPool[speakIdx];
+  const shownLang = speakLang === 'fr' ? 'de' : 'fr';
+  document.getElementById('speak-card-lang').textContent = shownLang === 'de' ? 'Deutsch' : 'Französisch';
+  document.getElementById('speak-card-word').textContent = speakCurrent[shownLang];
+  document.getElementById('speak-transcript').value = '';
+  document.getElementById('speak-feedback-wrap').style.display = 'none';
+  document.getElementById('speak-feedback-wrap').innerHTML = '';
+}
+
+function nextSpeakWord() { speakIdx++; showSpeakCard(); }
+
+function backToSpeakSetup() {
+  if (speechSynthesis) speechSynthesis.cancel();
+  if (speakRecognizing && speakRecognition) speakRecognition.abort();
+  if (speakStats.tries > 0) showToast(speakStats.hits + ' von ' + speakStats.tries + ' gut umschrieben');
+  document.getElementById('speak-play').style.display = 'none';
+  document.getElementById('speak-setup').style.display = 'block';
+  renderSpeakSetup();
+}
+
+function getRecognition(lang) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return null;
+  const r = new SR();
+  r.lang = lang === 'fr' ? 'fr-FR' : 'de-DE';
+  r.interimResults = false;
+  r.maxAlternatives = 1;
+  return r;
+}
+
+function updateRecordButton() {
+  const btn = document.getElementById('record-btn');
+  btn.classList.toggle('recording', speakRecognizing);
+  btn.innerHTML = icon(speakRecognizing ? 'square' : 'mic', 32, speakRecognizing);
+  document.getElementById('record-hint').textContent = speakRecognizing ? 'Zum Stoppen tippen' : 'Zum Sprechen tippen';
+}
+
+function toggleRecording() {
+  if (speakRecognizing) { speakRecognition && speakRecognition.stop(); return; }
+  speakRecognition = getRecognition(speakLang);
+  if (!speakRecognition) { showToast('⚠️ Diktieren wird hier nicht unterstützt'); return; }
+  speakRecognizing = true;
+  updateRecordButton();
+  let finalTranscript = '';
+  speakRecognition.onresult = (e) => { finalTranscript = e.results[0][0].transcript; };
+  speakRecognition.onerror = (e) => { console.warn('[speech]', e.error); };
+  speakRecognition.onend = () => {
+    clearTimeout(speakStartTimeout);
+    speakRecognizing = false;
+    updateRecordButton();
+    document.getElementById('speak-transcript').value = finalTranscript;
+  };
+  speakRecognition.start();
+  speakStartTimeout = setTimeout(() => {
+    if (!speakRecognizing) return;
+    speakRecognition.abort();
+    speakRecognizing = false;
+    updateRecordButton();
+    showToast('⚠️ Diktieren hat nicht reagiert – bitte nochmal versuchen');
+  }, 8000);
+}
+
+async function judgeDescription() {
+  const transcript = document.getElementById('speak-transcript').value.trim();
+  if (!transcript || !speakCurrent) return;
+  if (!apiKey) { showToast('⚠️ Kein API-Key. Bitte unter Info einrichten.'); return; }
+  const langName = speakLang === 'fr' ? 'Französisch' : 'Deutsch';
+  const targetWord = speakCurrent[speakLang];
+  const btn = document.getElementById('speak-judge-btn');
+  btn.disabled = true;
+  const fbWrap = document.getElementById('speak-feedback-wrap');
+  fbWrap.style.display = 'block';
+  fbWrap.innerHTML = '<div class="speak-feedback"><span class="spinner"></span>Wird bewertet …</div>';
   try {
-    const prompt = `Du bist Französischlehrer an einer bayerischen Realschule (Lehrwerk À toi! Bayern).
-Erstelle 10 Lückentext-Aufgaben zum Thema "${topic.label}" für Jahrgangsstufe ${gramm.jahrgangsstufe}.
-Regeln:
-- Jeder Satz hat genau EINE Lücke, markiert mit ___
-- Die Lücke ist die grammatikalisch korrekte Form
-- Kurze, schülergerechte Sätze
-- Variiere Subjekte und Kontexte
-Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
-[{"q":"J'___ mangé une pomme.","a":"ai","hint":"avoir (je)"},...]`;
+    const prompt = `Wir spielen ein Umschreibe-Spiel im Französischunterricht (Bayerische Realschule, Lehrwerk À toi! Bayern).
+Zielwort (darf NICHT genannt werden, auch keine offensichtliche Wortform davon): "${targetWord}" (${langName})
+Umschreibung der Schülerin/des Schülers (auf ${langName}): "${transcript}"
+Prüfe:
+1. Wurde das Zielwort (oder eine offensichtliche Form davon) benutzt? (verboten)
+2. Ist die Umschreibung inhaltlich treffend, auch wenn nicht perfekt formuliert?
+3. Kurzes, freundliches Feedback auf ${langName} (2-3 Sätze): was war gut, was könnte besser sein (Wortschatz/Grammatik) – sprachlich gut reicht, muss nicht perfekt sein.
+Antworte NUR mit JSON, kein Markdown, keine Backticks:
+{"verbotenesWortBenutzt": true/false, "treffend": true/false, "feedback": "..."}`;
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 1500, messages: [{ role:'user', content: prompt }] })
+      body: JSON.stringify({ model: MODEL, max_tokens: 400, messages: [{ role:'user', content: prompt }] })
     });
     if (!res.ok) throw new Error('API Fehler ' + res.status);
     const data = await res.json();
     let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
     txt = txt.replace(/```json|```/g,'').trim();
-    const s = txt.indexOf('['), e = txt.lastIndexOf(']');
-    const qs = JSON.parse(txt.slice(s, e+1));
-    if (!qs.length) throw new Error('Keine Fragen generiert');
-    grammCache[cacheKey] = qs;
-    saveGrammCache();
-    gramm.questions = shuffle(qs);
-    document.getElementById('gramm-loading').style.display = 'none';
-    beginGrammQuiz();
+    const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
+    const result = JSON.parse(txt.slice(s, e+1));
+    speakStats.tries++;
+    const good = result.treffend && !result.verbotenesWortBenutzt;
+    if (good) speakStats.hits++;
+    fbWrap.innerHTML = `<div class="speak-feedback ${good?'speak-ok':'speak-nok'}">${esc(result.feedback || '')}${result.verbotenesWortBenutzt ? '<br><strong>⚠️ Zielwort wurde genannt.</strong>' : ''}</div>`;
   } catch(err) {
-    document.getElementById('gramm-loading').style.display = 'none';
-    document.getElementById('gramm-setup').style.display = 'block';
-    showToast('⚠️ ' + err.message);
+    fbWrap.innerHTML = `<div class="speak-feedback speak-nok">⚠️ ${esc(err.message)}</div>`;
   }
-}
-
-function beginGrammQuiz() {
-  gramm.idx = 0; gramm.score = 0; gramm.missed = [];
-  document.getElementById('gramm-setup').style.display = 'none';
-  document.getElementById('gramm-loading').style.display = 'none';
-  document.getElementById('gramm-results').style.display = 'none';
-  document.getElementById('gramm-quiz').style.display = 'block';
-  showGrammQ();
-}
-
-function showGrammQ() {
-  const total = Math.min(gramm.questions.length, 8);
-  const q = gramm.questions[gramm.idx];
-  document.getElementById('gq-progress').textContent = (gramm.idx+1) + ' / ' + total;
-  document.getElementById('gq-score-live').textContent = gramm.score + ' richtig';
-  document.getElementById('gq-fill').style.width = (gramm.idx / total * 100) + '%';
-  const parts = q.q.split('___');
-  const sentHtml = parts.map((p,i) => esc(p) + (i < parts.length-1 ? '<span class="gramm-blank">&nbsp;</span>' : '')).join('');
-  document.getElementById('gq-sentence').innerHTML = sentHtml;
-  document.getElementById('gq-hint').textContent = q.hint ? '💡 ' + q.hint : '';
-  const inp = document.getElementById('gq-input');
-  inp.value = ''; inp.className = 'answer-input';
-  document.getElementById('gq-feedback').innerHTML = '';
-  document.getElementById('gq-check-wrap').style.display = 'block';
-  document.getElementById('gq-check-btn').disabled = false;
-  document.getElementById('gq-nav-after').style.display = 'none';
-  setTimeout(() => inp.focus(), 100);
-}
-
-function checkGrammAnswer() {
-  const q = gramm.questions[gramm.idx];
-  const inp = document.getElementById('gq-input');
-  const user = inp.value.trim().toLowerCase().replace(/['']/g,"'");
-  const corr = q.a.trim().toLowerCase().replace(/['']/g,"'");
-  const ok = user === corr || corr.split('/').map(s=>s.trim()).includes(user);
-  inp.className = 'answer-input ' + (ok ? 'correct' : 'wrong');
-  const parts = q.q.split('___');
-  const fillColor = ok ? 'var(--green-text)' : 'var(--red-text)';
-  const sentHtml = parts.map((p,i) => esc(p) + (i < parts.length-1 ? `<span class="gramm-blank" style="color:${fillColor}">${esc(q.a)}</span>` : '')).join('');
-  document.getElementById('gq-sentence').innerHTML = sentHtml;
-  const fb = document.getElementById('gq-feedback');
-  fb.innerHTML = ok
-    ? '<div class="feedback-pill pill-ok">✓ Richtig!</div>'
-    : `<div class="feedback-pill pill-nok">✗ Falsch</div><div class="correct-hint">Richtig: <strong>${esc(q.a)}</strong></div>`;
-  document.getElementById('gq-check-wrap').style.display = 'none';
-  document.getElementById('gq-nav-after').style.display = 'flex';
-  if (ok) { gramm.score++; } else { gramm.missed.push(q); }
-}
-
-function nextGrammQ() {
-  gramm.idx++;
-  if (gramm.idx >= Math.min(gramm.questions.length, 8)) showGrammResults(); else showGrammQ();
-}
-
-function showGrammResults() {
-  document.getElementById('gramm-quiz').style.display = 'none';
-  document.getElementById('gramm-results').style.display = 'block';
-  const total = Math.min(gramm.questions.length, 8);
-  const pct = Math.round(gramm.score / total * 100);
-  document.getElementById('gr-score').textContent = gramm.score + '/' + total;
-  document.getElementById('gr-sub').textContent = pct + '% richtig – ' + emoji(pct);
-  const ms = document.getElementById('gr-missed-sec');
-  const rb = document.getElementById('gr-retry-btn');
-  if (gramm.missed.length) {
-    ms.style.display = 'block'; rb.style.display = 'block';
-    document.getElementById('gr-missed').innerHTML = gramm.missed.map(q =>
-      `<li class="vocab-row"><span class="de">${esc(q.q)}</span><span class="fr">${esc(q.a)}</span></li>`
-    ).join('');
-  } else { ms.style.display='none'; rb.style.display='none'; }
-}
-
-function retryGrammMissed() {
-  if (!gramm.missed.length) { backToGrammSetup(); return; }
-  gramm.questions = shuffle(gramm.missed);
-  gramm.idx = 0; gramm.score = 0; gramm.missed = [];
-  document.getElementById('gramm-results').style.display = 'none';
-  document.getElementById('gramm-quiz').style.display = 'block';
-  showGrammQ();
-}
-
-function abortGrammQuiz() {
-  document.getElementById('gramm-quiz').style.display = 'none';
-  document.getElementById('gramm-setup').style.display = 'block';
-}
-
-function backToGrammSetup() {
-  document.getElementById('gramm-results').style.display = 'none';
-  document.getElementById('gramm-setup').style.display = 'block';
-  renderGrammSetup();
+  btn.disabled = false;
 }
 
 // ─── LOOKUP ──────────────────────────────────────────────────────────
 let _lookupResult = null;
 
 function showLookup() {
-  document.getElementById('lookup-overlay').classList.remove('hidden');
+  oeffneOverlay('lookup');
   document.getElementById('lookup-input').value = '';
   document.getElementById('lookup-status').textContent = '';
   document.getElementById('lookup-result-wrap').style.display = 'none';
@@ -2855,7 +3029,7 @@ function showLookup() {
 }
 
 function closeLookup() {
-  document.getElementById('lookup-overlay').classList.add('hidden');
+  schliesseOverlay('lookup');
 }
 
 async function doLookup() {
@@ -2921,6 +3095,7 @@ function renderInstallHint() {
   const isStandalone = window.navigator.standalone === true;
   document.getElementById('install-hint').style.display = (isIOS && !isStandalone) ? 'block' : 'none';
   document.getElementById('apikey-banner').style.display = apiKey ? 'none' : 'block';
+  renderKlasseSelects();
 }
 
 // ─── SERVICE WORKER ───────────────────────────────────────────────────
@@ -2958,6 +3133,8 @@ function systemPrefersDark() {
 function applyTheme(theme) {
   if (theme === 'light' || theme === 'dark') document.documentElement.setAttribute('data-theme', theme);
   else document.documentElement.removeAttribute('data-theme');
+  const m = document.getElementById('theme-color-meta');
+  if (m) m.setAttribute('content', theme === 'dark' ? '#1c1c1e' : '#ffffff');
 }
 function toggleTheme() {
   const btn = document.getElementById('theme-toggle');
@@ -2974,9 +3151,10 @@ function initThemeToggle() {
 }
 
 // Init
+history.replaceState(_navState(null), '');
+initStaticIcons();
 applyUrlParams();
 renderLearnSetup();
-renderGrammSetup();
 initApiKeyUI();
 initDbxUI();
 handleDropboxCallback();

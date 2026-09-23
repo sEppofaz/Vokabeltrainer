@@ -1216,7 +1216,7 @@
       <!-- Schritt 7: Umschreiben -->
       <div class="card">
         <h3>7️⃣ Umschreiben üben</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Im Tab <strong>Umschreiben</strong> wird ein Wort angezeigt (in der jeweils anderen Sprache) – es muss mündlich umschrieben werden, ohne es selbst zu nennen:</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:10px;">Im Tab <strong>Umschreiben</strong> wird ein Wort in der gewählten Sprache angezeigt – es muss auch in dieser Sprache mündlich umschrieben werden, ohne es selbst zu nennen (kein Sprachmischen):</p>
         <div class="help-row">
           <span class="help-icon">🎤</span>
           <div><strong>Sprechen</strong><br><span>Runden Mikrofon-Button antippen, umschreiben, nochmal antippen zum Stoppen. Die Umschreibung erscheint als Text und kann vor dem Absenden korrigiert werden.</span></div>
@@ -2933,9 +2933,8 @@ function startSpeakSession() {
 function showSpeakCard() {
   if (speakIdx >= speakPool.length) { speakPool = shuffle(speakPool); speakIdx = 0; }
   speakCurrent = speakPool[speakIdx];
-  const shownLang = speakLang === 'fr' ? 'de' : 'fr';
-  document.getElementById('speak-card-lang').textContent = shownLang === 'de' ? 'Deutsch' : 'Französisch';
-  document.getElementById('speak-card-word').textContent = speakCurrent[shownLang];
+  document.getElementById('speak-card-lang').textContent = speakLang === 'de' ? 'Deutsch' : 'Französisch';
+  document.getElementById('speak-card-word').textContent = speakCurrent[speakLang];
   document.getElementById('speak-transcript').value = '';
   document.getElementById('speak-feedback-wrap').style.display = 'none';
   document.getElementById('speak-feedback-wrap').innerHTML = '';

@@ -506,6 +506,7 @@
       padding: 10px 18px; border-radius: 20px;
       font-size: 14px; font-weight: 600; z-index: 9999;
       pointer-events: none; transition: opacity 0.4s; opacity: 0;
+      width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.4;
     }
 
     /* ── HEATMAP ── */
@@ -751,7 +752,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v53)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v54)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -1226,7 +1227,7 @@
           <div><strong>Bewerten lassen</strong><br><span>Claude prüft, ob das Zielwort selbst genannt wurde und ob die Umschreibung inhaltlich trifft – gibt kurzes, schriftliches Feedback. Kein Vorlesen, damit es überall zuverlässig funktioniert.</span></div>
         </div>
         <div class="help-hint">
-          💡 Diktieren braucht ein Mikrofon-fähiges Gerät (iPhone/iPad, aktueller Chrome/Safari). Sprache (Deutsch/Französisch) und Unités vorher im Setup wählen.
+          💡 Diktieren braucht ein Mikrofon-fähiges Gerät (iPhone/iPad, aktueller Chrome/Safari) und auf dem iPhone/iPad die aktivierte Diktierfunktion (Einstellungen → Allgemein → Tastatur). Klappt die Aufnahme nicht, ins Textfeld tippen und das Mikrofon der Tastatur nutzen. Sprache (Deutsch/Französisch) und Unités vorher im Setup wählen.
         </div>
       </div>
 
@@ -1635,12 +1636,12 @@ function renderBonusBar() {
     lv.emoji + ' ' + lv.name + ' · ' + gc + ' ' + xp.toLocaleString('de') + ' · +' + xpToday + ' heute · 🔥 ' + dayStr;
 }
 
-function showToast(msg) {
+function showToast(msg, ms = 2500) {
   const t = document.getElementById('vt-toast');
   t.textContent = msg;
   t.style.opacity = '1';
   clearTimeout(t._timer);
-  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, ms);
 }
 
 function computeAndApplyBonus() {
@@ -2956,10 +2957,22 @@ function getRecognition(lang) {
   if (!SR) return null;
   const r = new SR();
   r.lang = lang === 'fr' ? 'fr-FR' : 'de-DE';
-  r.interimResults = false;
+  // iOS (v.a. Home-Bildschirm-App) liefert mit interimResults=false oft gar kein Ergebnis –
+  // daher Zwischenergebnisse mitnehmen und das letzte als Transkript verwenden
+  r.interimResults = true;
+  r.continuous = false;
   r.maxAlternatives = 1;
   return r;
 }
+
+const SPEECH_ERRORS = {
+  'not-allowed': 'Mikrofon nicht erlaubt – in den iPhone-Einstellungen freigeben',
+  'service-not-allowed': 'Diktieren hier nicht erlaubt – Diktierfunktion aktivieren (Einstellungen → Allgemein → Tastatur)',
+  'no-speech': 'Nichts gehört – bitte nochmal versuchen',
+  'audio-capture': 'Kein Mikrofon gefunden',
+  'network': 'Keine Verbindung zur Spracherkennung',
+};
+const SPEECH_FALLBACK_HINT = 'Tipp: ins Textfeld tippen und das Mikrofon der Tastatur nutzen';
 
 function updateRecordButton() {
   const btn = document.getElementById('record-btn');
@@ -2974,14 +2987,25 @@ function toggleRecording() {
   if (!speakRecognition) { showToast('⚠️ Diktieren wird hier nicht unterstützt'); return; }
   speakRecognizing = true;
   updateRecordButton();
-  let finalTranscript = '';
-  speakRecognition.onresult = (e) => { finalTranscript = e.results[0][0].transcript; };
-  speakRecognition.onerror = (e) => { console.warn('[speech]', e.error); };
+  const ta = document.getElementById('speak-transcript');
+  let transcript = '';
+  let speechError = '';
+  // Start-Timeout nur bis die Aufnahme tatsächlich läuft – danach darf beliebig lange gesprochen werden
+  const clearStartTimeout = () => clearTimeout(speakStartTimeout);
+  speakRecognition.onstart = clearStartTimeout;
+  speakRecognition.onaudiostart = clearStartTimeout;
+  speakRecognition.onresult = (e) => {
+    transcript = Array.from(e.results).map(r => r[0].transcript).join(' ').trim();
+    if (transcript) ta.value = transcript;
+  };
+  speakRecognition.onerror = (e) => { speechError = e.error; console.warn('[speech]', e.error); };
   speakRecognition.onend = () => {
-    clearTimeout(speakStartTimeout);
+    clearStartTimeout();
     speakRecognizing = false;
     updateRecordButton();
-    document.getElementById('speak-transcript').value = finalTranscript;
+    if (transcript) { ta.value = transcript; return; }
+    if (speechError === 'aborted') return;
+    showToast('⚠️ ' + (SPEECH_ERRORS[speechError] || 'Nichts verstanden') + '. ' + SPEECH_FALLBACK_HINT, 6000);
   };
   speakRecognition.start();
   speakStartTimeout = setTimeout(() => {
@@ -2989,13 +3013,14 @@ function toggleRecording() {
     speakRecognition.abort();
     speakRecognizing = false;
     updateRecordButton();
-    showToast('⚠️ Diktieren hat nicht reagiert – bitte nochmal versuchen');
+    showToast('⚠️ Diktieren hat nicht reagiert. ' + SPEECH_FALLBACK_HINT, 6000);
   }, 8000);
 }
 
 async function judgeDescription() {
   const transcript = document.getElementById('speak-transcript').value.trim();
-  if (!transcript || !speakCurrent) return;
+  if (!speakCurrent) return;
+  if (!transcript) { showToast('⚠️ Noch keine Umschreibung – erst sprechen oder ins Textfeld schreiben'); return; }
   if (!apiKey) { showToast('⚠️ Kein API-Key. Bitte unter Info einrichten.'); return; }
   const langName = speakLang === 'fr' ? 'Französisch' : 'Deutsch';
   const targetWord = speakCurrent[speakLang];

@@ -757,7 +757,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v56 · 2026-09-25)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v57 · 2026-09-25)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -1323,8 +1323,8 @@
         </div>
 
         <div class="help-hint" style="margin-top:12px;">
-          💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen). Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".<br><br>
-            🛡️ <strong>Neues Gerät:</strong> Direkt nach dem Verbinden lädt die App automatisch alle Vokabeln aus Dropbox – du musst nichts drücken. Solange das noch nicht geklappt hat, lädt die App auch nichts von selbst hoch (Hinweis erscheint als kurze Meldung), damit der Stand in Dropbox nicht durch ein leeres Gerät ersetzt wird.
+          💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Beide Richtungen gleichen die Stände ab und ergänzen nur fehlende Wörter – gelöscht wird dabei nie. Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".<br><br>
+            🛡️ <strong>Kein Vokabelverlust:</strong> Vor jedem Hochladen holt die App zuerst den Stand aus Dropbox und fügt ihn dazu – ein Gerät kann die Vokabeln eines anderen also nicht mehr verdrängen. Ein neu verbundenes Gerät lädt außerdem sofort alles herunter. Klappt das Laden einmal nicht, wird bewusst gar nicht hochgeladen (kurze Meldung) – einfach später nochmal ☁️ Hochladen.
         </div>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
@@ -1494,14 +1494,9 @@ try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(
 try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){ console.warn('[load:dbxaccess]', e); }
 try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){ console.warn('[load:dbxrefresh]', e); }
 try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){ console.warn('[load:dbxexpiry]', e); }
-// Freigabe-Flag (ab v56): erst wenn dieses Gerät einmal von Dropbox geladen hat (oder der
-// Nutzer einen Upload bewusst bestätigt hat), darf der Auto-Sync die Dropbox-Datei
-// überschreiben. Schützt frisch installierte Geräte davor, den Cloud-Stand zu leeren.
-let dbxPulled = false;
-try { dbxPulled = localStorage.getItem('vt_dbx_pulled') === '1'; } catch(e){ console.warn('[load:dbxpulled]', e); }
-function markDbxPulled() { dbxPulled = true; try { localStorage.setItem('vt_dbx_pulled', '1'); } catch(e){ console.warn('[save:dbxpulled]', e); } }
-// Migration v56: ein Gerät, das bereits verbunden ist UND Vokabeln hat, ist eingerichtet
-if (!dbxPulled && dbxRefreshToken && Object.keys(db).length) markDbxPulled();
+// v56 hatte das Freigabe-Flag vt_dbx_pulled; seit v57 mergt jeder Upload vorher den
+// Cloud-Stand, das Flag ist damit überflüssig – Rest aus alten Installationen aufräumen
+try { localStorage.removeItem('vt_dbx_pulled'); } catch(e){}
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
 
@@ -1897,29 +1892,84 @@ async function _uploadPayload(token) {
   });
 }
 
+// Alle Dropbox-Zugriffe laufen nacheinander – sonst könnte ein zweiter Auto-Sync zwischen
+// Laden und Hochladen des ersten dazwischenfunken
+let _dbxQueue = Promise.resolve();
+function _queueDbx(fn) {
+  const next = _dbxQueue.then(fn, fn);
+  _dbxQueue = next.catch(() => {});
+  return next;
+}
+
+// Lädt die Dropbox-Datei. Rückgabe {status:'ok', data} oder {status:'empty'} (409 = Datei
+// gibt es noch nicht). Jeder andere Fehler wirft – der Aufrufer darf dann NICHT hochladen.
+async function _downloadPayload(token) {
+  const res = await fetch(DBX_DOWNLOAD_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + token,
+      'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH })
+    }
+  });
+  if (res.status === 409) return { status: 'empty' };
+  if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
+  return { status: 'ok', data: await res.json() };
+}
+
+// Übernimmt den Inhalt einer Dropbox-Datei additiv in den lokalen Stand (löscht nie).
+// Rückgabe: Anzahl der neu hinzugekommenen Vokabeln.
+function mergeRemoteData(data) {
+  if (!data || !data.db) throw new Error('Ungültiges Dateiformat');
+  let added = 0;
+  Object.keys(data.db).forEach(u => {
+    if (!db[u]) db[u] = [];
+    const existing = existingSet(u);
+    data.db[u].forEach(v => { const k = vocabKey(v); if (!existing.has(k)) { db[u].push(v); existing.add(k); added++; } });
+  });
+  if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
+  if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
+  mergeUniteClasses(data.uniteClasses);
+  saveDb(); saveStars();
+  return added;
+}
+
+// Sicherer Upload (ab v57): erst laden und mergen, dann hochladen. Der Upload selbst ist
+// 'overwrite' – ohne diesen Schritt würde ein Gerät mit veraltetem Stand die Ergänzungen
+// der anderen Geräte verwerfen. Schlägt das Laden fehl, wird bewusst gar nicht hochgeladen.
+// Rückgabe: Anzahl der dabei übernommenen fremden Vokabeln.
+async function _mergeAndUpload(token) {
+  const dn = await _downloadPayload(token);
+  let added = 0;
+  if (dn.status === 'ok') {
+    added = mergeRemoteData(dn.data);
+    if (added) { renderVocabScreen(); renderLearnSetup(); }
+  }
+  const res = await _uploadPayload(token);
+  if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
+  return added;
+}
+
 async function autoSyncToDropbox() {
   if (!dbxRefreshToken) return;
-  // Upload ist immer 'overwrite' – auf einem Gerät, das noch nie geladen hat, würde er
-  // den kompletten Dropbox-Stand durch den lokalen (evtl. fast leeren) ersetzen
-  if (!dbxPulled) { showToast('⚠️ Lokal gespeichert, aber nicht zu Dropbox hochgeladen – bitte zuerst ☁️ Laden', 6000); return; }
   const token = await getValidAccessToken();
   if (!token) return;
   try {
-    const res = await _uploadPayload(token);
-    if (res.ok) {
-      const btn = document.getElementById('dbx-up-btn');
-      if (btn) { const prev = btn.innerHTML; btn.textContent = '✓'; setTimeout(() => { btn.innerHTML = prev; }, 1500); }
-    }
-  } catch(e) { console.warn('[dropbox:auto]', e); }
+    const added = await _queueDbx(() => _mergeAndUpload(token));
+    if (added) showToast('☁️ ' + added + (added === 1 ? ' Vokabel' : ' Vokabeln') + ' vom anderen Gerät übernommen');
+    const btn = document.getElementById('dbx-up-btn');
+    if (btn) { const prev = btn.innerHTML; btn.textContent = '✓'; setTimeout(() => { btn.innerHTML = prev; }, 1500); }
+  } catch(e) {
+    console.warn('[dropbox:auto]', e);
+    showToast('⚠️ Lokal gespeichert, aber nicht zu Dropbox hochgeladen – später ☁️ Hochladen', 6000);
+  }
 }
 
 function disconnectDropbox() {
   if (!confirm('Dropbox-Verbindung wirklich trennen?')) return;
-  dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0; dbxPulled = false;
+  dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0;
   localStorage.removeItem('vt_dbx_access');
   localStorage.removeItem('vt_dbx_refresh');
   localStorage.removeItem('vt_dbx_expiry');
-  localStorage.removeItem('vt_dbx_pulled');
   updateDbxButtons();
 }
 
@@ -1957,17 +2007,12 @@ function initDbxUI() {
 async function syncToDropbox() {
   const token = await getValidAccessToken();
   if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
-  if (!dbxPulled) {
-    const n = Object.values(db).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
-    if (!confirm('Dieses Gerät hat noch nie von Dropbox geladen.\n\nHochladen ersetzt die Dropbox-Datei komplett durch die ' + n + ' Vokabeln von diesem Gerät – alles, was nur in Dropbox liegt, geht verloren.\n\nNormalerweise zuerst „Laden" drücken. Trotzdem hochladen?')) return;
-  }
   const btn = document.getElementById('dbx-up-btn');
   const idleHtml = icon('cloud-upload',16) + 'Hochladen';
   btn.textContent = '⏳'; btn.disabled = true;
   try {
-    const res = await _uploadPayload(token);
-    if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
-    markDbxPulled();
+    const added = await _queueDbx(() => _mergeAndUpload(token));
+    if (added) showToast('☁️ ' + added + (added === 1 ? ' Vokabel' : ' Vokabeln') + ' vom anderen Gerät übernommen und mit hochgeladen');
     btn.textContent = '✓';
     setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
   } catch(e) {
@@ -1985,34 +2030,14 @@ async function syncFromDropbox(auto = false) {
   const resetBtn = () => { if (btn) { btn.innerHTML = idleHtml; btn.disabled = false; } };
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   try {
-    const res = await fetch(DBX_DOWNLOAD_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH })
-      }
-    });
-    if (res.status === 409) {
-      // Noch keine Datei in Dropbox – es gibt nichts, was ein Upload überschreiben könnte
-      markDbxPulled();
+    const dn = await _queueDbx(() => _downloadPayload(token));
+    if (dn.status === 'empty') {
       if (!auto) alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.');
       resetBtn(); return;
     }
-    if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
-    const data = await res.json();
-    if (!data.db) throw new Error('Ungültiges Dateiformat');
-    Object.keys(data.db).forEach(u => {
-      if (!db[u]) db[u] = [];
-      const existing = existingSet(u);
-      data.db[u].forEach(v => { const k = vocabKey(v); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
-    });
-    if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
-    if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
-    mergeUniteClasses(data.uniteClasses);
-    markDbxPulled();
-    saveDb(); saveStars();
+    const added = mergeRemoteData(dn.data);
     renderVocabScreen(); renderLearnSetup();
-    if (auto) showToast('☁️ Vokabeln von Dropbox geladen');
+    if (auto) showToast('☁️ ' + added + (added === 1 ? ' Vokabel' : ' Vokabeln') + ' von Dropbox geladen');
     if (btn) { btn.textContent = '✓'; setTimeout(resetBtn, 1500); }
   } catch(e) {
     if (auto) showToast('⚠️ Laden von Dropbox fehlgeschlagen – bitte im Vokabeln-Tab ☁️ Laden', 6000);

@@ -757,7 +757,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v55)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v56 · 2026-09-25)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -1323,7 +1323,8 @@
         </div>
 
         <div class="help-hint" style="margin-top:12px;">
-          💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen). Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".
+          💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Hochladen überschreibt die Dropbox-Datei; Laden <em>ergänzt</em> fehlende Wörter (kein Löschen). Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".<br><br>
+            🛡️ <strong>Neues Gerät:</strong> Direkt nach dem Verbinden lädt die App automatisch alle Vokabeln aus Dropbox – du musst nichts drücken. Solange das noch nicht geklappt hat, lädt die App auch nichts von selbst hoch (Hinweis erscheint als kurze Meldung), damit der Stand in Dropbox nicht durch ein leeres Gerät ersetzt wird.
         </div>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
@@ -1493,6 +1494,14 @@ try { dbxAppKey = (localStorage.getItem('vt_dbx_appkey') || '').trim(); } catch(
 try { dbxAccessToken = (localStorage.getItem('vt_dbx_access') || '').trim(); } catch(e){ console.warn('[load:dbxaccess]', e); }
 try { dbxRefreshToken = (localStorage.getItem('vt_dbx_refresh') || '').trim(); } catch(e){ console.warn('[load:dbxrefresh]', e); }
 try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); } catch(e){ console.warn('[load:dbxexpiry]', e); }
+// Freigabe-Flag (ab v56): erst wenn dieses Gerät einmal von Dropbox geladen hat (oder der
+// Nutzer einen Upload bewusst bestätigt hat), darf der Auto-Sync die Dropbox-Datei
+// überschreiben. Schützt frisch installierte Geräte davor, den Cloud-Stand zu leeren.
+let dbxPulled = false;
+try { dbxPulled = localStorage.getItem('vt_dbx_pulled') === '1'; } catch(e){ console.warn('[load:dbxpulled]', e); }
+function markDbxPulled() { dbxPulled = true; try { localStorage.setItem('vt_dbx_pulled', '1'); } catch(e){ console.warn('[save:dbxpulled]', e); } }
+// Migration v56: ein Gerät, das bereits verbunden ist UND Vokabeln hat, ist eingerichtet
+if (!dbxPulled && dbxRefreshToken && Object.keys(db).length) markDbxPulled();
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
 
@@ -1824,6 +1833,7 @@ async function handleDropboxCallback() {
   if (!code) return;
   const verifier = localStorage.getItem('vt_pkce_verifier');
   if (!verifier || !dbxAppKey) return;
+  let connected = false;
   try {
     const res = await fetch('https://api.dropbox.com/oauth2/token', {
       method: 'POST',
@@ -1843,9 +1853,13 @@ async function handleDropboxCallback() {
       localStorage.setItem('vt_dbx_expiry', String(dbxTokenExpiry));
       localStorage.removeItem('vt_pkce_verifier');
       window.history.replaceState({}, '', DBX_REDIRECT);
+      connected = true;
     }
   } catch(e) { console.warn('[dropbox:callback]', e); }
   updateDbxButtons();
+  // Direkt nach dem Verbinden den Cloud-Stand holen (rein ergänzend, löscht nie) –
+  // damit ein neu eingerichtetes Gerät sofort alle Vokabeln hat
+  if (connected) await syncFromDropbox(true);
 }
 
 async function getValidAccessToken() {
@@ -1885,6 +1899,9 @@ async function _uploadPayload(token) {
 
 async function autoSyncToDropbox() {
   if (!dbxRefreshToken) return;
+  // Upload ist immer 'overwrite' – auf einem Gerät, das noch nie geladen hat, würde er
+  // den kompletten Dropbox-Stand durch den lokalen (evtl. fast leeren) ersetzen
+  if (!dbxPulled) { showToast('⚠️ Lokal gespeichert, aber nicht zu Dropbox hochgeladen – bitte zuerst ☁️ Laden', 6000); return; }
   const token = await getValidAccessToken();
   if (!token) return;
   try {
@@ -1898,10 +1915,11 @@ async function autoSyncToDropbox() {
 
 function disconnectDropbox() {
   if (!confirm('Dropbox-Verbindung wirklich trennen?')) return;
-  dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0;
+  dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0; dbxPulled = false;
   localStorage.removeItem('vt_dbx_access');
   localStorage.removeItem('vt_dbx_refresh');
   localStorage.removeItem('vt_dbx_expiry');
+  localStorage.removeItem('vt_dbx_pulled');
   updateDbxButtons();
 }
 
@@ -1939,12 +1957,17 @@ function initDbxUI() {
 async function syncToDropbox() {
   const token = await getValidAccessToken();
   if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
+  if (!dbxPulled) {
+    const n = Object.values(db).reduce((sum, arr) => sum + (arr ? arr.length : 0), 0);
+    if (!confirm('Dieses Gerät hat noch nie von Dropbox geladen.\n\nHochladen ersetzt die Dropbox-Datei komplett durch die ' + n + ' Vokabeln von diesem Gerät – alles, was nur in Dropbox liegt, geht verloren.\n\nNormalerweise zuerst „Laden" drücken. Trotzdem hochladen?')) return;
+  }
   const btn = document.getElementById('dbx-up-btn');
   const idleHtml = icon('cloud-upload',16) + 'Hochladen';
   btn.textContent = '⏳'; btn.disabled = true;
   try {
     const res = await _uploadPayload(token);
     if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
+    markDbxPulled();
     btn.textContent = '✓';
     setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
   } catch(e) {
@@ -1953,12 +1976,14 @@ async function syncToDropbox() {
   }
 }
 
-async function syncFromDropbox() {
+// auto=true: läuft direkt nach dem Verbinden, ohne Dialoge (Meldungen als Toast)
+async function syncFromDropbox(auto = false) {
   const token = await getValidAccessToken();
-  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
+  if (!token) { if (!auto) alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
   const btn = document.getElementById('dbx-dn-btn');
   const idleHtml = icon('cloud-download',16) + 'Laden';
-  btn.textContent = '⏳'; btn.disabled = true;
+  const resetBtn = () => { if (btn) { btn.innerHTML = idleHtml; btn.disabled = false; } };
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   try {
     const res = await fetch(DBX_DOWNLOAD_URL, {
       method: 'POST',
@@ -1967,7 +1992,12 @@ async function syncFromDropbox() {
         'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH })
       }
     });
-    if (res.status === 409) { alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.'); btn.innerHTML = idleHtml; btn.disabled = false; return; }
+    if (res.status === 409) {
+      // Noch keine Datei in Dropbox – es gibt nichts, was ein Upload überschreiben könnte
+      markDbxPulled();
+      if (!auto) alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.');
+      resetBtn(); return;
+    }
     if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
     const data = await res.json();
     if (!data.db) throw new Error('Ungültiges Dateiformat');
@@ -1979,13 +2009,15 @@ async function syncFromDropbox() {
     if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
     if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
     mergeUniteClasses(data.uniteClasses);
+    markDbxPulled();
     saveDb(); saveStars();
     renderVocabScreen(); renderLearnSetup();
-    btn.textContent = '✓';
-    setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
+    if (auto) showToast('☁️ Vokabeln von Dropbox geladen');
+    if (btn) { btn.textContent = '✓'; setTimeout(resetBtn, 1500); }
   } catch(e) {
-    alert('Laden fehlgeschlagen:\n' + (e.message || String(e)));
-    btn.innerHTML = idleHtml; btn.disabled = false;
+    if (auto) showToast('⚠️ Laden von Dropbox fehlgeschlagen – bitte im Vokabeln-Tab ☁️ Laden', 6000);
+    else alert('Laden fehlgeschlagen:\n' + (e.message || String(e)));
+    resetBtn();
   }
 }
 

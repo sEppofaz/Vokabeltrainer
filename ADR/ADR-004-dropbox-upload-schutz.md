@@ -1,7 +1,7 @@
 # ADR-004: Upload-Schutz für Dropbox-Sync statt Merge-vor-Upload (Zwischenschritt)
 
 **Datum:** 2026-09-25
-**Status:** aktiv
+**Status:** ersetzt durch ADR-005 (2026-09-25 – Merge vor jedem Upload, das Flag `vt_dbx_pulled` entfällt)
 **Projekt:** Vokabeltrainer
 
 ## Problem

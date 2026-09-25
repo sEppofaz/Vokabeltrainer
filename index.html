@@ -757,7 +757,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v57 · 2026-09-25)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v58 · 2026-09-25)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -1324,7 +1324,7 @@
 
         <div class="help-hint" style="margin-top:12px;">
           💡 Nach der Verbindung erscheinen <strong>☁️↑</strong> (hochladen) und <strong>☁️↓</strong> (laden) im Vokabeln-Tab. Beide Richtungen gleichen die Stände ab und ergänzen nur fehlende Wörter – gelöscht wird dabei nie. Zweites Gerät: App Key und Redirect URI einmalig einrichten, dann „Verbinden".<br><br>
-            🛡️ <strong>Kein Vokabelverlust:</strong> Vor jedem Hochladen holt die App zuerst den Stand aus Dropbox und fügt ihn dazu – ein Gerät kann die Vokabeln eines anderen also nicht mehr verdrängen. Ein neu verbundenes Gerät lädt außerdem sofort alles herunter. Klappt das Laden einmal nicht, wird bewusst gar nicht hochgeladen (kurze Meldung) – einfach später nochmal ☁️ Hochladen.
+            🛡️ <strong>Abgleich in beide Richtungen:</strong> Vor jedem Hochladen holt die App zuerst den Stand aus Dropbox und fügt ihn dazu – ein Gerät kann die Vokabeln eines anderen also nicht verdrängen. Gelöschte Vokabeln, umbenannte oder gelöschte Unités und Korrekturen werden ebenfalls übertragen und verschwinden auf dem anderen Gerät mit. Klappt das Laden einmal nicht, wird bewusst gar nichts hochgeladen (kurze Meldung) – einfach später nochmal ☁️ Hochladen.
         </div>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
@@ -1498,6 +1498,30 @@ try { dbxTokenExpiry = parseInt(localStorage.getItem('vt_dbx_expiry') || '0'); }
 // Cloud-Stand, das Flag ist damit überflüssig – Rest aus alten Installationen aufräumen
 try { localStorage.removeItem('vt_dbx_pulled'); } catch(e){}
 function saveDb() { try { localStorage.setItem('vt_db', JSON.stringify(db)); } catch(e){ console.warn('[save:db]', e); } }
+
+// ─── LÖSCHVERMERKE / TOMBSTONES (ab v58) ───────────────────────────────
+// Ohne Vermerk käme eine gelöschte Vokabel beim nächsten Merge aus der Cloud zurück.
+// Schlüssel: "<Unité>||<de|fr>" für eine Vokabel, "<Unité>||*" für eine ganze Unité.
+// Wert: Zeitpunkt des Löschens. Ein Vermerk gewinnt gegen jede Vokabel, die älter ist
+// als er – eine danach neu angelegte (v.ts > Vermerk) überlebt also.
+const TOMB_TTL = 90 * 24 * 60 * 60 * 1000; // nach 90 Tagen verfallen Vermerke
+let deleted = {};
+try { deleted = JSON.parse(localStorage.getItem('vt_deleted') || '{}'); } catch(e){ console.warn('[load:deleted]', e); }
+function saveDeleted() { try { localStorage.setItem('vt_deleted', JSON.stringify(deleted)); } catch(e){ console.warn('[save:deleted]', e); } }
+function tombKey(unite, key) { return unite + '||' + key; }
+function markDeleted(unite, key) { deleted[tombKey(unite, key)] = Date.now(); saveDeleted(); }
+function pruneTombs() {
+  const cut = Date.now() - TOMB_TTL;
+  Object.keys(deleted).forEach(k => { if (!(deleted[k] > cut)) delete deleted[k]; });
+  return deleted;
+}
+// Gilt für v in unite ein Löschvermerk, der jünger ist als die Vokabel selbst?
+function isDeletedVocab(unite, v) {
+  const t = Math.max(deleted[tombKey(unite, vocabKey(v))] || 0, deleted[tombKey(unite, '*')] || 0);
+  return t > 0 && t >= (v.ts || 0);
+}
+// Neu angelegte Vokabeln bekommen einen Zeitstempel, damit sie einen älteren Vermerk schlagen
+function stampVocab(v) { return { de: v.de, fr: v.fr, ts: Date.now() }; }
 function saveStars() { try { localStorage.setItem('vt_stars', JSON.stringify(stars)); localStorage.setItem('vt_errors', JSON.stringify(errors)); } catch(e){ console.warn('[save:stars]', e); } }
 
 // ─── KLASSEN-ZUORDNUNG (Unités) ────────────────────────────────────────
@@ -1888,7 +1912,7 @@ async function _uploadPayload(token) {
       'Dropbox-API-Arg': JSON.stringify({ path: DBX_FILE_PATH, mode: 'overwrite', autorename: false }),
       'Content-Type': 'application/octet-stream'
     },
-    body: JSON.stringify({ db, stars, errors, uniteClasses: syncableUniteClasses() }, null, 2)
+    body: JSON.stringify({ db, stars, errors, uniteClasses: syncableUniteClasses(), deleted: pruneTombs() }, null, 2)
   });
 }
 
@@ -1916,21 +1940,51 @@ async function _downloadPayload(token) {
   return { status: 'ok', data: await res.json() };
 }
 
-// Übernimmt den Inhalt einer Dropbox-Datei additiv in den lokalen Stand (löscht nie).
-// Rückgabe: Anzahl der neu hinzugekommenen Vokabeln.
+// Führt den Inhalt einer Dropbox-/Export-Datei mit dem lokalen Stand zusammen.
+// Vokabeln werden ergänzt, Löschvermerke beider Seiten werden angewandt.
+// Rückgabe: { added, removed }.
 function mergeRemoteData(data) {
   if (!data || !data.db) throw new Error('Ungültiges Dateiformat');
-  let added = 0;
+  // Löschvermerke zusammenführen (der jüngste gewinnt), danach verfallene entfernen
+  const remoteTombs = (data.deleted && typeof data.deleted === 'object') ? data.deleted : {};
+  Object.keys(remoteTombs).forEach(k => {
+    const t = Number(remoteTombs[k]) || 0;
+    if (t > (deleted[k] || 0)) deleted[k] = t;
+  });
+  pruneTombs();
+  saveDeleted();
+
+  let added = 0, removed = 0;
+  // 1) Fremde Vokabeln übernehmen – außer sie wurden nachweislich gelöscht
   Object.keys(data.db).forEach(u => {
     if (!db[u]) db[u] = [];
     const existing = existingSet(u);
-    data.db[u].forEach(v => { const k = vocabKey(v); if (!existing.has(k)) { db[u].push(v); existing.add(k); added++; } });
+    (data.db[u] || []).forEach(v => {
+      const k = vocabKey(v);
+      if (existing.has(k) || isDeletedVocab(u, v)) return;
+      db[u].push(v); existing.add(k); added++;
+    });
+  });
+  // 2) Lokale Vokabeln entfernen, die auf einem anderen Gerät gelöscht wurden
+  Object.keys(db).forEach(u => {
+    const before = db[u].length;
+    db[u] = db[u].filter(v => !isDeletedVocab(u, v));
+    removed += before - db[u].length;
+    if (!db[u].length) delete db[u];
   });
   if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
   if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
   mergeUniteClasses(data.uniteClasses);
   saveDb(); saveStars();
-  return added;
+  return { added, removed };
+}
+
+// Einheitlicher Meldungstext für einen abgeschlossenen Abgleich
+function syncSummary(res) {
+  const parts = [];
+  if (res.added) parts.push(res.added + (res.added === 1 ? ' Vokabel' : ' Vokabeln') + ' übernommen');
+  if (res.removed) parts.push(res.removed + ' auf anderem Gerät gelöscht');
+  return parts.join(', ');
 }
 
 // Sicherer Upload (ab v57): erst laden und mergen, dann hochladen. Der Upload selbst ist
@@ -1939,14 +1993,14 @@ function mergeRemoteData(data) {
 // Rückgabe: Anzahl der dabei übernommenen fremden Vokabeln.
 async function _mergeAndUpload(token) {
   const dn = await _downloadPayload(token);
-  let added = 0;
+  let merged = { added: 0, removed: 0 };
   if (dn.status === 'ok') {
-    added = mergeRemoteData(dn.data);
-    if (added) { renderVocabScreen(); renderLearnSetup(); }
+    merged = mergeRemoteData(dn.data);
+    if (merged.added || merged.removed) { renderVocabScreen(); renderLearnSetup(); }
   }
   const res = await _uploadPayload(token);
   if (!res.ok) { const t = await res.text(); throw new Error(res.status + ': ' + t); }
-  return added;
+  return merged;
 }
 
 async function autoSyncToDropbox() {
@@ -1954,8 +2008,8 @@ async function autoSyncToDropbox() {
   const token = await getValidAccessToken();
   if (!token) return;
   try {
-    const added = await _queueDbx(() => _mergeAndUpload(token));
-    if (added) showToast('☁️ ' + added + (added === 1 ? ' Vokabel' : ' Vokabeln') + ' vom anderen Gerät übernommen');
+    const summary = syncSummary(await _queueDbx(() => _mergeAndUpload(token)));
+    if (summary) showToast('☁️ ' + summary);
     const btn = document.getElementById('dbx-up-btn');
     if (btn) { const prev = btn.innerHTML; btn.textContent = '✓'; setTimeout(() => { btn.innerHTML = prev; }, 1500); }
   } catch(e) {
@@ -2011,8 +2065,8 @@ async function syncToDropbox() {
   const idleHtml = icon('cloud-upload',16) + 'Hochladen';
   btn.textContent = '⏳'; btn.disabled = true;
   try {
-    const added = await _queueDbx(() => _mergeAndUpload(token));
-    if (added) showToast('☁️ ' + added + (added === 1 ? ' Vokabel' : ' Vokabeln') + ' vom anderen Gerät übernommen und mit hochgeladen');
+    const summary = syncSummary(await _queueDbx(() => _mergeAndUpload(token)));
+    if (summary) showToast('☁️ ' + summary + ' – anschließend hochgeladen');
     btn.textContent = '✓';
     setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
   } catch(e) {
@@ -2035,9 +2089,9 @@ async function syncFromDropbox(auto = false) {
       if (!auto) alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.');
       resetBtn(); return;
     }
-    const added = mergeRemoteData(dn.data);
+    const summary = syncSummary(mergeRemoteData(dn.data));
     renderVocabScreen(); renderLearnSetup();
-    if (auto) showToast('☁️ ' + added + (added === 1 ? ' Vokabel' : ' Vokabeln') + ' von Dropbox geladen');
+    if (auto) showToast('☁️ ' + (summary || 'Stand von Dropbox übernommen'));
     if (btn) { btn.textContent = '✓'; setTimeout(resetBtn, 1500); }
   } catch(e) {
     if (auto) showToast('⚠️ Laden von Dropbox fehlgeschlagen – bitte im Vokabeln-Tab ☁️ Laden', 6000);
@@ -2426,7 +2480,7 @@ function saveVocab() {
   if (!db[unite]) db[unite] = [];
   if (isNewUnite) { uniteClasses[unite] = parseInt(document.getElementById('up-unite-klasse').value) || DEFAULT_KLASSE; saveUniteClasses(); }
   const existing = existingSet(unite);
-  const newOnes = valid.filter(v => !existing.has(vocabKey(v)));
+  const newOnes = valid.filter(v => !existing.has(vocabKey(v))).map(stampVocab);
   const dupes = valid.length - newOnes.length;
   db[unite].push(...newOnes);
   saveDb();
@@ -2455,7 +2509,7 @@ function saveManual() {
   if (!db[unite]) db[unite] = [];
   if (isNewUnite) { uniteClasses[unite] = parseInt(document.getElementById('man-unite-klasse').value) || DEFAULT_KLASSE; saveUniteClasses(); }
   const existing = existingSet(unite);
-  const newOnes = pairs.filter(v => !existing.has(vocabKey(v)));
+  const newOnes = pairs.filter(v => !existing.has(vocabKey(v))).map(stampVocab);
   const dupes = pairs.length - newOnes.length;
   db[unite].push(...newOnes);
   saveDb();
@@ -2592,7 +2646,14 @@ function toggleStar(unite, idx) {
   saveStars(); renderVocabScreen();
 }
 
-function delItem(unite, i) { if (!confirm(`„${db[unite][i].de} – ${db[unite][i].fr}" löschen?`)) return; db[unite].splice(i,1); if(!db[unite].length) delete db[unite]; saveDb(); renderVocabScreen(); }
+function delItem(unite, i) {
+  const v = db[unite][i];
+  if (!confirm('„' + v.de + ' – ' + v.fr + '“ löschen?')) return;
+  markDeleted(unite, vocabKey(v));   // sonst kommt sie beim nächsten Abgleich zurück
+  db[unite].splice(i,1);
+  if(!db[unite].length) delete db[unite];
+  saveDb(); renderVocabScreen(); autoSyncToDropbox();
+}
 
 function editItem(unite, idx) {
   _editingKey = vocabKey(db[unite][idx]);
@@ -2604,12 +2665,20 @@ function saveItem(unite, idx) {
   const deVal = (document.getElementById('edit-de')?.value || '').trim();
   const frVal = (document.getElementById('edit-fr')?.value || '').trim();
   if (!deVal || !frVal) return;
-  db[unite][idx] = { de: deVal, fr: frVal };
+  const neu = stampVocab({ de: deVal, fr: frVal });
+  const alt = db[unite][idx];
+  if (vocabKey(alt) !== vocabKey(neu)) markDeleted(unite, vocabKey(alt));
+  db[unite][idx] = neu;
   _editingKey = null;
-  saveDb(); renderVocabScreen();
+  saveDb(); renderVocabScreen(); autoSyncToDropbox();
 }
 function cancelEdit() { _editingKey = null; renderVocabScreen(); }
-function delUnite(unite) { if(!confirm('"'+unite+'" wirklich löschen?')) return; delete db[unite]; saveDb(); renderVocabScreen(); renderLearnSetup(); }
+function delUnite(unite) {
+  if (!confirm('„' + unite + '“ wirklich löschen?')) return;
+  markDeleted(unite, '*');
+  delete db[unite];
+  saveDb(); renderVocabScreen(); renderLearnSetup(); autoSyncToDropbox();
+}
 
 function renameUnite(oldName) {
   const newName = prompt('Neuer Name für „' + oldName + '":', oldName);
@@ -2617,8 +2686,9 @@ function renameUnite(oldName) {
   const n = newName.trim();
   if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
   db[n] = db[oldName]; delete db[oldName];
+  markDeleted(oldName, '*');   // der alte Name verschwindet auch auf den anderen Geräten
   if (uniteClasses[oldName] !== undefined) { uniteClasses[n] = uniteClasses[oldName]; delete uniteClasses[oldName]; saveUniteClasses(); }
-  saveDb(); renderVocabScreen(); renderLearnSetup();
+  saveDb(); renderVocabScreen(); renderLearnSetup(); autoSyncToDropbox();
 }
 
 function moveVocab(fromUnite, idx, toUnite) {
@@ -2626,16 +2696,17 @@ function moveVocab(fromUnite, idx, toUnite) {
   const vocab = db[fromUnite][idx];
   if (!db[toUnite]) db[toUnite] = [];
   const exists = db[toUnite].some(v => v.de.trim().toLowerCase()===vocab.de.trim().toLowerCase() && v.fr.trim().toLowerCase()===vocab.fr.trim().toLowerCase());
-  if (!exists) db[toUnite].push(vocab);
+  if (!exists) db[toUnite].push(stampVocab(vocab));   // frischer Zeitstempel schlägt alte Vermerke
+  markDeleted(fromUnite, vocabKey(vocab));
   db[fromUnite].splice(idx, 1);
   if (!db[fromUnite].length) delete db[fromUnite];
-  saveDb(); renderVocabScreen(); renderLearnSetup();
+  saveDb(); renderVocabScreen(); renderLearnSetup(); autoSyncToDropbox();
   showToast('→ ' + toUnite + ' (Klasse ' + getUniteKlasse(toUnite) + ')');
 }
 
 // ─── EXPORT / IMPORT ─────────────────────────────────────────────────
 function exportData() {
-  const data = JSON.stringify({ db, stars, errors, uniteClasses: syncableUniteClasses() }, null, 2);
+  const data = JSON.stringify({ db, stars, errors, uniteClasses: syncableUniteClasses(), deleted: pruneTombs() }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2653,18 +2724,10 @@ function importData(e) {
     try {
       const data = JSON.parse(reader.result);
       if (!data.db) { alert('Ungültige Datei.'); return; }
-      // Merge
-      Object.keys(data.db).forEach(u => {
-        if (!db[u]) db[u] = [];
-        const existing = existingSet(u);
-        data.db[u].forEach(v => { const k = vocabKey(v); if (!existing.has(k)) { db[u].push(v); existing.add(k); }});
-      });
-      if (data.stars) Object.keys(data.stars).forEach(k => { if (!stars[k]) stars[k] = true; });
-      if (data.errors) Object.keys(data.errors).forEach(k => { if ((data.errors[k]||0) > (errors[k]||0)) errors[k] = data.errors[k]; });
-      mergeUniteClasses(data.uniteClasses);
-      saveDb(); saveStars();
+      const res = mergeRemoteData(data);   // gleiche Logik wie der Dropbox-Abgleich
       renderVocabScreen(); renderLearnSetup();
-      alert('✓ Import erfolgreich!');
+      autoSyncToDropbox();
+      alert('✓ Import erfolgreich!' + (syncSummary(res) ? '\n' + syncSummary(res) : ''));
     } catch(err) { alert('Fehler beim Import: ' + err.message); }
   };
   reader.readAsText(file);
@@ -3216,7 +3279,7 @@ function addLookupVocab() {
   if (!v.de || !v.fr) { showToast('⚠️ Unvollständige Übersetzung'); return; }
   if (!db[unite]) db[unite] = [];
   if (existingSet(unite).has(vocabKey(v))) { showToast('⚠️ Wort bereits in ' + unite); return; }
-  db[unite].push(v);
+  db[unite].push(stampVocab(v));
   saveDb();
   autoSyncToDropbox();
   showToast('✓ „' + v.fr + '" zu ' + unite + ' hinzugefügt');

@@ -737,6 +737,11 @@
     .theme-switch[aria-checked="true"] { background: var(--blue-text); }
     .theme-switch-knob { position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s ease; }
     .theme-switch[aria-checked="true"] .theme-switch-knob { transform: translateX(20px); }
+    /* Sprachumschalter (v59): gleiche Optik wie der Dunkelmodus-Schalter, eigene Zeile darunter.
+       Die aktive Sprache wird hervorgehoben, damit die Knopfstellung eindeutig lesbar ist. */
+    .lang-switch-row { border-top: 0.5px solid var(--border); margin-top: 10px; padding-top: 10px; }
+    .lang-opt { color: var(--text3); font-weight: 400; transition: color .15s ease, font-weight .15s ease; }
+    .lang-opt.on { color: var(--text); font-weight: 600; }
   </style>
   <script>
   (function () {
@@ -757,7 +762,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v58 · 2026-09-25)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v59 · 2026-09-27)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -772,37 +777,37 @@
       <div id="learn-setup">
         <div class="two-col">
           <div class="card">
-            <h2>Abfrage starten</h2>
+            <h2 data-i18n="learnStart">Abfrage starten</h2>
             <div id="schwierig-card-wrap"></div>
             <div id="unite-select-list"></div>
             <div id="learn-empty" class="empty" style="display:none;">
               <span class="emoji">📖</span>
-              Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.
+              <span data-i18n="learnEmpty">Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.</span>
             </div>
           </div>
           <div id="learn-options" style="display:none;" class="card">
-            <h3>Einstellungen</h3>
-            <label>Richtung</label>
+            <h3 data-i18n="settings">Einstellungen</h3>
+            <label data-i18n="labelDirection">Richtung</label>
             <div class="toggle-group">
-              <button class="toggle-btn active-blue" id="dir-de-fr" onclick="setDir('de-fr')">Deutsch → Französisch</button>
-              <button class="toggle-btn" id="dir-fr-de" onclick="setDir('fr-de')">Französisch → Deutsch</button>
+              <button class="toggle-btn active-blue" id="dir-de-fr" onclick="setDir('de-fr')" data-i18n="dirDeFr">Deutsch → Französisch</button>
+              <button class="toggle-btn" id="dir-fr-de" onclick="setDir('fr-de')" data-i18n="dirFrDe">Französisch → Deutsch</button>
             </div>
-            <label>Modus</label>
+            <label data-i18n="labelMode">Modus</label>
             <div class="toggle-group">
-              <button class="toggle-btn active-green" id="mode-cover" onclick="setMode('cover')">Aufdecken</button>
-              <button class="toggle-btn" id="mode-type" onclick="setMode('type')">Eintippen</button>
+              <button class="toggle-btn active-green" id="mode-cover" onclick="setMode('cover')" data-i18n="modeCover">Aufdecken</button>
+              <button class="toggle-btn" id="mode-type" onclick="setMode('type')" data-i18n="modeType">Eintippen</button>
             </div>
-            <label>Reihenfolge</label>
+            <label data-i18n="labelOrder">Reihenfolge</label>
             <div class="toggle-group">
-              <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="shuffle" data-icon-size="14"></span>Zufällig</button>
-              <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="arrow-up-down" data-icon-size="14"></span>Nacheinander</button>
+              <button class="toggle-btn active-blue" id="order-random" onclick="setOrder('random')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="shuffle" data-icon-size="14"></span><span data-i18n="orderRandom">Zufällig</span></button>
+              <button class="toggle-btn" id="order-sequential" onclick="setOrder('sequential')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="arrow-up-down" data-icon-size="14"></span><span data-i18n="orderSeq">Nacheinander</span></button>
             </div>
-            <label>Filter</label>
+            <label data-i18n="labelFilter">Filter</label>
             <div class="toggle-group">
-              <button class="toggle-btn active-blue" id="filter-all" onclick="setFilter('all')">Alle</button>
-              <button class="toggle-btn" id="filter-new" onclick="setFilter('new')">🆕 Nur neue</button>
+              <button class="toggle-btn active-blue" id="filter-all" onclick="setFilter('all')" data-i18n="filterAll">Alle</button>
+              <button class="toggle-btn" id="filter-new" onclick="setFilter('new')" data-i18n="filterNew">🆕 Nur neue</button>
             </div>
-            <button class="btn btn-dark" id="start-btn" onclick="startQuiz()">Abfrage starten</button>
+            <button class="btn btn-dark" id="start-btn" onclick="startQuiz()" data-i18n="learnStart">Abfrage starten</button>
           </div>
         </div>
       </div>
@@ -812,7 +817,7 @@
         <div class="progress-wrap">
           <div class="progress-top">
             <span id="q-progress">1 / 10</span>
-            <span id="q-score-live">0 richtig</span>
+            <span id="q-score-live">0</span>
           </div>
           <div class="progress-bar"><div class="progress-fill" id="q-fill" style="width:0%"></div></div>
         </div>
@@ -826,7 +831,7 @@
         </div>
 
         <div class="q-answer-card" id="q-answer-card">
-          <div class="q-cover" id="q-cover" onclick="reveal()"><span>Antippen zum Aufdecken</span></div>
+          <div class="q-cover" id="q-cover" onclick="reveal()"><span data-i18n="coverHint">Antippen zum Aufdecken</span></div>
           <div id="q-revealed" style="display:none;">
             <div class="q-lang" id="q-ans-lang">Französisch</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:20px 16px;">
@@ -837,29 +842,29 @@
         </div>
 
         <div id="q-type-area" style="display:none;">
-          <input class="answer-input" id="q-type-input" placeholder="Antwort eingeben …" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkAnswer()" />
+          <input class="answer-input" id="q-type-input" placeholder="Antwort eingeben …" data-i18n-ph="phAnswer" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkAnswer()" />
           <div id="q-type-feedback"></div>
         </div>
 
         <div class="nav-btns" id="q-nav-cover" style="display:none;">
-          <button class="nav-btn nav-nok" onclick="nextCard(false)" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="x" data-icon-size="16"></span>Falsch</button>
-          <button class="nav-btn nav-ok" onclick="nextCard(true)" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="check" data-icon-size="16"></span>Richtig</button>
+          <button class="nav-btn nav-nok" onclick="nextCard(false)" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="x" data-icon-size="16"></span><span data-i18n="btnWrong">Falsch</span></button>
+          <button class="nav-btn nav-ok" onclick="nextCard(true)" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="check" data-icon-size="16"></span><span data-i18n="btnRight">Richtig</span></button>
         </div>
 
         <div id="q-check-wrap" style="display:none;">
-          <button class="btn btn-dark" onclick="checkAnswer()" id="q-check-btn">Überprüfen</button>
+          <button class="btn btn-dark" onclick="checkAnswer()" id="q-check-btn" data-i18n="btnCheck">Überprüfen</button>
         </div>
         <div class="nav-btns" id="q-nav-after" style="display:none;">
-          <button class="nav-btn nav-next" onclick="nextCard(quiz.lastCorrect)">Weiter →</button>
+          <button class="nav-btn nav-next" onclick="nextCard(quiz.lastCorrect)" data-i18n="btnNext">Weiter →</button>
         </div>
 
-        <button class="btn btn-secondary" onclick="abortQuiz()" style="margin-top:4px;">Abbrechen</button>
+        <button class="btn btn-secondary" onclick="abortQuiz()" style="margin-top:4px;" data-i18n="btnCancel">Abbrechen</button>
       </div>
 
       <!-- Results -->
       <div id="learn-results" style="display:none;">
         <div class="card">
-          <h2>Ergebnis</h2>
+          <h2 data-i18n="resultTitle">Ergebnis</h2>
           <div class="result-score" id="r-score">–</div>
           <div class="result-sub" id="r-sub">–</div>
           <div id="r-xp-block" class="xp-result-block" style="display:none;">
@@ -869,17 +874,17 @@
             <div class="xp-sub" id="r-next-level" style="margin-top:6px;font-size:12px;opacity:0.7;"></div>
           </div>
           <div id="r-freeze-banner" class="freeze-banner" style="display:none;">
-            <p>😔 Dein Streak wurde unterbrochen. Joker einsetzen?</p>
-            <button class="btn btn-secondary" style="margin:0;font-size:13px;" onclick="useFreeze()">🧊 Joker einsetzen (1× pro Monat)</button>
+            <p data-i18n="freezeQuestion">😔 Dein Streak wurde unterbrochen. Joker einsetzen?</p>
+            <button class="btn btn-secondary" style="margin:0;font-size:13px;" onclick="useFreeze()" data-i18n="btnFreeze">🧊 Joker einsetzen (1× pro Monat)</button>
           </div>
           <div id="r-missed-sec" style="display:none;">
-            <label style="margin-bottom:8px;">Noch üben:</label>
+            <label style="margin-bottom:8px;" data-i18n="stillPractice">Noch üben:</label>
             <div class="vocab-scroll-limited">
               <ul id="r-missed" style="list-style:none;"></ul>
             </div>
           </div>
-          <button class="btn btn-dark" onclick="restartMissed()" id="r-retry-btn">Nur Falsche wiederholen</button>
-          <button class="btn btn-secondary" onclick="backToSetup()">Neue Auswahl</button>
+          <button class="btn btn-dark" onclick="restartMissed()" id="r-retry-btn" data-i18n="btnRetryWrong">Nur Falsche wiederholen</button>
+          <button class="btn btn-secondary" onclick="backToSetup()" data-i18n="btnNewSelection">Neue Auswahl</button>
         </div>
       </div>
     </div>
@@ -888,23 +893,23 @@
     <div id="main-vocab" class="screen">
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h2 style="margin-bottom:0;">Gespeicherte Vokabeln</h2>
+          <h2 style="margin-bottom:0;" data-i18n="vocabTitle">Gespeicherte Vokabeln</h2>
           <div style="display:flex;gap:6px;align-items:center;">
-            <button class="hide-col-btn" onclick="showLookup()" title="Wort nachschlagen" data-icon="search" data-icon-size="15"></button>
+            <button class="hide-col-btn" onclick="showLookup()" title="Wort nachschlagen" data-i18n-title="titleLookup" data-icon="search" data-icon-size="15"></button>
             <button class="hide-col-btn" id="hide-de-btn" onclick="toggleHide('de')">DE</button>
             <button class="hide-col-btn" id="hide-fr-btn" onclick="toggleHide('fr')">FR</button>
             <div class="btn-group">
               <button class="hide-col-btn" onclick="toggleMenu('menu-file')"><span data-icon="folder" data-icon-size="15"></span>▾</button>
               <div id="menu-file" class="btn-dropdown">
-                <button onclick="exportData();closeMenus()"><span data-icon="upload" data-icon-size="16"></span>Exportieren</button>
-                <label><span data-icon="download" data-icon-size="16"></span>Importieren<input type="file" accept=".json" onchange="importData(event);closeMenus()" style="display:none;"></label>
+                <button onclick="exportData();closeMenus()"><span data-icon="upload" data-icon-size="16"></span><span data-i18n="menuExport">Exportieren</span></button>
+                <label><span data-icon="download" data-icon-size="16"></span><span data-i18n="menuImport">Importieren</span><input type="file" accept=".json" onchange="importData(event);closeMenus()" style="display:none;"></label>
               </div>
             </div>
             <div class="btn-group" id="dbx-group" style="display:none;">
               <button class="hide-col-btn" onclick="toggleMenu('menu-dbx')"><span data-icon="cloud" data-icon-size="15"></span>▾</button>
               <div id="menu-dbx" class="btn-dropdown">
-                <button id="dbx-up-btn" onclick="syncToDropbox();closeMenus()"><span data-icon="cloud-upload" data-icon-size="16"></span>Hochladen</button>
-                <button id="dbx-dn-btn" onclick="syncFromDropbox();closeMenus()"><span data-icon="cloud-download" data-icon-size="16"></span>Laden</button>
+                <button id="dbx-up-btn" onclick="syncToDropbox();closeMenus()"><span data-icon="cloud-upload" data-icon-size="16"></span><span data-i18n="menuUpload">Hochladen</span></button>
+                <button id="dbx-dn-btn" onclick="syncFromDropbox();closeMenus()"><span data-icon="cloud-download" data-icon-size="16"></span><span data-i18n="menuDownload">Laden</span></button>
               </div>
             </div>
           </div>
@@ -922,34 +927,32 @@
 
       <!-- API Key Banner (shown when no key set) -->
       <div id="apikey-banner" class="card two-col-full" style="display:none; border-color: var(--red-border); background: var(--red-bg);">
-        <h3 style="color:var(--red-text);">⚠️ API-Key fehlt</h3>
-        <p style="font-size:13px;color:var(--red-text);line-height:1.6;margin-bottom:10px;">
-          Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>
-          Einmalig eingeben unter <strong>Info → API-Key</strong>.
-        </p>
-        <button class="btn btn-secondary" onclick="oeffneOverlay('hilfe');setTimeout(()=>document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'}),50)">→ Jetzt einrichten</button>
+        <h3 style="color:var(--red-text);" data-i18n="apiMissingTitle">⚠️ API-Key fehlt</h3>
+        <p style="font-size:13px;color:var(--red-text);line-height:1.6;margin-bottom:10px;" data-i18n="apiMissingText">Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>
+          Einmalig eingeben unter <strong>Info → API-Key</strong>.</p>
+        <button class="btn btn-secondary" onclick="oeffneOverlay('hilfe');setTimeout(()=>document.getElementById('apikey-section').scrollIntoView({behavior:'smooth'}),50)" data-i18n="btnSetupNow">→ Jetzt einrichten</button>
       </div>
 
       <div class="card">
-        <h2>Vokabeln hinzufügen</h2>
+        <h2 data-i18n="addTitle">Vokabeln hinzufügen</h2>
 
         <div class="toggle-group" style="margin-bottom:16px;">
-          <button class="toggle-btn active-blue" id="tab-photo" onclick="setUploadTab('photo')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="camera" data-icon-size="14"></span>Foto / Screenshot</button>
-          <button class="toggle-btn" id="tab-manual" onclick="setUploadTab('manual')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="pencil" data-icon-size="14"></span>Manuell</button>
+          <button class="toggle-btn active-blue" id="tab-photo" onclick="setUploadTab('photo')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="camera" data-icon-size="14"></span><span data-i18n="tabPhoto">Foto / Screenshot</span></button>
+          <button class="toggle-btn" id="tab-manual" onclick="setUploadTab('manual')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="pencil" data-icon-size="14"></span><span data-i18n="tabManual">Manuell</span></button>
         </div>
 
         <!-- Photo -->
         <div id="upload-photo">
-          <label>Unité / Kapitel</label>
+          <label data-i18n="labelUnite">Unité / Kapitel</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="up-unite-name" placeholder="z.B. Unité 3" oninput="renderExtracted()" style="flex:1;" />
+            <input type="text" id="up-unite-name" placeholder="z.B. Unité 3" data-i18n-ph="phUnite3" oninput="renderExtracted()" style="flex:1;" />
             <select id="up-unite-klasse" style="width:auto;flex:0 0 90px;"></select>
           </div>
 
-          <label>Art der Vorlage</label>
+          <label data-i18n="labelSource">Art der Vorlage</label>
           <div class="ocr-type-row">
-            <button class="toggle-btn active-blue" id="ocr-print" onclick="setOcrType('print')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="book" data-icon-size="14"></span>Schulbuch / Druck</button>
-            <button class="toggle-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="pencil" data-icon-size="14"></span>Handschrift / Heft</button>
+            <button class="toggle-btn active-blue" id="ocr-print" onclick="setOcrType('print')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="book" data-icon-size="14"></span><span data-i18n="srcPrint">Schulbuch / Druck</span></button>
+            <button class="toggle-btn" id="ocr-handwritten" onclick="setOcrType('handwritten')" style="display:inline-flex;align-items:center;justify-content:center;gap:5px;"><span data-icon="pencil" data-icon-size="14"></span><span data-i18n="srcHand">Handschrift / Heft</span></button>
           </div>
 
           <div class="upload-zone-wrap">
@@ -957,11 +960,11 @@
               <input type="file" id="file-input" accept="image/*" multiple onchange="handleFiles(event)" />
               <div class="uz-icon" id="up-icon" data-icon="camera" data-icon-size="34" style="display:flex;justify-content:center;"></div>
               <p id="up-zone-text">Foto oder Screenshot auswählen</p>
-              <small>Galerie · Kamera · Screenshots</small>
+              <small data-i18n="uzSmall">Galerie · Kamera · Screenshots</small>
             </label>
             <label for="file-input-camera" class="upload-zone-camera" style="display:flex;align-items:center;justify-content:center;gap:6px;">
               <input type="file" id="file-input-camera" accept="image/*" capture="environment" onchange="handleFiles(event)" />
-              <span data-icon="camera" data-icon-size="15"></span>Direkt fotografieren
+              <span data-icon="camera" data-icon-size="15"></span><span data-i18n="uzCamera">Direkt fotografieren</span>
             </label>
           </div>
 
@@ -970,41 +973,39 @@
 
           <div id="up-extracted" style="display:none;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <label style="margin:0;">Erkannte Vokabeln (<span id="up-count">0</span>) – direkt editierbar</label>
-              <button class="link-btn" onclick="addEmptyRow()">+ Zeile</button>
+              <label style="margin:0;"><span data-i18n="extractedPre">Erkannte Vokabeln</span> (<span id="up-count">0</span>)<span data-i18n="extractedPost"> – direkt editierbar</span></label>
+              <button class="link-btn" onclick="addEmptyRow()" data-i18n="btnAddRow">+ Zeile</button>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:4px;padding:4px 0;border-bottom:0.5px solid var(--border);margin-bottom:4px;">
-              <span style="font-size:11px;color:var(--text3);padding-left:4px;">Deutsch</span>
-              <span style="font-size:11px;color:var(--text3);padding-left:4px;">Französisch</span>
+              <span style="font-size:11px;color:var(--text3);padding-left:4px;" data-i18n="langDe">Deutsch</span>
+              <span style="font-size:11px;color:var(--text3);padding-left:4px;" data-i18n="langFr">Französisch</span>
               <span></span>
             </div>
             <div class="vocab-scroll-limited" id="up-vocab-list"></div>
-            <button class="btn btn-dark" onclick="saveVocab()" style="margin-top:8px;">Speichern</button>
-            <button class="btn btn-secondary" onclick="resetUpload()">Neues Bild laden</button>
+            <button class="btn btn-dark" onclick="saveVocab()" style="margin-top:8px;" data-i18n="btnSave">Speichern</button>
+            <button class="btn btn-secondary" onclick="resetUpload()" data-i18n="btnNewImage">Neues Bild laden</button>
           </div>
         </div>
 
         <!-- Manual -->
         <div id="upload-manual" style="display:none;">
-          <label>Unité / Kapitel</label>
+          <label data-i18n="labelUnite">Unité / Kapitel</label>
           <div style="display:flex;gap:8px;">
-            <input type="text" id="man-unite-name" placeholder="z.B. Unité 2" style="flex:1;" />
+            <input type="text" id="man-unite-name" placeholder="z.B. Unité 2" data-i18n-ph="phUnite2" style="flex:1;" />
             <select id="man-unite-klasse" style="width:auto;flex:0 0 90px;"></select>
           </div>
-          <label>Vokabeln (eine pro Zeile: deutsch;französisch)</label>
+          <label data-i18n="labelManual">Vokabeln (eine pro Zeile: deutsch;französisch)</label>
           <textarea id="man-text" rows="10" placeholder="der Hund;le chien&#10;die Katze;le chat&#10;schön;beau / belle"></textarea>
-          <button class="btn btn-dark" onclick="saveManual()">Speichern</button>
+          <button class="btn btn-dark" onclick="saveManual()" data-i18n="btnSave">Speichern</button>
         </div>
       </div>
 
       <!-- Install hint -->
       <div class="card" id="install-hint" style="display:none;">
-        <h3>📲 App installieren</h3>
-        <p style="font-size:13px;color:var(--text2);line-height:1.6;">
-          Tippe auf <strong>Teilen</strong> (□↑) und dann auf<br>
-          <strong>„Zum Home-Bildschirm"</strong> – fertig!<br>
-          Die App läuft dann offline wie eine normale App.
-        </p>
+        <h3 data-i18n="installTitle">📲 App installieren</h3>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;" data-i18n="installText">Tippe auf <strong>Teilen</strong> (□↑) und dann auf<br>
+          <strong>„Zum Home-Bildschirm“</strong> – fertig!<br>
+          Die App läuft dann offline wie eine normale App.</p>
       </div>
       </div><!-- end two-col -->
     </div>
@@ -1015,8 +1016,8 @@
       <!-- Kein Diktieren unterstützt -->
       <div id="speak-nosupport" style="display:none;">
         <div class="card">
-          <h2><span data-icon="mic" data-icon-size="18" style="display:inline-flex;vertical-align:-3px;margin-right:6px;"></span>Umschreiben</h2>
-          <div class="speak-hint-card">Diktieren wird von diesem Browser nicht unterstützt.<br>Bitte einen aktuellen Chrome oder Safari verwenden.</div>
+          <h2><span data-icon="mic" data-icon-size="18" style="display:inline-flex;vertical-align:-3px;margin-right:6px;"></span><span data-i18n="speakTitleShort">Umschreiben</span></h2>
+          <div class="speak-hint-card" data-i18n="speakNoSupport">Diktieren wird von diesem Browser nicht unterstützt.<br>Bitte einen aktuellen Chrome oder Safari verwenden.</div>
         </div>
       </div>
 
@@ -1024,21 +1025,21 @@
       <div id="speak-setup">
         <div class="two-col">
           <div class="card">
-            <h2>Umschreiben üben</h2>
+            <h2 data-i18n="speakTitle">Umschreiben üben</h2>
             <div id="speak-unite-select-list"></div>
             <div id="speak-empty" class="empty" style="display:none;">
               <span class="emoji">📖</span>
-              Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.
+              <span data-i18n="learnEmpty">Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.</span>
             </div>
           </div>
           <div id="speak-options" style="display:none;" class="card">
-            <h3>Einstellungen</h3>
-            <label>Sprache (wird gesprochen)</label>
+            <h3 data-i18n="settings">Einstellungen</h3>
+            <label data-i18n="speakLangLabel">Sprache (wird gesprochen)</label>
             <div class="toggle-group">
-              <button class="toggle-btn" id="speak-lang-de" onclick="setSpeakLang('de')">Deutsch</button>
-              <button class="toggle-btn active-blue" id="speak-lang-fr" onclick="setSpeakLang('fr')">Französisch</button>
+              <button class="toggle-btn" id="speak-lang-de" onclick="setSpeakLang('de')" data-i18n="langDe">Deutsch</button>
+              <button class="toggle-btn active-blue" id="speak-lang-fr" onclick="setSpeakLang('fr')" data-i18n="langFr">Französisch</button>
             </div>
-            <button class="btn btn-dark" id="speak-start-btn" onclick="startSpeakSession()">Umschreiben starten</button>
+            <button class="btn btn-dark" id="speak-start-btn" onclick="startSpeakSession()" data-i18n="btnSpeakStart">Umschreiben starten</button>
           </div>
         </div>
       </div>
@@ -1050,19 +1051,19 @@
           <div class="speak-card-word" id="speak-card-word">–</div>
         </div>
 
-        <button class="record-btn" id="record-btn" onclick="toggleRecording()" aria-label="Aufnahme"></button>
+        <button class="record-btn" id="record-btn" onclick="toggleRecording()" aria-label="Aufnahme" data-i18n-aria="ariaRecord"></button>
         <div id="record-hint">Zum Sprechen tippen</div>
 
         <div class="speak-transcript-wrap">
-          <label>Deine Umschreibung (bei Bedarf korrigieren)</label>
-          <textarea id="speak-transcript" rows="3" placeholder="… wird nach der Aufnahme hier angezeigt"></textarea>
+          <label data-i18n="speakTranscript">Deine Umschreibung (bei Bedarf korrigieren)</label>
+          <textarea id="speak-transcript" rows="3" placeholder="… wird nach der Aufnahme hier angezeigt" data-i18n-ph="phTranscript"></textarea>
         </div>
-        <button class="btn btn-dark" id="speak-judge-btn" onclick="judgeDescription()">Bewerten lassen</button>
+        <button class="btn btn-dark" id="speak-judge-btn" onclick="judgeDescription()" data-i18n="btnJudge">Bewerten lassen</button>
 
         <div id="speak-feedback-wrap" style="display:none;"></div>
 
-        <button class="btn btn-dark" style="margin-top:12px;" onclick="nextSpeakWord()">Nächstes Wort</button>
-        <button class="btn btn-secondary" onclick="backToSpeakSetup()">Beenden</button>
+        <button class="btn btn-dark" style="margin-top:12px;" onclick="nextSpeakWord()" data-i18n="btnNextWord">Nächstes Wort</button>
+        <button class="btn btn-secondary" onclick="backToSpeakSetup()" data-i18n="btnFinish">Beenden</button>
       </div>
 
     </div><!-- end main-speak -->
@@ -1071,21 +1072,25 @@
     <div id="hilfe-overlay" onclick="if(event.target===this)schliesseOverlay('hilfe')">
       <div id="hilfe-sheet">
         <div id="hilfe-sheet-hd">
-          <strong>❓ Hilfe</strong>
-          <button id="btn-hilfe-close" onclick="schliesseOverlay('hilfe')">Schließen</button>
+          <strong data-i18n="helpTitle">❓ Hilfe</strong>
+          <button id="btn-hilfe-close" onclick="schliesseOverlay('hilfe')" data-i18n="btnClose">Schließen</button>
         </div>
         <div id="hilfe-sheet-body">
       <div class="two-col">
 
       <div class="card two-col-full">
         <h2>Vokabeltrainer 🇫🇷</h2>
-        <p style="font-size:13px;color:var(--text2);line-height:1.6;">Dein persönlicher Französisch-Trainer für das Schulbuch <em>À toi! Bayern</em>. Fotos vom Heft oder Schulbuch hochladen – die KI erkennt die Vokabeln automatisch. Dann gezielt üben, einzelne Wörter markieren und den Fortschritt verfolgen.</p>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6;" data-i18n="appIntro">Dein persönlicher Französisch-Trainer für das Schulbuch <em>À toi! Bayern</em>. Fotos vom Heft oder Schulbuch hochladen – die KI erkennt die Vokabeln automatisch. Dann gezielt üben, einzelne Wörter markieren und den Fortschritt verfolgen.</p>
       </div>
 
       <div class="card two-col-full">
         <div class="theme-switch-row">
-          <span>Dunkelmodus</span>
+          <span data-i18n="darkMode">Dunkelmodus</span>
           <button class="theme-switch" id="theme-toggle" role="switch" aria-checked="false" onclick="toggleTheme()"><span class="theme-switch-knob"></span></button>
+        </div>
+        <div class="theme-switch-row lang-switch-row">
+          <span><span class="lang-opt" id="lang-lbl-fr">Français</span> – <span class="lang-opt" id="lang-lbl-de">Deutsch</span></span>
+          <button class="theme-switch" id="lang-toggle" role="switch" aria-checked="false" onclick="toggleLang()"><span class="theme-switch-knob"></span></button>
         </div>
       </div>
 
@@ -1356,7 +1361,7 @@
           <div id="stats-lv-emoji" style="font-size:44px;line-height:1;">🐣</div>
           <div style="flex:1;">
             <div id="stats-lv-name" style="font-size:22px;font-weight:700;color:var(--text);">Curieux</div>
-            <div id="stats-lv-num" style="font-size:13px;color:var(--text2);">Level 1 von 10</div>
+            <div id="stats-lv-num" style="font-size:13px;color:var(--text2);"></div>
           </div>
         </div>
         <div class="lv-bar-wrap"><div id="stats-lv-bar" class="lv-bar-fill" style="width:0%;"></div></div>
@@ -1368,12 +1373,12 @@
       <!-- XP + Streak -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="card" style="text-align:center;padding:14px 10px;">
-          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;margin-bottom:6px;">PUNKTE GESAMT</div>
+          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;margin-bottom:6px;" data-i18n="statsPointsTotal">PUNKTE GESAMT</div>
           <div id="stats-xp-total" style="font-size:24px;font-weight:700;color:var(--text);"></div>
           <div id="stats-xp-today" style="font-size:12px;color:var(--text2);margin-top:4px;"></div>
         </div>
         <div class="card" style="text-align:center;padding:14px 10px;">
-          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;margin-bottom:6px;">STREAK</div>
+          <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.5px;margin-bottom:6px;" data-i18n="statsStreakLabel">STREAK</div>
           <div id="stats-streak-val" style="font-size:24px;font-weight:700;color:var(--text);"></div>
           <div id="stats-streak-best" style="font-size:12px;color:var(--text2);margin-top:4px;"></div>
           <div id="stats-freeze-st" style="font-size:11px;color:var(--blue-text);margin-top:3px;"></div>
@@ -1382,51 +1387,51 @@
 
       <!-- Heatmap -->
       <div class="card" style="margin-bottom:12px;">
-        <h2>Lernaktivität (letzte 12 Wochen)</h2>
+        <h2 data-i18n="statsActivity">Lernaktivität (letzte 12 Wochen)</h2>
         <div id="stats-heatmap" class="hm-grid" style="margin-bottom:10px;"></div>
         <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);">
-          <span>weniger</span>
+          <span data-i18n="hmLess">weniger</span>
           <div class="hm-cell" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
           <div class="hm-cell hm-1" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
           <div class="hm-cell hm-2" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
           <div class="hm-cell hm-3" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
           <div class="hm-cell hm-4" style="width:12px;height:12px;display:inline-block;flex-shrink:0;"></div>
-          <span>mehr</span>
+          <span data-i18n="hmMore">mehr</span>
         </div>
       </div>
 
       <!-- Regeln -->
       <div class="card" style="margin-bottom:12px;">
-        <h2>Wie funktioniert das Punktesystem?</h2>
+        <h2 data-i18n="rulesTitle">Wie funktioniert das Punktesystem?</h2>
         <div style="font-size:13px;color:var(--text2);line-height:1.7;">
           <div style="margin-bottom:10px;">
-            <strong style="color:var(--text);">🪙 Punkte verdienen</strong><br>
-            +3 <span class="gc">🪙</span> pro richtige Antwort<br>
+            <strong style="color:var(--text);" data-i18n="rulesEarn">🪙 Punkte verdienen</strong><br>
+            <span data-i18n="rulesEarnBody">+3 <span class="gc">🪙</span> pro richtige Antwort<br>
             +5 <span class="gc">🪙</span> bei schwierigen Wörtern (≥ 2× falsch beantwortet)<br>
-            +5 <span class="gc">🪙</span> Tagesbonus – einmal pro Tag beim ersten Quiz
+            +5 <span class="gc">🪙</span> Tagesbonus – einmal pro Tag beim ersten Quiz</span>
           </div>
           <div style="margin-bottom:10px;">
-            <strong style="color:var(--text);">🔥 Streak-Multiplikator</strong><br>
-            3–6 Tage in Folge → alle Punkte ×1,5<br>
+            <strong style="color:var(--text);" data-i18n="rulesMult">🔥 Streak-Multiplikator</strong><br>
+            <span data-i18n="rulesMultBody">3–6 Tage in Folge → alle Punkte ×1,5<br>
             7+ Tage in Folge → alle Punkte ×2,0<br>
-            Wer täglich lernt, verdient doppelt so schnell!
+            Wer täglich lernt, verdient doppelt so schnell!</span>
           </div>
           <div style="margin-bottom:10px;">
-            <strong style="color:var(--text);">🧊 Streak-Joker</strong><br>
-            Einmal pro Monat kannst du einen verpassten Tag ausgleichen.<br>
-            Der Joker wird automatisch angeboten, wenn du deinen Streak gefährdet hast.
+            <strong style="color:var(--text);" data-i18n="rulesJoker">🧊 Streak-Joker</strong><br>
+            <span data-i18n="rulesJokerBody">Einmal pro Monat kannst du einen verpassten Tag ausgleichen.<br>
+            Der Joker wird automatisch angeboten, wenn du deinen Streak gefährdet hast.</span>
           </div>
           <div>
-            <strong style="color:var(--text);">🏆 Level aufsteigen</strong><br>
-            Mit genug Punkten steigst du automatisch auf – von 🐣 Curieux bis 👑 Maître.<br>
-            Bei jedem Level-Aufstieg gibt es Konfetti!
+            <strong style="color:var(--text);" data-i18n="rulesLevel">🏆 Level aufsteigen</strong><br>
+            <span data-i18n="rulesLevelBody">Mit genug Punkten steigst du automatisch auf – von 🐣 Curieux bis 👑 Maître.<br>
+            Bei jedem Level-Aufstieg gibt es Konfetti!</span>
           </div>
         </div>
       </div>
 
       <!-- Level-Übersicht -->
       <div class="card">
-        <h2>Alle Levels</h2>
+        <h2 data-i18n="allLevels">Alle Levels</h2>
         <div id="stats-levels"></div>
       </div>
 
@@ -1436,22 +1441,22 @@
 
   <!-- Tab Bar -->
   <div class="tab-bar">
-    <button id="nav-learn" class="active" onclick="showMain('learn')"><span data-icon="book-open" data-icon-size="20"></span><span>Lernen</span></button>
-    <button id="nav-vocab" onclick="showMain('vocab')"><span data-icon="list" data-icon-size="20"></span><span>Vokabeln</span></button>
-    <button id="nav-upload" onclick="showMain('upload')"><span data-icon="plus" data-icon-size="20"></span><span>Hinzufügen</span></button>
-    <button id="nav-speak" onclick="showMain('speak')"><span data-icon="mic" data-icon-size="20"></span><span>Umschreiben</span></button>
-    <button id="nav-stats" onclick="showMain('stats')"><span data-icon="trophy" data-icon-size="20"></span><span>Fortschritt</span></button>
+    <button id="nav-learn" class="active" onclick="showMain('learn')"><span data-icon="book-open" data-icon-size="20"></span><span data-i18n="tabLearn">Lernen</span></button>
+    <button id="nav-vocab" onclick="showMain('vocab')"><span data-icon="list" data-icon-size="20"></span><span data-i18n="tabVocab">Vokabeln</span></button>
+    <button id="nav-upload" onclick="showMain('upload')"><span data-icon="plus" data-icon-size="20"></span><span data-i18n="tabAdd">Hinzufügen</span></button>
+    <button id="nav-speak" onclick="showMain('speak')"><span data-icon="mic" data-icon-size="20"></span><span data-i18n="tabSpeak">Umschreiben</span></button>
+    <button id="nav-stats" onclick="showMain('stats')"><span data-icon="trophy" data-icon-size="20"></span><span data-i18n="tabStats">Fortschritt</span></button>
   </div>
 </div><!-- end .app -->
 <!-- ── LOOKUP MODAL ── -->
 <div id="lookup-overlay" class="lookup-overlay" onclick="if(event.target===this)closeLookup()">
   <div class="lookup-sheet">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h2 style="margin-bottom:0;display:flex;align-items:center;gap:8px;"><span data-icon="search" data-icon-size="18"></span>Wort nachschlagen</h2>
+      <h2 style="margin-bottom:0;display:flex;align-items:center;gap:8px;"><span data-icon="search" data-icon-size="18"></span><span data-i18n="lookupTitle">Wort nachschlagen</span></h2>
       <button onclick="closeLookup()" data-icon="x" data-icon-size="20" style="background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:inline-flex;align-items:center;"></button>
     </div>
-    <input type="text" id="lookup-input" placeholder="Französisch oder Deutsch eingeben …" onkeydown="if(event.key==='Enter')doLookup()" style="margin-bottom:8px;" autocorrect="off" autocapitalize="off" spellcheck="false" />
-    <button class="btn btn-dark" id="lookup-btn" onclick="doLookup()">Nachschlagen</button>
+    <input type="text" id="lookup-input" placeholder="Französisch oder Deutsch eingeben …" data-i18n-ph="phLookup" onkeydown="if(event.key==='Enter')doLookup()" style="margin-bottom:8px;" autocorrect="off" autocapitalize="off" spellcheck="false" />
+    <button class="btn btn-dark" id="lookup-btn" onclick="doLookup()" data-i18n="btnLookup">Nachschlagen</button>
     <div id="lookup-status" style="font-size:13px;color:var(--text2);margin:8px 0;min-height:20px;"></div>
     <div id="lookup-result-wrap" style="display:none;">
       <div class="lookup-result">
@@ -1460,9 +1465,9 @@
         <div class="lookup-info" id="lr-info"></div>
         <div class="lookup-ex" id="lr-ex"></div>
       </div>
-      <label>Zu Unité hinzufügen</label>
+      <label data-i18n="lookupAddLabel">Zu Unité hinzufügen</label>
       <select id="lookup-unite-select" style="margin-bottom:8px;"></select>
-      <button class="btn btn-dark" onclick="addLookupVocab()" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="plus" data-icon-size="16"></span>Hinzufügen</button>
+      <button class="btn btn-dark" onclick="addLookupVocab()" style="display:flex;align-items:center;justify-content:center;gap:6px;"><span data-icon="plus" data-icon-size="16"></span><span data-i18n="btnAdd">Hinzufügen</span></button>
     </div>
   </div>
 </div>
@@ -1476,6 +1481,456 @@ const API_URL        = 'https://api.anthropic.com/v1/messages';
 const DBX_UPLOAD_URL   = 'https://content.dropboxapi.com/2/files/upload';
 const DBX_DOWNLOAD_URL = 'https://content.dropboxapi.com/2/files/download';
 const DBX_FILE_PATH    = '/vokabeln.json';
+
+// ─── OBERFLÄCHENSPRACHE (i18n, ab v59) ─────────────────────────────────
+// Neue Texte IMMER in beide Blöcke eintragen. Platzhalter {x} werden über trf() gefüllt.
+// Die Übersetzungsfunktion heißt bewusst tr() und nicht t() – t ist im Code mehrfach
+// als lokaler Parameter/Variable belegt (setOcrType, setUploadTab, showToast, showMain).
+const I18N = {
+  de: {
+    today: "heute",
+    day1: "1 Tag",
+    dayN: "Tage",
+    klasse: "Klasse",
+    btnClose: "Schließen",
+    btnSave: "Speichern",
+    btnCancel: "Abbrechen",
+    btnAdd: "Hinzufügen",
+    btnDelete: "Löschen",
+    selAll: "Alle",
+    selNone: "Keine",
+    langDe: "Deutsch",
+    langFr: "Französisch",
+    tabLearn: "Lernen",
+    tabVocab: "Vokabeln",
+    tabAdd: "Hinzufügen",
+    tabSpeak: "Umschreiben",
+    tabStats: "Fortschritt",
+    helpTitle: "❓ Hilfe",
+    appIntro: "Dein persönlicher Französisch-Trainer für das Schulbuch <em>À toi! Bayern</em>. Fotos vom Heft oder Schulbuch hochladen – die KI erkennt die Vokabeln automatisch. Dann gezielt üben, einzelne Wörter markieren und den Fortschritt verfolgen.",
+    darkMode: "Dunkelmodus",
+    learnStart: "Abfrage starten",
+    learnEmpty: "Noch keine Vokabeln gespeichert.<br>Füge zuerst Screenshots hinzu.",
+    settings: "Einstellungen",
+    labelDirection: "Richtung",
+    dirDeFr: "Deutsch → Französisch",
+    dirFrDe: "Französisch → Deutsch",
+    labelMode: "Modus",
+    modeCover: "Aufdecken",
+    modeType: "Eintippen",
+    labelOrder: "Reihenfolge",
+    orderRandom: "Zufällig",
+    orderSeq: "Nacheinander",
+    labelFilter: "Filter",
+    filterAll: "Alle",
+    filterNew: "🆕 Nur neue",
+    hardWords: "Schwierige Wörter",
+    hardSub: "{n} Wörter · {m} manuell markiert · {o} oft falsch",
+    uniteHeader: "{sel} von {all} · {w} Wörter",
+    uniteCount: "{n} Wörter",
+    scoreLive: "{n} richtig",
+    coverHint: "Antippen zum Aufdecken",
+    phAnswer: "Antwort eingeben …",
+    btnWrong: "Falsch",
+    btnRight: "Richtig",
+    btnCheck: "Überprüfen",
+    btnNext: "Weiter →",
+    fbOk: "✓ Richtig!",
+    fbNok: "✗ Falsch",
+    fbCorrectIs: "Richtig:",
+    resultTitle: "Ergebnis",
+    resultSub: "{p}% richtig – {e}",
+    stillPractice: "Noch üben:",
+    btnRetryWrong: "Nur Falsche wiederholen",
+    btnNewSelection: "Neue Auswahl",
+    freezeQuestion: "😔 Dein Streak wurde unterbrochen. Joker einsetzen?",
+    btnFreeze: "🧊 Joker einsetzen (1× pro Monat)",
+    emojiPerfect: "🏆 Perfekt!",
+    emojiSuper: "🌟 Super!",
+    emojiGood: "👍 Gut!",
+    emojiKeep: "💪 Weiter üben!",
+    emojiAgain: "📚 Noch mal!",
+    streakMult: " · ×{m} Streak-Bonus",
+    levelTotal: "{e} {name} · {gc} {xp} gesamt",
+    nextLevel: "Noch {n} {gc} bis {e} {name}",
+    maxLevel: "👑 Maximales Level erreicht!",
+    toastStreakSaved: "🧊 Streak gerettet! 🔥 {d}",
+    toastLevelUp: "🎉 Level Up! {e} {name}!",
+    toastXp: "+{n} 🪙 · 🔥 {d}",
+    alertQuizNoNew: "Keine neuen Wörter – alle wurden schon mindestens einmal beantwortet.",
+    alertSelectUnite: "Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.",
+    vocabTitle: "Gespeicherte Vokabeln",
+    titleLookup: "Wort nachschlagen",
+    menuExport: "Exportieren",
+    menuImport: "Importieren",
+    menuUpload: "Hochladen",
+    menuDownload: "Laden",
+    filterAllClasses: "Alle Klassen",
+    emptyVocab: "Noch keine Vokabeln.<br>Füge Screenshots hinzu.",
+    emptyKlasse: "Keine Unités in dieser Klasse.",
+    titleMove: "In andere Unité verschieben",
+    titleEdit: "Bearbeiten",
+    titleKlasse: "Klasse ändern",
+    titleRename: "Tippen zum Umbenennen",
+    confirmDelVocab: "„{de} – {fr}“ löschen?",
+    confirmDelUnite: "„{u}“ wirklich löschen?",
+    promptRename: "Neuer Name für „{u}“:",
+    alertExists: "„{n}“ existiert bereits.",
+    alertInvalidFile: "Ungültige Datei.",
+    alertImportOk: "✓ Import erfolgreich!",
+    alertImportErr: "Fehler beim Import: {m}",
+    toastMoved: "→ {u} (Klasse {k})",
+    apiMissingTitle: "⚠️ API-Key fehlt",
+    apiMissingText: "Für die Foto-Erkennung wird ein Anthropic API-Key benötigt.<br>\n          Einmalig eingeben unter <strong>Info → API-Key</strong>.",
+    btnSetupNow: "→ Jetzt einrichten",
+    addTitle: "Vokabeln hinzufügen",
+    tabPhoto: "Foto / Screenshot",
+    tabManual: "Manuell",
+    labelUnite: "Unité / Kapitel",
+    phUnite3: "z.B. Unité 3",
+    phUnite2: "z.B. Unité 2",
+    labelSource: "Art der Vorlage",
+    srcPrint: "Schulbuch / Druck",
+    srcHand: "Handschrift / Heft",
+    uzPhoto: "Foto oder Screenshot auswählen",
+    uzHand: "Foto vom Heft oder handgeschriebener Liste",
+    uzSmall: "Galerie · Kamera · Screenshots",
+    uzCamera: "Direkt fotografieren",
+    extractedPre: "Erkannte Vokabeln",
+    extractedPost: " – direkt editierbar",
+    btnAddRow: "+ Zeile",
+    btnNewImage: "Neues Bild laden",
+    labelManual: "Vokabeln (eine pro Zeile: deutsch;französisch)",
+    installTitle: "📲 App installieren",
+    installText: "Tippe auf <strong>Teilen</strong> (□↑) und dann auf<br>\n          <strong>„Zum Home-Bildschirm“</strong> – fertig!<br>\n          Die App läuft dann offline wie eine normale App.",
+    statusLoading: "Bilder werden geladen…",
+    statusPhotoErr: "⚠️ Foto konnte nicht geladen werden. Bitte in Safari (nicht als App) versuchen, oder \"Direkt fotografieren\" nutzen.",
+    statusHandRecog: "Handschrift wird erkannt – einen Moment…",
+    statusAiRecog: "KI erkennt Vokabeln…",
+    errNoVocab: "Keine Vokabeln erkannt – bitte klareres Foto versuchen",
+    statusRecognized: "✓ {n} Vokabeln erkannt – bitte prüfen und ggf. korrigieren",
+    statusNetworkErr: "⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>",
+    dupeBadge: "Duplikat",
+    dupeCount1: "{t} ({d} Duplikat)",
+    dupeCountN: "{t} ({d} Duplikate)",
+    savedDupes: "✓ {n} gespeichert, {d} Duplikat(e) übersprungen.",
+    savedNew: "✓ {n} Vokabeln in „{u}“ gespeichert!",
+    alertManualFormat: "Keine gültigen Einträge gefunden.\nFormat: deutsch;französisch",
+    speakTitleShort: "Umschreiben",
+    speakNoSupport: "Diktieren wird von diesem Browser nicht unterstützt.<br>Bitte einen aktuellen Chrome oder Safari verwenden.",
+    speakTitle: "Umschreiben üben",
+    speakLangLabel: "Sprache (wird gesprochen)",
+    btnSpeakStart: "Umschreiben starten",
+    recHintStart: "Zum Sprechen tippen",
+    recHintStop: "Zum Stoppen tippen",
+    speakTranscript: "Deine Umschreibung (bei Bedarf korrigieren)",
+    phTranscript: "… wird nach der Aufnahme hier angezeigt",
+    btnJudge: "Bewerten lassen",
+    btnNextWord: "Nächstes Wort",
+    btnFinish: "Beenden",
+    judging: "Wird bewertet …",
+    ariaRecord: "Aufnahme",
+    toastNoDescription: "⚠️ Noch keine Umschreibung – erst sprechen oder ins Textfeld schreiben",
+    toastNoApiKey: "⚠️ Kein API-Key. Bitte unter Info einrichten.",
+    toastNoDictation: "⚠️ Diktieren wird hier nicht unterstützt",
+    toastNoReaction: "⚠️ Diktieren hat nicht reagiert. {h}",
+    toastSpeechErr: "⚠️ {e}{f}. {h}",
+    speechFallback: "Tipp: ins Textfeld tippen und das Mikrofon der Tastatur nutzen",
+    speechNotAllowed: "Mikrofon nicht erlaubt – in den iPhone-Einstellungen freigeben",
+    speechServiceNot: "Diktieren hier nicht erlaubt – Diktierfunktion aktivieren (Einstellungen → Allgemein → Tastatur)",
+    speechNoSpeech: "Nichts gehört – bitte nochmal versuchen",
+    speechNoMic: "Kein Mikrofon gefunden",
+    speechNetwork: "Keine Verbindung zur Spracherkennung",
+    speechLangNot: "Sprache nicht verfügbar – passende Tastatur installieren (Einstellungen → Allgemein → Tastatur → Tastaturen)",
+    speechNothing: "Nichts verstanden",
+    speechFrHint: " (Französisch braucht eine französische Tastatur am Gerät)",
+    targetWordUsed: "⚠️ Zielwort wurde genannt.",
+    speakStatsToast: "{h} von {t} gut umschrieben",
+    alertSelectUniteSpeak: "Bitte mindestens eine Unité auswählen.",
+    levelNum: "Level {i} von {n}",
+    statsTarget: "Ziel: {n}",
+    maitreReached: "👑 Maître erreicht!",
+    statsPointsTotal: "PUNKTE GESAMT",
+    statsStreakLabel: "STREAK",
+    statsToday: "+{n} {gc} heute",
+    statsRecord: "Rekord: {d}",
+    jokerUsed: "🧊 Joker diesen Monat verbraucht",
+    jokerFree: "🧊 Joker verfügbar",
+    statsActivity: "Lernaktivität (letzte 12 Wochen)",
+    hmLess: "weniger",
+    hmMore: "mehr",
+    rulesTitle: "Wie funktioniert das Punktesystem?",
+    rulesEarn: "🪙 Punkte verdienen",
+    rulesEarnBody: "+3 <span class=\"gc\">🪙</span> pro richtige Antwort<br>\n            +5 <span class=\"gc\">🪙</span> bei schwierigen Wörtern (≥ 2× falsch beantwortet)<br>\n            +5 <span class=\"gc\">🪙</span> Tagesbonus – einmal pro Tag beim ersten Quiz",
+    rulesMult: "🔥 Streak-Multiplikator",
+    rulesMultBody: "3–6 Tage in Folge → alle Punkte ×1,5<br>\n            7+ Tage in Folge → alle Punkte ×2,0<br>\n            Wer täglich lernt, verdient doppelt so schnell!",
+    rulesJoker: "🧊 Streak-Joker",
+    rulesJokerBody: "Einmal pro Monat kannst du einen verpassten Tag ausgleichen.<br>\n            Der Joker wird automatisch angeboten, wenn du deinen Streak gefährdet hast.",
+    rulesLevel: "🏆 Level aufsteigen",
+    rulesLevelBody: "Mit genug Punkten steigst du automatisch auf – von 🐣 Curieux bis 👑 Maître.<br>\n            Bei jedem Level-Aufstieg gibt es Konfetti!",
+    allLevels: "Alle Levels",
+    levelFrom: "ab {n}",
+    youAreHere: "← du bist hier",
+    lookupTitle: "Wort nachschlagen",
+    phLookup: "Französisch oder Deutsch eingeben …",
+    btnLookup: "Nachschlagen",
+    lookupLoading: "Nachschlagen …",
+    lookupAddLabel: "Zu Unité hinzufügen",
+    toastIncomplete: "⚠️ Unvollständige Übersetzung",
+    toastAlreadyIn: "⚠️ Wort bereits in {u}",
+    toastAddedTo: "✓ „{w}“ zu {u} hinzugefügt",
+    apiKeyPrefixErr: "⚠️ Key muss mit sk-ant- beginnen",
+    apiKeySavedPrev: "✓ Gespeichert: {p}",
+    apiKeySaved: "✓ Key gespeichert",
+    apiKeyDeleted: "Key gelöscht",
+    dbxKeyEmpty: "⚠️ App Key darf nicht leer sein",
+    dbxSaved: "✓ Gespeichert",
+    dbxAppKeySaved: "✓ App Key gespeichert",
+    alertAppKeyFirst: "Bitte zuerst den App Key speichern.",
+    confirmDisconnect: "Dropbox-Verbindung wirklich trennen?",
+    alertNotConnected: "Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.",
+    alertNoDbxFile: "Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.",
+    alertUploadFailed: "Hochladen fehlgeschlagen:\n{m}",
+    alertDownloadFailed: "Laden fehlgeschlagen:\n{m}",
+    toastLocalOnly: "⚠️ Lokal gespeichert, aber nicht zu Dropbox hochgeladen – später ☁️ Hochladen",
+    toastDbxDownFail: "⚠️ Laden von Dropbox fehlgeschlagen – bitte im Vokabeln-Tab ☁️ Laden",
+    syncAdded1: "{n} Vokabel übernommen",
+    syncAddedN: "{n} Vokabeln übernommen",
+    syncRemoved: "{n} auf anderem Gerät gelöscht",
+    syncThenUploaded: " – anschließend hochgeladen",
+    syncFromDbx: "Stand von Dropbox übernommen",
+    errFileFormat: "Ungültiges Dateiformat",
+  },
+  fr: {
+    today: "aujourd'hui",
+    day1: "1 jour",
+    dayN: "jours",
+    klasse: "Classe",
+    btnClose: "Fermer",
+    btnSave: "Enregistrer",
+    btnCancel: "Annuler",
+    btnAdd: "Ajouter",
+    btnDelete: "Supprimer",
+    selAll: "Tous",
+    selNone: "Aucun",
+    langDe: "allemand",
+    langFr: "français",
+    tabLearn: "Apprendre",
+    tabVocab: "Vocabulaire",
+    tabAdd: "Ajouter",
+    tabSpeak: "Décrire",
+    tabStats: "Progrès",
+    helpTitle: "❓ Aide",
+    appIntro: "Ton entraîneur de français personnel pour le manuel <em>À toi ! Bayern</em>. Envoie des photos de ton cahier ou du manuel – l'IA reconnaît les mots automatiquement. Ensuite tu t'entraînes, tu marques certains mots et tu suis tes progrès.",
+    darkMode: "Mode sombre",
+    learnStart: "Commencer le test",
+    learnEmpty: "Aucun mot enregistré pour le moment.<br>Ajoute d'abord des photos.",
+    settings: "Réglages",
+    labelDirection: "Sens",
+    dirDeFr: "allemand → français",
+    dirFrDe: "français → allemand",
+    labelMode: "Mode",
+    modeCover: "Découvrir",
+    modeType: "Saisir",
+    labelOrder: "Ordre",
+    orderRandom: "Au hasard",
+    orderSeq: "Dans l'ordre",
+    labelFilter: "Filtre",
+    filterAll: "Tous",
+    filterNew: "🆕 Nouveaux",
+    hardWords: "Mots difficiles",
+    hardSub: "{n} mots · {m} marqués à la main · {o} souvent faux",
+    uniteHeader: "{sel} sur {all} · {w} mots",
+    uniteCount: "{n} mots",
+    scoreLive: "{n} justes",
+    coverHint: "Touche pour découvrir",
+    phAnswer: "Saisis ta réponse …",
+    btnWrong: "Faux",
+    btnRight: "Juste",
+    btnCheck: "Vérifier",
+    btnNext: "Suivant →",
+    fbOk: "✓ Juste !",
+    fbNok: "✗ Faux",
+    fbCorrectIs: "Réponse :",
+    resultTitle: "Résultat",
+    resultSub: "{p}% de justes – {e}",
+    stillPractice: "À revoir :",
+    btnRetryWrong: "Revoir seulement les fautes",
+    btnNewSelection: "Nouvelle sélection",
+    freezeQuestion: "😔 Ta série est interrompue. Utiliser le joker ?",
+    btnFreeze: "🧊 Utiliser le joker (1× par mois)",
+    emojiPerfect: "🏆 Parfait !",
+    emojiSuper: "🌟 Super !",
+    emojiGood: "👍 Bien !",
+    emojiKeep: "💪 Continue !",
+    emojiAgain: "📚 Recommence !",
+    streakMult: " · ×{m} bonus de série",
+    levelTotal: "{e} {name} · {gc} {xp} au total",
+    nextLevel: "Encore {n} {gc} avant {e} {name}",
+    maxLevel: "👑 Niveau maximal atteint !",
+    toastStreakSaved: "🧊 Série sauvée ! 🔥 {d}",
+    toastLevelUp: "🎉 Niveau supérieur ! {e} {name} !",
+    toastXp: "+{n} 🪙 · 🔥 {d}",
+    alertQuizNoNew: "Aucun mot nouveau – tous ont déjà été demandés au moins une fois.",
+    alertSelectUnite: "Choisis au moins une unité ou ⭐ Mots difficiles.",
+    vocabTitle: "Mots enregistrés",
+    titleLookup: "Chercher un mot",
+    menuExport: "Exporter",
+    menuImport: "Importer",
+    menuUpload: "Envoyer",
+    menuDownload: "Charger",
+    filterAllClasses: "Toutes les classes",
+    emptyVocab: "Aucun mot pour le moment.<br>Ajoute des photos.",
+    emptyKlasse: "Aucune unité dans cette classe.",
+    titleMove: "Déplacer vers une autre unité",
+    titleEdit: "Modifier",
+    titleKlasse: "Changer de classe",
+    titleRename: "Touche pour renommer",
+    confirmDelVocab: "Supprimer « {de} – {fr} » ?",
+    confirmDelUnite: "Vraiment supprimer « {u} » ?",
+    promptRename: "Nouveau nom pour « {u} » :",
+    alertExists: "« {n} » existe déjà.",
+    alertInvalidFile: "Fichier non valide.",
+    alertImportOk: "✓ Importation réussie !",
+    alertImportErr: "Erreur d'importation : {m}",
+    toastMoved: "→ {u} (classe {k})",
+    apiMissingTitle: "⚠️ Clé API manquante",
+    apiMissingText: "Une clé API Anthropic est nécessaire pour lire les photos.<br>\n          À saisir une seule fois sous <strong>Info → API-Key</strong>.",
+    btnSetupNow: "→ Configurer maintenant",
+    addTitle: "Ajouter des mots",
+    tabPhoto: "Photo / capture",
+    tabManual: "À la main",
+    labelUnite: "Unité / chapitre",
+    phUnite3: "p. ex. Unité 3",
+    phUnite2: "p. ex. Unité 2",
+    labelSource: "Type de document",
+    srcPrint: "Manuel / imprimé",
+    srcHand: "Écriture à la main",
+    uzPhoto: "Choisir une photo ou une capture",
+    uzHand: "Photo du cahier ou d'une liste écrite à la main",
+    uzSmall: "Galerie · appareil photo · captures",
+    uzCamera: "Photographier directement",
+    extractedPre: "Mots reconnus",
+    extractedPost: " – modifiables directement",
+    btnAddRow: "+ Ligne",
+    btnNewImage: "Charger une autre image",
+    labelManual: "Mots (un par ligne : allemand;français)",
+    installTitle: "📲 Installer l'app",
+    installText: "Touche <strong>Partager</strong> (□↑) puis<br>\n          <strong>« Sur l'écran d'accueil »</strong> – et c'est fait !<br>\n          L'app fonctionne ensuite hors ligne comme une vraie app.",
+    statusLoading: "Chargement des images…",
+    statusPhotoErr: "⚠️ La photo n'a pas pu être chargée. Essaie dans Safari (pas dans l'app) ou utilise « Photographier directement ».",
+    statusHandRecog: "Lecture de l'écriture – un instant…",
+    statusAiRecog: "L'IA lit les mots…",
+    errNoVocab: "Aucun mot reconnu – essaie une photo plus nette",
+    statusRecognized: "✓ {n} mots reconnus – vérifie et corrige si besoin",
+    statusNetworkErr: "⚠️ Erreur de réseau – l'IA est injoignable.<br><small>→ Ouvre l'app dans <strong>Safari</strong> (pas depuis l'écran d'accueil) et réessaie.<br>→ Ou vérifie le Wi-Fi.</small>",
+    dupeBadge: "Doublon",
+    dupeCount1: "{t} ({d} doublon)",
+    dupeCountN: "{t} ({d} doublons)",
+    savedDupes: "✓ {n} enregistrés, {d} doublon(s) ignoré(s).",
+    savedNew: "✓ {n} mots enregistrés dans « {u} » !",
+    alertManualFormat: "Aucune entrée valable trouvée.\nFormat : allemand;français",
+    speakTitleShort: "Décrire",
+    speakNoSupport: "La dictée n'est pas prise en charge par ce navigateur.<br>Utilise un Chrome ou un Safari récent.",
+    speakTitle: "S'entraîner à décrire",
+    speakLangLabel: "Langue (à parler)",
+    btnSpeakStart: "Commencer à décrire",
+    recHintStart: "Touche pour parler",
+    recHintStop: "Touche pour arrêter",
+    speakTranscript: "Ta description (corrige si besoin)",
+    phTranscript: "… apparaît ici après l'enregistrement",
+    btnJudge: "Faire évaluer",
+    btnNextWord: "Mot suivant",
+    btnFinish: "Terminer",
+    judging: "Évaluation …",
+    ariaRecord: "Enregistrement",
+    toastNoDescription: "⚠️ Pas encore de description – parle d'abord ou écris dans le champ",
+    toastNoApiKey: "⚠️ Pas de clé API. À configurer sous Info.",
+    toastNoDictation: "⚠️ La dictée n'est pas possible ici",
+    toastNoReaction: "⚠️ La dictée n'a pas réagi. {h}",
+    toastSpeechErr: "⚠️ {e}{f}. {h}",
+    speechFallback: "Astuce : écris dans le champ en utilisant le micro du clavier",
+    speechNotAllowed: "Micro non autorisé – à autoriser dans les réglages de l'iPhone",
+    speechServiceNot: "Dictée non autorisée ici – active la dictée (Réglages → Général → Clavier)",
+    speechNoSpeech: "Rien entendu – essaie encore",
+    speechNoMic: "Aucun micro trouvé",
+    speechNetwork: "Pas de connexion à la reconnaissance vocale",
+    speechLangNot: "Langue indisponible – installe le clavier correspondant (Réglages → Général → Clavier → Claviers)",
+    speechNothing: "Rien compris",
+    speechFrHint: " (le français demande un clavier français sur l'appareil)",
+    targetWordUsed: "⚠️ Le mot cible a été dit.",
+    speakStatsToast: "{h} sur {t} bien décrits",
+    alertSelectUniteSpeak: "Choisis au moins une unité.",
+    levelNum: "Niveau {i} sur {n}",
+    statsTarget: "Objectif : {n}",
+    maitreReached: "👑 Maître atteint !",
+    statsPointsTotal: "POINTS AU TOTAL",
+    statsStreakLabel: "SÉRIE",
+    statsToday: "+{n} {gc} aujourd'hui",
+    statsRecord: "Record : {d}",
+    jokerUsed: "🧊 Joker utilisé ce mois-ci",
+    jokerFree: "🧊 Joker disponible",
+    statsActivity: "Activité (12 dernières semaines)",
+    hmLess: "moins",
+    hmMore: "plus",
+    rulesTitle: "Comment marche le système de points ?",
+    rulesEarn: "🪙 Gagner des points",
+    rulesEarnBody: "+3 <span class=\"gc\">🪙</span> par bonne réponse<br>\n            +5 <span class=\"gc\">🪙</span> pour un mot difficile (au moins 2 fautes)<br>\n            +5 <span class=\"gc\">🪙</span> bonus du jour – une fois par jour au premier test",
+    rulesMult: "🔥 Multiplicateur de série",
+    rulesMultBody: "3 à 6 jours de suite → tous les points ×1,5<br>\n            7 jours ou plus → tous les points ×2,0<br>\n            Qui apprend chaque jour gagne deux fois plus vite !",
+    rulesJoker: "🧊 Joker de série",
+    rulesJokerBody: "Une fois par mois, tu peux rattraper un jour manqué.<br>\n            Le joker est proposé automatiquement quand ta série est en danger.",
+    rulesLevel: "🏆 Monter de niveau",
+    rulesLevelBody: "Avec assez de points, tu montes automatiquement – de 🐣 Curieux jusqu'à 👑 Maître.<br>\n            À chaque niveau, il y a des confettis !",
+    allLevels: "Tous les niveaux",
+    levelFrom: "à partir de {n}",
+    youAreHere: "← tu es ici",
+    lookupTitle: "Chercher un mot",
+    phLookup: "Entre un mot français ou allemand …",
+    btnLookup: "Chercher",
+    lookupLoading: "Recherche …",
+    lookupAddLabel: "Ajouter à l'unité",
+    toastIncomplete: "⚠️ Traduction incomplète",
+    toastAlreadyIn: "⚠️ Mot déjà dans {u}",
+    toastAddedTo: "✓ « {w} » ajouté à {u}",
+    apiKeyPrefixErr: "⚠️ La clé doit commencer par sk-ant-",
+    apiKeySavedPrev: "✓ Enregistrée : {p}",
+    apiKeySaved: "✓ Clé enregistrée",
+    apiKeyDeleted: "Clé supprimée",
+    dbxKeyEmpty: "⚠️ La clé d'app ne peut pas être vide",
+    dbxSaved: "✓ Enregistrée",
+    dbxAppKeySaved: "✓ Clé d'app enregistrée",
+    alertAppKeyFirst: "Enregistre d'abord la clé d'app.",
+    confirmDisconnect: "Vraiment déconnecter Dropbox ?",
+    alertNotConnected: "Pas connecté à Dropbox.\nÀ configurer sous Info → Dropbox.",
+    alertNoDbxFile: "Aucun fichier Dropbox pour le moment. Envoie-le d'abord.",
+    alertUploadFailed: "Envoi échoué :\n{m}",
+    alertDownloadFailed: "Chargement échoué :\n{m}",
+    toastLocalOnly: "⚠️ Enregistré sur l'appareil, mais pas envoyé à Dropbox – réessaie plus tard avec ☁️",
+    toastDbxDownFail: "⚠️ Chargement depuis Dropbox échoué – réessaie avec ☁️ dans l'onglet Vocabulaire",
+    syncAdded1: "{n} mot repris",
+    syncAddedN: "{n} mots repris",
+    syncRemoved: "{n} supprimé(s) sur un autre appareil",
+    syncThenUploaded: " – puis envoyé",
+    syncFromDbx: "État repris de Dropbox",
+    errFileFormat: "Format de fichier non valide",
+  }
+};
+// Startsprache ohne gespeicherte Wahl: Französisch (Josef-Vorgabe 2026-09-27)
+let LANG = 'fr';
+function tr(key) {
+  const v = I18N[LANG] && I18N[LANG][key] !== undefined ? I18N[LANG][key] : I18N.de[key];
+  return v !== undefined ? v : key;
+}
+function trf(key, vals) {
+  let s = tr(key);
+  for (const k in vals) s = s.split('{' + k + '}').join(vals[k]);
+  return s;
+}
+function numLoc() { return LANG === 'fr' ? 'fr-FR' : 'de'; }
+function trNum(n) { return n.toLocaleString(numLoc()); }
+function trDays(n) { return n === 1 ? tr('day1') : n + ' ' + tr('dayN'); }
+try { const _l = localStorage.getItem('vt_lang'); if (_l === 'de' || _l === 'fr') LANG = _l; } catch (e) {}
 
 // ─── DB ──────────────────────────────────────────────────────────────
 let db = {};
@@ -1679,10 +2134,10 @@ function saveBonus() {
 
 function renderBonusBar() {
   const lv = getLevel(xp);
-  const dayStr = streak === 1 ? '1 Tag' : streak + ' Tage';
+  const dayStr = trDays(streak);
   const gc = '<span class="gc">🪙</span>';
   document.getElementById('bonus-bar').innerHTML =
-    lv.emoji + ' ' + lv.name + ' · ' + gc + ' ' + xp.toLocaleString('de') + ' · +' + xpToday + ' heute · 🔥 ' + dayStr;
+    lv.emoji + ' ' + lv.name + ' · ' + gc + ' ' + trNum(xp) + ' · +' + xpToday + ' ' + tr('today') + ' · 🔥 ' + dayStr;
 }
 
 function showToast(msg, ms = 2500) {
@@ -1726,19 +2181,19 @@ function computeAndApplyBonus() {
 
 function renderStreakInfo() {
   const gc = '<span class="gc">🪙</span>';
-  const dayStr = streak === 1 ? '1 Tag' : streak + ' Tage';
+  const dayStr = trDays(streak);
   const mult = streakMult();
-  const multStr = mult > 1.0 ? ' · ×' + mult.toFixed(1) + ' Streak-Bonus' : '';
+  const multStr = mult > 1.0 ? trf('streakMult', { m: mult.toFixed(1) }) : '';
   document.getElementById('r-streak-info').textContent = '🔥 ' + dayStr + multStr;
   const lv = getLevel(xp);
-  document.getElementById('r-level-info').innerHTML = lv.emoji + ' ' + lv.name + ' · ' + gc + ' ' + xp.toLocaleString('de') + ' gesamt';
+  document.getElementById('r-level-info').innerHTML = trf('levelTotal', { e: lv.emoji, name: lv.name, gc: gc, xp: trNum(xp) });
   const lvIdx = LEVELS.indexOf(lv);
   const nextLv = LEVELS[lvIdx + 1];
   const nlEl = document.getElementById('r-next-level');
   if (nextLv) {
-    nlEl.innerHTML = 'Noch ' + (nextLv.min - xp).toLocaleString('de') + ' ' + gc + ' bis ' + nextLv.emoji + ' ' + nextLv.name;
+    nlEl.innerHTML = trf('nextLevel', { n: trNum(nextLv.min - xp), gc: gc, e: nextLv.emoji, name: nextLv.name });
   } else {
-    nlEl.textContent = '👑 Maximales Level erreicht!';
+    nlEl.textContent = tr('maxLevel');
   }
 }
 
@@ -1752,7 +2207,7 @@ function useFreeze() {
   saveBonus();
   document.getElementById('r-freeze-banner').style.display = 'none';
   renderStreakInfo();
-  showToast('🧊 Streak gerettet! 🔥 ' + streak + ' Tage');
+  showToast(trf('toastStreakSaved', { d: trDays(streak) }));
 }
 
 // ─── VOCAB KEY (content-based) ───────────────────────────────────── P1
@@ -1784,13 +2239,13 @@ migrateKeys();
 function saveApiKey() {
   const val = document.getElementById('apikey-input').value.trim();
   if (!val.startsWith('sk-ant-')) {
-    document.getElementById('apikey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ Key muss mit sk-ant- beginnen</span>';
+    document.getElementById('apikey-status').innerHTML = '<span style="color:var(--red-text);">' + tr('apiKeyPrefixErr') + '</span>';
     return;
   }
   apiKey = val;
   localStorage.setItem('vt_apikey', apiKey);
   const preview = val.substring(0, 14) + '...' + val.substring(val.length - 4);
-  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert: ' + preview + '</span>';
+  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">' + trf('apiKeySavedPrev', { p: preview }) + '</span>';
   document.getElementById('apikey-input').value = '••••••••••••••••••••';
   document.getElementById('apikey-clear-btn').style.display = 'block';
   renderInstallHint();
@@ -1800,7 +2255,7 @@ function clearApiKey() {
   apiKey = '';
   localStorage.removeItem('vt_apikey');
   document.getElementById('apikey-input').value = '';
-  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--text2);">Key gelöscht</span>';
+  document.getElementById('apikey-status').innerHTML = '<span style="color:var(--text2);">' + tr('apiKeyDeleted') + '</span>';
   document.getElementById('apikey-clear-btn').style.display = 'none';
   renderInstallHint();
 }
@@ -1813,7 +2268,7 @@ function toggleKeyVis() {
 function initApiKeyUI() {
   if (apiKey) {
     document.getElementById('apikey-input').value = '••••••••••••••••••••';
-    document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">✓ Key gespeichert</span>';
+    document.getElementById('apikey-status').innerHTML = '<span style="color:var(--green-text);">' + tr('apiKeySaved') + '</span>';
     document.getElementById('apikey-clear-btn').style.display = 'block';
   }
 }
@@ -1823,15 +2278,15 @@ const DBX_REDIRECT = 'https://seppofaz.github.io/Vokabeltrainer/';
 
 function saveDbxAppKey() {
   const val = document.getElementById('dbx-appkey-input').value.trim();
-  if (!val) { document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--red-text);">⚠️ App Key darf nicht leer sein</span>'; return; }
+  if (!val) { document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--red-text);">' + tr('dbxKeyEmpty') + '</span>'; return; }
   dbxAppKey = val;
   localStorage.setItem('vt_dbx_appkey', dbxAppKey);
-  document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--green-text);">✓ Gespeichert</span>';
+  document.getElementById('dbx-appkey-status').innerHTML = '<span style="color:var(--green-text);">' + tr('dbxSaved') + '</span>';
   updateDbxButtons();
 }
 
 async function startDropboxAuth() {
-  if (!dbxAppKey) { alert('Bitte zuerst den App Key speichern.'); return; }
+  if (!dbxAppKey) { alert(tr('alertAppKeyFirst')); return; }
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   const verifier = btoa(String.fromCharCode(...array)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
@@ -1944,7 +2399,7 @@ async function _downloadPayload(token) {
 // Vokabeln werden ergänzt, Löschvermerke beider Seiten werden angewandt.
 // Rückgabe: { added, removed }.
 function mergeRemoteData(data) {
-  if (!data || !data.db) throw new Error('Ungültiges Dateiformat');
+  if (!data || !data.db) throw new Error(tr('errFileFormat'));
   // Löschvermerke zusammenführen (der jüngste gewinnt), danach verfallene entfernen
   const remoteTombs = (data.deleted && typeof data.deleted === 'object') ? data.deleted : {};
   Object.keys(remoteTombs).forEach(k => {
@@ -1982,8 +2437,8 @@ function mergeRemoteData(data) {
 // Einheitlicher Meldungstext für einen abgeschlossenen Abgleich
 function syncSummary(res) {
   const parts = [];
-  if (res.added) parts.push(res.added + (res.added === 1 ? ' Vokabel' : ' Vokabeln') + ' übernommen');
-  if (res.removed) parts.push(res.removed + ' auf anderem Gerät gelöscht');
+  if (res.added) parts.push(trf(res.added === 1 ? 'syncAdded1' : 'syncAddedN', { n: res.added }));
+  if (res.removed) parts.push(trf('syncRemoved', { n: res.removed }));
   return parts.join(', ');
 }
 
@@ -2014,12 +2469,12 @@ async function autoSyncToDropbox() {
     if (btn) { const prev = btn.innerHTML; btn.textContent = '✓'; setTimeout(() => { btn.innerHTML = prev; }, 1500); }
   } catch(e) {
     console.warn('[dropbox:auto]', e);
-    showToast('⚠️ Lokal gespeichert, aber nicht zu Dropbox hochgeladen – später ☁️ Hochladen', 6000);
+    showToast(tr('toastLocalOnly'), 6000);
   }
 }
 
 function disconnectDropbox() {
-  if (!confirm('Dropbox-Verbindung wirklich trennen?')) return;
+  if (!confirm(tr('confirmDisconnect'))) return;
   dbxAccessToken = ''; dbxRefreshToken = ''; dbxTokenExpiry = 0;
   localStorage.removeItem('vt_dbx_access');
   localStorage.removeItem('vt_dbx_refresh');
@@ -2053,24 +2508,24 @@ function initDbxUI() {
     const inp = document.getElementById('dbx-appkey-input');
     if (inp) { inp.value = dbxAppKey.substring(0,4) + '••••' + dbxAppKey.slice(-2); }
     const st = document.getElementById('dbx-appkey-status');
-    if (st) st.innerHTML = '<span style="color:var(--green-text);">✓ App Key gespeichert</span>';
+    if (st) st.innerHTML = '<span style="color:var(--green-text);">' + tr('dbxAppKeySaved') + '</span>';
   }
   updateDbxButtons();
 }
 
 async function syncToDropbox() {
   const token = await getValidAccessToken();
-  if (!token) { alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
+  if (!token) { alert(tr('alertNotConnected')); return; }
   const btn = document.getElementById('dbx-up-btn');
-  const idleHtml = icon('cloud-upload',16) + 'Hochladen';
+  const idleHtml = icon('cloud-upload',16) + '<span data-i18n="menuUpload">' + tr('menuUpload') + '</span>';
   btn.textContent = '⏳'; btn.disabled = true;
   try {
     const summary = syncSummary(await _queueDbx(() => _mergeAndUpload(token)));
-    if (summary) showToast('☁️ ' + summary + ' – anschließend hochgeladen');
+    if (summary) showToast('☁️ ' + summary + tr('syncThenUploaded'));
     btn.textContent = '✓';
     setTimeout(() => { btn.innerHTML = idleHtml; btn.disabled = false; }, 1500);
   } catch(e) {
-    alert('Hochladen fehlgeschlagen:\n' + (e.message || String(e)));
+    alert(trf('alertUploadFailed', { m: e.message || String(e) }));
     btn.innerHTML = idleHtml; btn.disabled = false;
   }
 }
@@ -2078,24 +2533,24 @@ async function syncToDropbox() {
 // auto=true: läuft direkt nach dem Verbinden, ohne Dialoge (Meldungen als Toast)
 async function syncFromDropbox(auto = false) {
   const token = await getValidAccessToken();
-  if (!token) { if (!auto) alert('Nicht mit Dropbox verbunden.\nBitte im Info → Dropbox-Sync einrichten.'); return; }
+  if (!token) { if (!auto) alert(tr('alertNotConnected')); return; }
   const btn = document.getElementById('dbx-dn-btn');
-  const idleHtml = icon('cloud-download',16) + 'Laden';
+  const idleHtml = icon('cloud-download',16) + '<span data-i18n="menuDownload">' + tr('menuDownload') + '</span>';
   const resetBtn = () => { if (btn) { btn.innerHTML = idleHtml; btn.disabled = false; } };
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   try {
     const dn = await _queueDbx(() => _downloadPayload(token));
     if (dn.status === 'empty') {
-      if (!auto) alert('Noch keine Dropbox-Datei vorhanden. Zuerst hochladen.');
+      if (!auto) alert(tr('alertNoDbxFile'));
       resetBtn(); return;
     }
     const summary = syncSummary(mergeRemoteData(dn.data));
     renderVocabScreen(); renderLearnSetup();
-    if (auto) showToast('☁️ ' + (summary || 'Stand von Dropbox übernommen'));
+    if (auto) showToast('☁️ ' + (summary || tr('syncFromDbx')));
     if (btn) { btn.textContent = '✓'; setTimeout(resetBtn, 1500); }
   } catch(e) {
-    if (auto) showToast('⚠️ Laden von Dropbox fehlgeschlagen – bitte im Vokabeln-Tab ☁️ Laden', 6000);
-    else alert('Laden fehlgeschlagen:\n' + (e.message || String(e)));
+    if (auto) showToast(tr('toastDbxDownFail'), 6000);
+    else alert(trf('alertDownloadFailed', { m: e.message || String(e) }));
     resetBtn();
   }
 }
@@ -2228,22 +2683,22 @@ function renderStats() {
   // Level card
   document.getElementById('stats-lv-emoji').textContent = lv.emoji;
   document.getElementById('stats-lv-name').textContent = lv.name;
-  document.getElementById('stats-lv-num').textContent = 'Level ' + (lvIdx + 1) + ' von ' + LEVELS.length;
+  document.getElementById('stats-lv-num').textContent = trf('levelNum', { i: lvIdx + 1, n: LEVELS.length });
   const pct = nextLv ? Math.min(100, Math.round((xp - lv.min) / (nextLv.min - lv.min) * 100)) : 100;
   document.getElementById('stats-lv-bar').style.width = pct + '%';
-  document.getElementById('stats-lv-cur').innerHTML = gc + ' ' + xp.toLocaleString('de');
+  document.getElementById('stats-lv-cur').innerHTML = gc + ' ' + trNum(xp);
   document.getElementById('stats-lv-next').innerHTML = nextLv
-    ? 'Ziel: ' + nextLv.min.toLocaleString('de') + ' ' + gc : '👑 Maître erreicht!';
+    ? trf('statsTarget', { n: trNum(nextLv.min) + ' ' + gc }) : tr('maitreReached');
 
   // XP card
-  document.getElementById('stats-xp-total').innerHTML = xp.toLocaleString('de') + ' ' + gc;
-  document.getElementById('stats-xp-today').innerHTML = '+' + xpToday + ' ' + gc + ' heute';
+  document.getElementById('stats-xp-total').innerHTML = trNum(xp) + ' ' + gc;
+  document.getElementById('stats-xp-today').innerHTML = trf('statsToday', { n: xpToday, gc: gc });
 
   // Streak card
   document.getElementById('stats-streak-val').textContent = streak + ' 🔥';
-  document.getElementById('stats-streak-best').textContent = 'Rekord: ' + streakBest + (streakBest === 1 ? ' Tag' : ' Tage');
+  document.getElementById('stats-streak-best').textContent = trf('statsRecord', { d: trDays(streakBest) });
   const thisMonth = todayStr().slice(0, 7);
-  document.getElementById('stats-freeze-st').textContent = freezeKey === thisMonth ? '🧊 Joker diesen Monat verbraucht' : '🧊 Joker verfügbar';
+  document.getElementById('stats-freeze-st').textContent = freezeKey === thisMonth ? tr('jokerUsed') : tr('jokerFree');
 
   renderHeatmap();
   renderLevelOverview();
@@ -2278,14 +2733,14 @@ function renderLevelOverview() {
     const isCurrent = i === curIdx;
     const dotCls = 'level-dot' + (isCurrent ? ' current' : reached ? ' reached' : '');
     const nameStyle = isCurrent ? 'font-weight:700;color:var(--text)' : reached ? 'color:var(--text)' : 'color:var(--text3)';
-    const badge = isCurrent ? '<span style="font-size:11px;color:var(--text2);">← du bist hier</span>'
+    const badge = isCurrent ? '<span style="font-size:11px;color:var(--text2);">' + tr('youAreHere') + '</span>'
       : reached ? '<span style="color:#f59e0b;font-size:15px;">✓</span>' : '';
     return '<div class="level-row">'
       + '<div class="' + dotCls + '"></div>'
       + '<div style="font-size:20px;">' + l.emoji + '</div>'
       + '<div style="flex:1;">'
       +   '<div style="font-size:14px;' + nameStyle + ';">' + l.name + '</div>'
-      +   '<div style="font-size:11px;color:var(--text3);">ab ' + l.min.toLocaleString('de') + ' ' + gc + '</div>'
+      +   '<div style="font-size:11px;color:var(--text3);">' + trf('levelFrom', { n: trNum(l.min) + ' ' + gc }) + '</div>'
       + '</div>'
       + badge
       + '</div>';
@@ -2299,7 +2754,7 @@ function setOcrType(t) {
   document.getElementById('ocr-handwritten').className = 'toggle-btn' + (t==='handwritten'?' active-blue':'');
   document.getElementById('up-icon').innerHTML = icon(t==='handwritten' ? 'pencil' : 'camera', 34);
   document.getElementById('up-zone-text').textContent = t==='handwritten'
-    ? 'Foto vom Heft oder handgeschriebener Liste' : 'Foto oder Screenshot auswählen';
+    ? tr('uzHand') : tr('uzPhoto');
 }
 
 // ─── UPLOAD TAB ──────────────────────────────────────────────────────
@@ -2318,7 +2773,7 @@ async function handleFiles(e) {
   pendingImages = []; pendingVocab = [];
   document.getElementById('up-previews').innerHTML = '';
   document.getElementById('up-extracted').style.display = 'none';
-  setStatus('<span class="spinner"></span>Bilder werden geladen…', 'loading');
+  setStatus('<span class="spinner"></span>' + tr('statusLoading'), 'loading');
   try {
     for (const file of files) {
       const b64 = await toBase64(file);
@@ -2329,12 +2784,10 @@ async function handleFiles(e) {
       document.getElementById('up-previews').appendChild(img);
     }
   } catch(err) {
-    setStatus('⚠️ Foto konnte nicht geladen werden. Bitte in Safari (nicht als App) versuchen, oder "Direkt fotografieren" nutzen.', 'error');
+    setStatus(tr('statusPhotoErr'), 'error');
     return;
   }
-  const label = ocrType === 'handwritten'
-    ? '<span class="spinner"></span>Handschrift wird erkannt – einen Moment…'
-    : '<span class="spinner"></span>KI erkennt Vokabeln…';
+  const label = '<span class="spinner"></span>' + (ocrType === 'handwritten' ? tr('statusHandRecog') : tr('statusAiRecog'));
   setStatus(label, 'loading');
   await extractVocab();
 }
@@ -2422,7 +2875,7 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
         })
       });
     } catch(netErr) {
-      setStatus('⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>', 'error');
+      setStatus(tr('statusNetworkErr'), 'error');
       return;
     }
 
@@ -2441,9 +2894,9 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
     txt = txt.replace(/```json|```/g,'').trim();
     const s = txt.indexOf('['), e = txt.lastIndexOf(']');
     if (s!==-1 && e!==-1) pendingVocab = JSON.parse(txt.slice(s,e+1));
-    if (!pendingVocab.length) throw new Error('Keine Vokabeln erkannt – bitte klareres Foto versuchen');
+    if (!pendingVocab.length) throw new Error(tr('errNoVocab'));
     renderExtracted();
-    setStatus('✓ ' + pendingVocab.length + ' Vokabeln erkannt – bitte prüfen und ggf. korrigieren', 'success');
+    setStatus(trf('statusRecognized', { n: pendingVocab.length }), 'success');
   } catch(err) {
     setStatus('⚠️ ' + err.message, 'error');
   }
@@ -2457,14 +2910,15 @@ function renderExtracted() {
     const isDupe = v.de && v.fr && existing.has(vocabKey(v));
     if (isDupe) dupeCount++;
     return `<div class="edit-row${isDupe?' is-dupe':''}">
-      <input class="edit-cell de-cell" value="${esc(v.de)}" placeholder="Deutsch" oninput="updatePending(${i},'de',this.value)" />
-      <input class="edit-cell" value="${esc(v.fr)}" placeholder="Französisch" oninput="updatePending(${i},'fr',this.value)" />
-      ${isDupe ? '<span class="dupe-badge">Duplikat</span>' : ''}
+      <input class="edit-cell de-cell" value="${esc(v.de)}" placeholder="${esc(tr('langDe'))}" oninput="updatePending(${i},'de',this.value)" />
+      <input class="edit-cell" value="${esc(v.fr)}" placeholder="${esc(tr('langFr'))}" oninput="updatePending(${i},'fr',this.value)" />
+      ${isDupe ? `<span class="dupe-badge">${tr('dupeBadge')}</span>` : ''}
       <button class="del-btn" onclick="removePending(${i})" style="display:inline-flex;align-items:center;">${icon('x',16)}</button>
     </div>`;
   }).join('');
   const total = pendingVocab.length;
-  document.getElementById('up-count').textContent = dupeCount > 0 ? `${total} (${dupeCount} Duplikat${dupeCount>1?'e':''})` : total;
+  document.getElementById('up-count').textContent = dupeCount > 0
+    ? trf(dupeCount > 1 ? 'dupeCountN' : 'dupeCount1', { t: total, d: dupeCount }) : total;
   document.getElementById('up-extracted').style.display = 'block';
 }
 
@@ -2486,8 +2940,8 @@ function saveVocab() {
   saveDb();
   autoSyncToDropbox();
   const msg = dupes > 0
-    ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.`
-    : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`;
+    ? trf('savedDupes', { n: newOnes.length, d: dupes })
+    : trf('savedNew', { n: newOnes.length, u: unite });
   setStatus(msg, 'success');
   pendingVocab = []; pendingImages = [];
   setTimeout(resetUpload, 2000);
@@ -2504,7 +2958,7 @@ function saveManual() {
   const unite = document.getElementById('man-unite-name').value.trim() || 'Unité ?';
   const lines = document.getElementById('man-text').value.trim().split('\n').filter(Boolean);
   const pairs = lines.map(l => { const p = l.split(';'); return p.length>=2 ? {de:p[0].trim(),fr:p[1].trim()} : null; }).filter(Boolean);
-  if (!pairs.length) { alert('Keine gültigen Einträge gefunden.\nFormat: deutsch;französisch'); return; }
+  if (!pairs.length) { alert(tr('alertManualFormat')); return; }
   const isNewUnite = !db[unite];
   if (!db[unite]) db[unite] = [];
   if (isNewUnite) { uniteClasses[unite] = parseInt(document.getElementById('man-unite-klasse').value) || DEFAULT_KLASSE; saveUniteClasses(); }
@@ -2516,7 +2970,7 @@ function saveManual() {
   autoSyncToDropbox();
   document.getElementById('man-text').value = '';
   document.getElementById('man-unite-name').value = '';
-  alert(dupes > 0 ? `✓ ${newOnes.length} gespeichert, ${dupes} Duplikat(e) übersprungen.` : `✓ ${newOnes.length} Vokabeln in „${unite}" gespeichert!`);
+  alert(dupes > 0 ? trf('savedDupes', { n: newOnes.length, d: dupes }) : trf('savedNew', { n: newOnes.length, u: unite }));
 }
 
 function setStatus(html, cls) {
@@ -2548,12 +3002,12 @@ function renderVocabScreen() {
   const el = document.getElementById('vocab-content');
   renderKlasseSelects();
   if (!allUnites.length) {
-    el.innerHTML = '<div class="empty"><span data-icon="inbox" data-icon-size="40" style="display:flex;justify-content:center;margin-bottom:12px;"></span>Noch keine Vokabeln.<br>Füge Screenshots hinzu.</div>';
+    el.innerHTML = '<div class="empty"><span data-icon="inbox" data-icon-size="40" style="display:flex;justify-content:center;margin-bottom:12px;"></span>' + tr('emptyVocab') + '</div>';
     initStaticIcons();
     return;
   }
   if (!unites.length) {
-    el.innerHTML = '<div class="empty"><span data-icon="inbox" data-icon-size="40" style="display:flex;justify-content:center;margin-bottom:12px;"></span>Keine Unités in dieser Klasse.</div>';
+    el.innerHTML = '<div class="empty"><span data-icon="inbox" data-icon-size="40" style="display:flex;justify-content:center;margin-bottom:12px;"></span>' + tr('emptyKlasse') + '</div>';
     initStaticIcons();
     return;
   }
@@ -2563,13 +3017,13 @@ function renderVocabScreen() {
     const moveGroups = [ownKlasse, ...KLASSEN.filter(k => k !== ownKlasse)]
       .map(k => ({ k, list: allUnites.filter(x => x !== u && getUniteKlasse(x) === k) }))
       .filter(g => g.list.length);
-    const moveOptions = moveGroups.map(g => `<optgroup label="Klasse ${g.k}">${g.list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</optgroup>`).join('');
+    const moveOptions = moveGroups.map(g => `<optgroup label="${tr('klasse')} ${g.k}">${g.list.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}</optgroup>`).join('');
     const rows = pairs.map((v,i) => {
       const k = vocabKey(v);
       const isStarred = !!stars[k];
       const errCount = errors[k]||0;
       const autoFlag = errCount >= 2 ? `<span style="font-size:11px;color:var(--red-text);margin-left:4px;">${errCount}✗</span>` : '';
-      const moveSelect = moveGroups.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);width:36px;min-width:36px;flex-shrink:0;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;" title="In andere Unité verschieben"><option value="">↗</option>${moveOptions}</select>` : '';
+      const moveSelect = moveGroups.length ? `<select onchange="moveVocab('${esc(u)}',${i},this.value);this.value=''" style="font-size:11px;padding:2px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);width:36px;min-width:36px;flex-shrink:0;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;" title="${esc(tr('titleMove'))}"><option value="">↗</option>${moveOptions}</select>` : '';
       if (_editingKey === k) {
         return `<div class="vocab-row vocab-row--edit">
           <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">${icon('star',18,isStarred)}</button>
@@ -2589,7 +3043,7 @@ function renderVocabScreen() {
         <button class="star-btn${isStarred?' starred':''}" onclick="toggleStar('${esc(u)}',${i})">${icon('star',18,isStarred)}</button>
         <span class="de" style="flex:1;">${deHtml}</span>
         <span class="fr" style="flex:1;">${frHtml}</span>
-        <button class="edit-btn" onclick="editItem('${esc(u)}',${i})" title="Bearbeiten">${icon('pencil',15)}</button>
+        <button class="edit-btn" onclick="editItem('${esc(u)}',${i})" title="${esc(tr('titleEdit'))}">${icon('pencil',15)}</button>
         ${moveSelect}
         <button class="del-btn"  onclick="delItem('${esc(u)}',${i})" style="margin-left:4px;">${icon('x',16)}</button>
       </div>`;
@@ -2600,15 +3054,15 @@ function renderVocabScreen() {
       starredCount ? `<span style="color:#b07d20;">⭐${starredCount}</span>` : '',
       hardCount ? `<span style="color:var(--red-text);">✗${hardCount}</span>` : ''
     ].filter(Boolean).join(' ');
-    const klasseSelect = `<select onchange="setUniteKlasse('${esc(u)}',this.value)" style="font-size:11px;padding:2px 4px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);width:auto;margin:0;flex-shrink:0;-webkit-appearance:none;" title="Klasse ändern">${KLASSEN.map(k=>`<option value="${k}"${getUniteKlasse(u)===k?' selected':''}>Klasse ${k}</option>`).join('')}</select>`;
+    const klasseSelect = `<select onchange="setUniteKlasse('${esc(u)}',this.value)" style="font-size:11px;padding:2px 4px;border:0.5px solid var(--border2);border-radius:4px;background:var(--bg2);color:var(--text2);width:auto;margin:0;flex-shrink:0;-webkit-appearance:none;" title="${esc(tr('titleKlasse'))}">${KLASSEN.map(k=>`<option value="${k}"${getUniteKlasse(u)===k?' selected':''}>${tr('klasse')} ${k}</option>`).join('')}</select>`;
     return `<div class="unite-section">
       <div class="unite-header">
-        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Tippen zum Umbenennen">
-          ${esc(u)} ${icon('pencil',13)} <span style="font-weight:400;font-size:12px;color:var(--text2);">${pairs.length} Wörter ${badges}</span>
+        <span class="utitle" onclick="renameUnite('${esc(u)}')" style="cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="${esc(tr('titleRename'))}">
+          ${esc(u)} ${icon('pencil',13)} <span style="font-weight:400;font-size:12px;color:var(--text2);">${trf('uniteCount', { n: pairs.length })} ${badges}</span>
         </span>
         <div style="display:flex;gap:6px;align-items:center;">
           ${klasseSelect}
-          <button class="del-btn" onclick="delUnite('${esc(u)}')">Löschen</button>
+          <button class="del-btn" onclick="delUnite('${esc(u)}')">${tr('btnDelete')}</button>
         </div>
       </div>
       <div class="vocab-scroll">${rows}</div>
@@ -2630,10 +3084,10 @@ function setUniteKlasse(unite, val) {
 }
 
 function renderKlasseSelects() {
-  const filterOptions = '<option value="all">Alle Klassen</option>' + KLASSEN.map(k => `<option value="${k}"${klasseFilter===String(k)?' selected':''}>Klasse ${k}</option>`).join('');
+  const filterOptions = `<option value="all">${tr('filterAllClasses')}</option>` + KLASSEN.map(k => `<option value="${k}"${klasseFilter===String(k)?' selected':''}>${tr('klasse')} ${k}</option>`).join('');
   const filterSel = document.getElementById('klasse-filter-select');
   if (filterSel) { filterSel.innerHTML = filterOptions; filterSel.value = klasseFilter; }
-  const plainOptions = KLASSEN.map(k => `<option value="${k}"${k===DEFAULT_KLASSE?' selected':''}>Klasse ${k}</option>`).join('');
+  const plainOptions = KLASSEN.map(k => `<option value="${k}"${k===DEFAULT_KLASSE?' selected':''}>${tr('klasse')} ${k}</option>`).join('');
   const upSel = document.getElementById('up-unite-klasse');
   if (upSel && !upSel.dataset.filled) { upSel.innerHTML = plainOptions; upSel.dataset.filled = '1'; }
   const manSel = document.getElementById('man-unite-klasse');
@@ -2648,7 +3102,7 @@ function toggleStar(unite, idx) {
 
 function delItem(unite, i) {
   const v = db[unite][i];
-  if (!confirm('„' + v.de + ' – ' + v.fr + '“ löschen?')) return;
+  if (!confirm(trf('confirmDelVocab', { de: v.de, fr: v.fr }))) return;
   markDeleted(unite, vocabKey(v));   // sonst kommt sie beim nächsten Abgleich zurück
   db[unite].splice(i,1);
   if(!db[unite].length) delete db[unite];
@@ -2674,17 +3128,17 @@ function saveItem(unite, idx) {
 }
 function cancelEdit() { _editingKey = null; renderVocabScreen(); }
 function delUnite(unite) {
-  if (!confirm('„' + unite + '“ wirklich löschen?')) return;
+  if (!confirm(trf('confirmDelUnite', { u: unite }))) return;
   markDeleted(unite, '*');
   delete db[unite];
   saveDb(); renderVocabScreen(); renderLearnSetup(); autoSyncToDropbox();
 }
 
 function renameUnite(oldName) {
-  const newName = prompt('Neuer Name für „' + oldName + '":', oldName);
+  const newName = prompt(trf('promptRename', { u: oldName }), oldName);
   if (!newName || newName.trim() === oldName) return;
   const n = newName.trim();
-  if (db[n]) { alert('„' + n + '" existiert bereits.'); return; }
+  if (db[n]) { alert(trf('alertExists', { n: n })); return; }
   db[n] = db[oldName]; delete db[oldName];
   markDeleted(oldName, '*');   // der alte Name verschwindet auch auf den anderen Geräten
   if (uniteClasses[oldName] !== undefined) { uniteClasses[n] = uniteClasses[oldName]; delete uniteClasses[oldName]; saveUniteClasses(); }
@@ -2701,7 +3155,7 @@ function moveVocab(fromUnite, idx, toUnite) {
   db[fromUnite].splice(idx, 1);
   if (!db[fromUnite].length) delete db[fromUnite];
   saveDb(); renderVocabScreen(); renderLearnSetup(); autoSyncToDropbox();
-  showToast('→ ' + toUnite + ' (Klasse ' + getUniteKlasse(toUnite) + ')');
+  showToast(trf('toastMoved', { u: toUnite, k: getUniteKlasse(toUnite) }));
 }
 
 // ─── EXPORT / IMPORT ─────────────────────────────────────────────────
@@ -2723,12 +3177,12 @@ function importData(e) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
-      if (!data.db) { alert('Ungültige Datei.'); return; }
+      if (!data.db) { alert(tr('alertInvalidFile')); return; }
       const res = mergeRemoteData(data);   // gleiche Logik wie der Dropbox-Abgleich
       renderVocabScreen(); renderLearnSetup();
       autoSyncToDropbox();
-      alert('✓ Import erfolgreich!' + (syncSummary(res) ? '\n' + syncSummary(res) : ''));
-    } catch(err) { alert('Fehler beim Import: ' + err.message); }
+      alert(tr('alertImportOk') + (syncSummary(res) ? '\n' + syncSummary(res) : ''));
+    } catch(err) { alert(trf('alertImportErr', { m: err.message })); }
   };
   reader.readAsText(file);
   e.target.value = '';
@@ -2773,8 +3227,8 @@ function renderLearnSetup() {
     const selSch = selectedUnites.has('__schwierig__');
     schwEl.innerHTML = `<div class="schwierig-card${selSch?' selected':''}" onclick="toggleUnite('__schwierig__')">
       <div class="sc-left">
-        <div class="sc-title" style="display:flex;align-items:center;gap:6px;">${icon('star',16,true)}Schwierige Wörter</div>
-        <div class="sc-sub">${schwList.length} Wörter · ${schwList.filter(v=>stars[v.key]).length} manuell markiert · ${schwList.filter(v=>(errors[v.key]||0)>=2).length} oft falsch</div>
+        <div class="sc-title" style="display:flex;align-items:center;gap:6px;">${icon('star',16,true)}${tr('hardWords')}</div>
+        <div class="sc-sub">${trf('hardSub', { n: schwList.length, m: schwList.filter(v=>stars[v.key]).length, o: schwList.filter(v=>(errors[v.key]||0)>=2).length })}</div>
       </div>
       <span class="sc-check">${icon('check',18)}</span>
     </div>`;
@@ -2806,10 +3260,10 @@ function renderLearnSetup() {
 
   listEl.innerHTML = (unites.length ? `
     <div class="unite-select-header">
-      <span>${selNormalCount} von ${unites.length} · ${totalSelWords} Wörter</span>
+      <span>${trf('uniteHeader', { sel: selNormalCount, all: unites.length, w: totalSelWords })}</span>
       <div>
-        <button class="link-btn" onclick="selectAll()">Alle</button>
-        <button class="link-btn" onclick="selectNone()">Keine</button>
+        <button class="link-btn" onclick="selectAll()">${tr('selAll')}</button>
+        <button class="link-btn" onclick="selectNone()">${tr('selNone')}</button>
       </div>
     </div>` : '') +
     unites.map(u => {
@@ -2817,7 +3271,7 @@ function renderLearnSetup() {
       return `<div class="unite-item${sel?' selected':''}" onclick="toggleUnite('${esc(u)}')">
         <div>
           <div class="uname">${esc(u)}</div>
-          <div class="ucount">${db[u].length} Wörter</div>
+          <div class="ucount">${trf('uniteCount', { n: db[u].length })}</div>
         </div>
         <span class="check">${icon('check',16)}</span>
       </div>`;
@@ -2862,10 +3316,10 @@ function startQuiz() {
   // apply filter
   if (quiz.filter === 'new') {
     const filtered = all.filter(v => !v.key || (!(errors[v.key]||0) && !stars[v.key]));
-    if (!filtered.length) { alert('Keine neuen Wörter – alle wurden schon mindestens einmal beantwortet.'); return; }
+    if (!filtered.length) { alert(tr('alertQuizNoNew')); return; }
     all = filtered;
   }
-  if (!all.length) { alert('Bitte mindestens eine Unité oder ⭐ Schwierige Wörter auswählen.'); return; }
+  if (!all.length) { alert(tr('alertSelectUnite')); return; }
   quiz.cards = quiz.order === 'random' ? shuffle(all) : all;
   quiz.idx=0; quiz.score=0; quiz.missed=[];
   document.getElementById('learn-setup').style.display='none';
@@ -2879,11 +3333,11 @@ function showCard() {
   quiz.current = card;
   const total = quiz.cards.length;
   document.getElementById('q-progress').textContent = (quiz.idx+1)+' / '+total;
-  document.getElementById('q-score-live').textContent = quiz.score+' richtig';
+  document.getElementById('q-score-live').textContent = trf('scoreLive', { n: quiz.score });
   document.getElementById('q-fill').style.width = (quiz.idx/total*100)+'%';
-  document.getElementById('q-ask-lang').textContent = quiz.direction==='de-fr'?'Deutsch':'Französisch';
+  document.getElementById('q-ask-lang').textContent = quiz.direction==='de-fr'?tr('langDe'):tr('langFr');
   document.getElementById('q-ask-word').textContent = quiz.direction==='de-fr'?card.de:card.fr;
-  document.getElementById('q-ans-lang').textContent = quiz.direction==='de-fr'?'Französisch':'Deutsch';
+  document.getElementById('q-ans-lang').textContent = quiz.direction==='de-fr'?tr('langFr'):tr('langDe');
   document.getElementById('q-ans-word').textContent = quiz.direction==='de-fr'?card.fr:card.de;
   quiz.lastCorrect = false;
   document.getElementById('q-revealed').style.display='none';
@@ -2925,8 +3379,8 @@ function checkAnswer() {
   inp.className = 'answer-input ' + (ok?'correct':'wrong');
   const fb = document.getElementById('q-type-feedback');
   fb.innerHTML = ok
-    ? '<div class="feedback-pill pill-ok">✓ Richtig!</div>'
-    : `<div class="feedback-pill pill-nok">✗ Falsch</div><div class="correct-hint">Richtig: <strong>${esc(correct)}</strong></div>`;
+    ? `<div class="feedback-pill pill-ok">${tr('fbOk')}</div>`
+    : `<div class="feedback-pill pill-nok">${tr('fbNok')}</div><div class="correct-hint">${tr('fbCorrectIs')} <strong>${esc(correct)}</strong></div>`;
   document.getElementById('q-check-btn').disabled=true;
   document.getElementById('q-check-wrap').style.display='none';
   document.getElementById('q-nav-after').style.display='flex';
@@ -2962,7 +3416,7 @@ function showResults() {
   document.getElementById('learn-results').style.display='block';
   const pct = Math.round(quiz.score/quiz.cards.length*100);
   document.getElementById('r-score').textContent = quiz.score+'/'+quiz.cards.length;
-  document.getElementById('r-sub').textContent = pct+'% richtig – '+emoji(pct);
+  document.getElementById('r-sub').textContent = trf('resultSub', { p: pct, e: emoji(pct) });
   const ms = document.getElementById('r-missed-sec');
   const rb = document.getElementById('r-retry-btn');
   if (quiz.missed.length) {
@@ -2984,10 +3438,10 @@ function showResults() {
     if (leveledUp) {
       setTimeout(() => {
         triggerConfetti();
-        showToast('🎉 Level Up! ' + newLevel.emoji + ' ' + newLevel.name + '!');
+        showToast(trf('toastLevelUp', { e: newLevel.emoji, name: newLevel.name }));
       }, 350);
     } else if (xpFinal > 0) {
-      showToast('+' + xpFinal + ' 🪙 · 🔥 ' + (streak === 1 ? '1 Tag' : streak + ' Tage'));
+      showToast(trf('toastXp', { n: xpFinal, d: trDays(streak) }));
     }
   }
 }
@@ -3038,18 +3492,18 @@ function renderSpeakSetup() {
 
   listEl.innerHTML = `
     <div class="unite-select-header">
-      <span>${selCount} von ${unites.length} · ${selWordCount} Wörter</span>
+      <span>${trf('uniteHeader', { sel: selCount, all: unites.length, w: selWordCount })}</span>
       <div>
-        <button class="link-btn" onclick="selectAllSpeak()">Alle</button>
-        <button class="link-btn" onclick="selectNoneSpeak()">Keine</button>
+        <button class="link-btn" onclick="selectAllSpeak()">${tr('selAll')}</button>
+        <button class="link-btn" onclick="selectNoneSpeak()">${tr('selNone')}</button>
       </div>
     </div>` +
     unites.map(u => {
       const sel = speakUnites.has(u);
       return `<div class="unite-item${sel?' selected':''}" onclick="toggleSpeakUnite('${esc(u)}')">
         <div>
-          <div class="uname">${esc(u)} <span style="font-weight:400;font-size:11px;color:var(--text3);">· Klasse ${getUniteKlasse(u)}</span></div>
-          <div class="ucount">${db[u].length} Wörter</div>
+          <div class="uname">${esc(u)} <span style="font-weight:400;font-size:11px;color:var(--text3);">· ${tr('klasse')} ${getUniteKlasse(u)}</span></div>
+          <div class="ucount">${trf('uniteCount', { n: db[u].length })}</div>
         </div>
         <span class="check">${icon('check',16)}</span>
       </div>`;
@@ -3071,7 +3525,7 @@ function startSpeakSession() {
   speakUnites.forEach(u => { if (db[u]) db[u].forEach(v => all.push({...v, unite:u})); });
   const seen = new Set();
   all = all.filter(v => { const k = vocabKey(v); if (seen.has(k)) return false; seen.add(k); return true; });
-  if (!all.length) { alert('Bitte mindestens eine Unité auswählen.'); return; }
+  if (!all.length) { alert(tr('alertSelectUniteSpeak')); return; }
   speakPool = shuffle(all);
   speakIdx = 0;
   speakStats = { tries: 0, hits: 0 };
@@ -3084,7 +3538,7 @@ function startSpeakSession() {
 function showSpeakCard() {
   if (speakIdx >= speakPool.length) { speakPool = shuffle(speakPool); speakIdx = 0; }
   speakCurrent = speakPool[speakIdx];
-  document.getElementById('speak-card-lang').textContent = speakLang === 'de' ? 'Deutsch' : 'Französisch';
+  document.getElementById('speak-card-lang').textContent = speakLang === 'de' ? tr('langDe') : tr('langFr');
   document.getElementById('speak-card-word').textContent = speakCurrent[speakLang];
   document.getElementById('speak-transcript').value = '';
   document.getElementById('speak-feedback-wrap').style.display = 'none';
@@ -3096,7 +3550,7 @@ function nextSpeakWord() { speakIdx++; showSpeakCard(); }
 function backToSpeakSetup() {
   if (speechSynthesis) speechSynthesis.cancel();
   if (speakRecognizing && speakRecognition) speakRecognition.abort();
-  if (speakStats.tries > 0) showToast(speakStats.hits + ' von ' + speakStats.tries + ' gut umschrieben');
+  if (speakStats.tries > 0) showToast(trf('speakStatsToast', { h: speakStats.hits, t: speakStats.tries }));
   document.getElementById('speak-play').style.display = 'none';
   document.getElementById('speak-setup').style.display = 'block';
   renderSpeakSetup();
@@ -3115,27 +3569,27 @@ function getRecognition(lang) {
   return r;
 }
 
+// Fehlerschlüssel → i18n-Schlüssel (Text kommt aus I18N, damit er der Oberflächensprache folgt)
 const SPEECH_ERRORS = {
-  'not-allowed': 'Mikrofon nicht erlaubt – in den iPhone-Einstellungen freigeben',
-  'service-not-allowed': 'Diktieren hier nicht erlaubt – Diktierfunktion aktivieren (Einstellungen → Allgemein → Tastatur)',
-  'no-speech': 'Nichts gehört – bitte nochmal versuchen',
-  'audio-capture': 'Kein Mikrofon gefunden',
-  'network': 'Keine Verbindung zur Spracherkennung',
-  'language-not-supported': 'Sprache nicht verfügbar – passende Tastatur installieren (Einstellungen → Allgemein → Tastatur → Tastaturen)',
+  'not-allowed': 'speechNotAllowed',
+  'service-not-allowed': 'speechServiceNot',
+  'no-speech': 'speechNoSpeech',
+  'audio-capture': 'speechNoMic',
+  'network': 'speechNetwork',
+  'language-not-supported': 'speechLangNot',
 };
-const SPEECH_FALLBACK_HINT = 'Tipp: ins Textfeld tippen und das Mikrofon der Tastatur nutzen';
 
 function updateRecordButton() {
   const btn = document.getElementById('record-btn');
   btn.classList.toggle('recording', speakRecognizing);
   btn.innerHTML = icon(speakRecognizing ? 'square' : 'mic', 32, speakRecognizing);
-  document.getElementById('record-hint').textContent = speakRecognizing ? 'Zum Stoppen tippen' : 'Zum Sprechen tippen';
+  document.getElementById('record-hint').textContent = speakRecognizing ? tr('recHintStop') : tr('recHintStart');
 }
 
 function toggleRecording() {
   if (speakRecognizing) { speakRecognition && speakRecognition.stop(); return; }
   speakRecognition = getRecognition(speakLang);
-  if (!speakRecognition) { showToast('⚠️ Diktieren wird hier nicht unterstützt'); return; }
+  if (!speakRecognition) { showToast(tr('toastNoDictation')); return; }
   speakRecognizing = true;
   updateRecordButton();
   const ta = document.getElementById('speak-transcript');
@@ -3156,8 +3610,9 @@ function toggleRecording() {
     updateRecordButton();
     if (transcript) { ta.value = transcript; return; }
     if (speechError === 'aborted') return;
-    const frHint = speakLang === 'fr' && !SPEECH_ERRORS[speechError] ? ' (Französisch braucht eine französische Tastatur am Gerät)' : '';
-    showToast('⚠️ ' + (SPEECH_ERRORS[speechError] || 'Nichts verstanden') + frHint + '. ' + SPEECH_FALLBACK_HINT, 6000);
+    const frHint = speakLang === 'fr' && !SPEECH_ERRORS[speechError] ? tr('speechFrHint') : '';
+    const errText = SPEECH_ERRORS[speechError] ? tr(SPEECH_ERRORS[speechError]) : tr('speechNothing');
+    showToast(trf('toastSpeechErr', { e: errText, f: frHint, h: tr('speechFallback') }), 6000);
   };
   speakRecognition.start();
   speakStartTimeout = setTimeout(() => {
@@ -3165,22 +3620,22 @@ function toggleRecording() {
     speakRecognition.abort();
     speakRecognizing = false;
     updateRecordButton();
-    showToast('⚠️ Diktieren hat nicht reagiert. ' + SPEECH_FALLBACK_HINT, 6000);
+    showToast(trf('toastNoReaction', { h: tr('speechFallback') }), 6000);
   }, 8000);
 }
 
 async function judgeDescription() {
   const transcript = document.getElementById('speak-transcript').value.trim();
   if (!speakCurrent) return;
-  if (!transcript) { showToast('⚠️ Noch keine Umschreibung – erst sprechen oder ins Textfeld schreiben'); return; }
-  if (!apiKey) { showToast('⚠️ Kein API-Key. Bitte unter Info einrichten.'); return; }
+  if (!transcript) { showToast(tr('toastNoDescription')); return; }
+  if (!apiKey) { showToast(tr('toastNoApiKey')); return; }
   const langName = speakLang === 'fr' ? 'Französisch' : 'Deutsch';
   const targetWord = speakCurrent[speakLang];
   const btn = document.getElementById('speak-judge-btn');
   btn.disabled = true;
   const fbWrap = document.getElementById('speak-feedback-wrap');
   fbWrap.style.display = 'block';
-  fbWrap.innerHTML = '<div class="speak-feedback"><span class="spinner"></span>Wird bewertet …</div>';
+  fbWrap.innerHTML = '<div class="speak-feedback"><span class="spinner"></span>' + tr('judging') + '</div>';
   try {
     const prompt = `Wir spielen ein Umschreibe-Spiel im Französischunterricht (Bayerische Realschule, Lehrwerk À toi! Bayern).
 Zielwort (darf NICHT genannt werden, auch keine offensichtliche Wortform davon): "${targetWord}" (${langName})
@@ -3205,7 +3660,7 @@ Antworte NUR mit JSON, kein Markdown, keine Backticks:
     speakStats.tries++;
     const good = result.treffend && !result.verbotenesWortBenutzt;
     if (good) speakStats.hits++;
-    fbWrap.innerHTML = `<div class="speak-feedback ${good?'speak-ok':'speak-nok'}">${esc(result.feedback || '')}${result.verbotenesWortBenutzt ? '<br><strong>⚠️ Zielwort wurde genannt.</strong>' : ''}</div>`;
+    fbWrap.innerHTML = `<div class="speak-feedback ${good?'speak-ok':'speak-nok'}">${esc(result.feedback || '')}${result.verbotenesWortBenutzt ? `<br><strong>${tr('targetWordUsed')}</strong>` : ''}</div>`;
   } catch(err) {
     fbWrap.innerHTML = `<div class="speak-feedback speak-nok">⚠️ ${esc(err.message)}</div>`;
   }
@@ -3236,10 +3691,10 @@ function closeLookup() {
 async function doLookup() {
   const word = document.getElementById('lookup-input').value.trim();
   if (!word) return;
-  if (!apiKey) { document.getElementById('lookup-status').textContent = '⚠️ Kein API-Key. Bitte unter Info einrichten.'; return; }
+  if (!apiKey) { document.getElementById('lookup-status').textContent = tr('toastNoApiKey'); return; }
   const btn = document.getElementById('lookup-btn');
   btn.disabled = true;
-  document.getElementById('lookup-status').innerHTML = '<span class="spinner"></span>Nachschlagen …';
+  document.getElementById('lookup-status').innerHTML = '<span class="spinner"></span>' + tr('lookupLoading');
   document.getElementById('lookup-result-wrap').style.display = 'none';
   try {
     const prompt = `Übersetze das folgende Wort / den Ausdruck für den Französischunterricht (Bayerische Realschule, Lehrwerk À toi! Bayern).
@@ -3276,20 +3731,20 @@ function addLookupVocab() {
   if (!_lookupResult) return;
   const unite = document.getElementById('lookup-unite-select').value || 'Unité ?';
   const v = { de: (_lookupResult.de || '').trim(), fr: (_lookupResult.fr || '').trim() };
-  if (!v.de || !v.fr) { showToast('⚠️ Unvollständige Übersetzung'); return; }
+  if (!v.de || !v.fr) { showToast(tr('toastIncomplete')); return; }
   if (!db[unite]) db[unite] = [];
-  if (existingSet(unite).has(vocabKey(v))) { showToast('⚠️ Wort bereits in ' + unite); return; }
+  if (existingSet(unite).has(vocabKey(v))) { showToast(trf('toastAlreadyIn', { u: unite })); return; }
   db[unite].push(stampVocab(v));
   saveDb();
   autoSyncToDropbox();
-  showToast('✓ „' + v.fr + '" zu ' + unite + ' hinzugefügt');
+  showToast(trf('toastAddedTo', { w: v.fr, u: unite }));
   closeLookup();
 }
 
 // ─── UTILS ───────────────────────────────────────────────────────────
 function shuffle(arr) { return [...arr].sort(()=>Math.random()-0.5); }
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function emoji(pct) { if(pct===100)return'🏆 Perfekt!'; if(pct>=80)return'🌟 Super!'; if(pct>=60)return'👍 Gut!'; if(pct>=40)return'💪 Weiter üben!'; return'📚 Noch mal!'; }
+function emoji(pct) { if(pct===100)return tr('emojiPerfect'); if(pct>=80)return tr('emojiSuper'); if(pct>=60)return tr('emojiGood'); if(pct>=40)return tr('emojiKeep'); return tr('emojiAgain'); }
 
 function renderInstallHint() {
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -3351,6 +3806,60 @@ function initThemeToggle() {
   btn.setAttribute('aria-checked', effective === 'dark' ? 'true' : 'false');
 }
 
+// ── Sprachumschalter Deutsch / Français (v59) ───────────────────────
+// data-i18n gehört IMMER auf das textführende Blattelement, nie auf einen Button,
+// der ein per initStaticIcons() eingesetztes SVG enthält – sonst löscht innerHTML das Icon.
+function applyLangStatic() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = tr(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = tr(el.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => { el.title = tr(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', tr(el.dataset.i18nAria)); });
+  // Texte, die vom Zustand abhängen und deshalb kein data-i18n tragen können
+  const uz = document.getElementById('up-zone-text');
+  if (uz) uz.textContent = ocrType === 'handwritten' ? tr('uzHand') : tr('uzPhoto');
+  const rh = document.getElementById('record-hint');
+  if (rh) rh.textContent = speakRecognizing ? tr('recHintStop') : tr('recHintStart');
+  // Schalterzustand: aktive Sprache hervorheben, aria-checked=true bedeutet Français
+  const lf = document.getElementById('lang-lbl-fr');
+  const ld = document.getElementById('lang-lbl-de');
+  if (lf) lf.classList.toggle('on', LANG === 'fr');
+  if (ld) ld.classList.toggle('on', LANG === 'de');
+  const lb = document.getElementById('lang-toggle');
+  if (lb) lb.setAttribute('aria-checked', LANG === 'fr' ? 'true' : 'false');
+}
+
+function applyLang() {
+  applyLangStatic();
+  // Klassen-Selects tragen „Klasse"/„Classe" im Label – Füll-Sperre lösen, Auswahl behalten
+  ['up-unite-klasse', 'man-unite-klasse'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (sel && sel.dataset.filled) { const v = sel.value; delete sel.dataset.filled; renderKlasseSelects(); sel.value = v; }
+  });
+  renderKlasseSelects();
+  renderBonusBar();
+  initApiKeyUI();
+  initDbxUI();
+  // Laufendes Quiz: nur die Sprachlabels nachziehen, nie showCard() – das würde die Karte zurücksetzen
+  if (quiz.current) {
+    document.getElementById('q-ask-lang').textContent = quiz.direction === 'de-fr' ? tr('langDe') : tr('langFr');
+    document.getElementById('q-ans-lang').textContent = quiz.direction === 'de-fr' ? tr('langFr') : tr('langDe');
+    document.getElementById('q-score-live').textContent = trf('scoreLive', { n: quiz.score });
+  }
+  renderLearnSetup();
+  renderVocabScreen();
+  renderInstallHint();
+  renderStats();
+  // renderSpeakSetup() blendet das Setup ein – während eines laufenden Spiels also nicht aufrufen
+  if (document.getElementById('speak-play').style.display === 'none') renderSpeakSetup();
+}
+
+function toggleLang() {
+  LANG = LANG === 'fr' ? 'de' : 'fr';
+  try { localStorage.setItem('vt_lang', LANG); } catch (e) {}
+  applyLang();
+}
+
 // Init
 history.replaceState(_navState(null), '');
 initStaticIcons();
@@ -3361,6 +3870,7 @@ initDbxUI();
 handleDropboxCallback();
 renderBonusBar();
 initThemeToggle();
+applyLang();
 
 // ─── NACH-OBEN-BUTTON ─────────────────────────────────────────────────
 // Scroll-Container ist .content (nicht window); Button sitzt 16px über der Tab-Leiste

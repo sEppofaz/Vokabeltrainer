@@ -762,7 +762,7 @@
   <div class="header">
     <h1>Vokabeltrainer 🇫🇷</h1>
     <div style="text-align:right;">
-      <p>Jule Édition <span style="opacity:0.5;">(v59 · 2026-09-27)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
+      <p>Jule Édition <span style="opacity:0.5;">(v60 · 2026-10-12)</span> <button data-icon="rotate-ccw" data-icon-size="12" onclick="forceUpdate()" style="background:none;border:0.5px solid var(--border2);border-radius:4px;color:var(--blue-text);cursor:pointer;padding:2px 6px;margin-left:4px;display:inline-flex;align-items:center;"></button> <button onclick="toggleHilfe()" style="background:rgba(0,0,0,.06);border:none;border-radius:9px;height:34px;padding:0 12px;font-size:13px;font-weight:600;letter-spacing:.3px;color:var(--text2);cursor:pointer;transition:background .15s;margin-left:4px;">Info</button></p>
       <p id="bonus-bar">🐣 Curieux · 🪙 0 · +0 heute · 🔥 0 Tage</p>
     </div>
   </div>
@@ -1476,8 +1476,18 @@
 
 <script>
 // ─── CONSTANTS ──────────────────────────────────────────────────────── P7
-const MODEL          = 'claude-sonnet-4-6';
+const MODEL          = 'claude-sonnet-5-5';
+const EFFORT         = 'low';     // Sonnet 5.5 denkt sonst mit Standard „high“ – langsamer, teurer
+const MAX_TOKENS     = 16000;     // großzügig: Antworten nie abschneiden (bezahlt wird nur, was erzeugt wird)
 const API_URL        = 'https://api.anthropic.com/v1/messages';
+
+// Text der Claude-Antwort (Denkblöcke übersprungen). Abgeschnittene oder abgelehnte Antworten
+// nie still weiterverarbeiten, sondern als Fehler melden.
+function antwortText(data) {
+  if (data.stop_reason === 'max_tokens') throw new Error(tr('errTruncated'));
+  if (data.stop_reason === 'refusal') throw new Error(tr('errRefusal'));
+  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+}
 const DBX_UPLOAD_URL   = 'https://content.dropboxapi.com/2/files/upload';
 const DBX_DOWNLOAD_URL = 'https://content.dropboxapi.com/2/files/download';
 const DBX_FILE_PATH    = '/vokabeln.json';
@@ -1609,6 +1619,8 @@ const I18N = {
     statusAiRecog: "KI erkennt Vokabeln…",
     errNoVocab: "Keine Vokabeln erkannt – bitte klareres Foto versuchen",
     statusRecognized: "✓ {n} Vokabeln erkannt – bitte prüfen und ggf. korrigieren",
+    errTruncated: "Die KI-Antwort war zu lang und wurde abgeschnitten – bitte nochmal versuchen.",
+    errRefusal: "Die KI hat die Anfrage abgelehnt.",
     statusNetworkErr: "⚠️ Netzwerkfehler – KI nicht erreichbar.<br><small>→ App in <strong>Safari</strong> öffnen (nicht als Home-Bildschirm-App) und dort versuchen.<br>→ Oder WLAN prüfen.</small>",
     dupeBadge: "Duplikat",
     dupeCount1: "{t} ({d} Duplikat)",
@@ -1823,6 +1835,8 @@ const I18N = {
     statusAiRecog: "L'IA lit les mots…",
     errNoVocab: "Aucun mot reconnu – essaie une photo plus nette",
     statusRecognized: "✓ {n} mots reconnus – vérifie et corrige si besoin",
+    errTruncated: "La réponse de l'IA était trop longue et a été coupée – réessaie.",
+    errRefusal: "L'IA a refusé la demande.",
     statusNetworkErr: "⚠️ Erreur de réseau – l'IA est injoignable.<br><small>→ Ouvre l'app dans <strong>Safari</strong> (pas depuis l'écran d'accueil) et réessaie.<br>→ Ou vérifie le Wi-Fi.</small>",
     dupeBadge: "Doublon",
     dupeCount1: "{t} ({d} doublon)",
@@ -2870,7 +2884,8 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: 2000,
+          max_tokens: MAX_TOKENS,
+          output_config: { effort: EFFORT },
           messages: [{ role: 'user', content: [...imageBlocks, { type: 'text', text: prompt }] }]
         })
       });
@@ -2890,7 +2905,7 @@ Antworte NUR mit einem JSON-Array, kein Markdown, keine Backticks:
     }
 
     const data = await res.json();
-    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    let txt = antwortText(data);
     txt = txt.replace(/```json|```/g,'').trim();
     const s = txt.indexOf('['), e = txt.lastIndexOf(']');
     if (s!==-1 && e!==-1) pendingVocab = JSON.parse(txt.slice(s,e+1));
@@ -3649,11 +3664,11 @@ Antworte NUR mit JSON, kein Markdown, keine Backticks:
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 400, messages: [{ role:'user', content: prompt }] })
+      body: JSON.stringify({ model: MODEL, max_tokens: MAX_TOKENS, output_config: { effort: EFFORT }, messages: [{ role:'user', content: prompt }] })
     });
     if (!res.ok) throw new Error('API Fehler ' + res.status);
     const data = await res.json();
-    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    let txt = antwortText(data);
     txt = txt.replace(/```json|```/g,'').trim();
     const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
     const result = JSON.parse(txt.slice(s, e+1));
@@ -3704,11 +3719,11 @@ Antworte NUR mit JSON, kein Markdown, keine Backticks:
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 300, messages: [{ role:'user', content: prompt }] })
+      body: JSON.stringify({ model: MODEL, max_tokens: MAX_TOKENS, output_config: { effort: EFFORT }, messages: [{ role:'user', content: prompt }] })
     });
     if (!res.ok) throw new Error('API Fehler ' + res.status);
     const data = await res.json();
-    let txt = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    let txt = antwortText(data);
     txt = txt.replace(/```json|```/g,'').trim();
     const s = txt.indexOf('{'), e = txt.lastIndexOf('}');
     _lookupResult = JSON.parse(txt.slice(s, e+1));
